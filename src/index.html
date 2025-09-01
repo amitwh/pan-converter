@@ -10,6 +10,13 @@
 </head>
 <body>
     <div class="container">
+        <div class="tab-bar" id="tab-bar">
+            <div class="tab active" data-tab-id="1">
+                <span class="tab-title">Untitled</span>
+                <button class="tab-close" title="Close tab">×</button>
+            </div>
+            <button class="new-tab-button" id="new-tab-btn" title="New tab">+</button>
+        </div>
         <div class="toolbar">
             <button id="btn-bold" title="Bold">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -108,14 +115,16 @@
         </div>
         
         <div class="editor-container">
-            <div id="editor-pane" class="pane">
-                <div class="editor-wrapper">
-                    <div id="line-numbers" class="line-numbers hidden"></div>
-                    <textarea id="editor"></textarea>
+            <div class="tab-content active" id="tab-content-1" data-tab-id="1">
+                <div id="editor-pane-1" class="pane">
+                    <div class="editor-wrapper">
+                        <div id="line-numbers-1" class="line-numbers hidden"></div>
+                        <textarea id="editor-1" class="editor-textarea"></textarea>
+                    </div>
                 </div>
-            </div>
-            <div id="preview-pane" class="pane">
-                <div id="preview"></div>
+                <div id="preview-pane-1" class="pane">
+                    <div id="preview-1" class="preview-content"></div>
+                </div>
             </div>
         </div>
         

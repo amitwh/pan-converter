@@ -16,6 +16,93 @@ body {
     height: 100vh;
 }
 
+/* Tab Bar */
+.tab-bar {
+    display: flex;
+    align-items: center;
+    background: #f0f0f0;
+    border-bottom: 1px solid #ddd;
+    padding: 0 8px;
+    min-height: 36px;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    background: #e8e8e8;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    margin-right: 2px;
+    cursor: pointer;
+    user-select: none;
+    max-width: 200px;
+    min-width: 120px;
+}
+
+.tab.active {
+    background: #fff;
+    border-color: #999;
+    z-index: 1;
+}
+
+.tab-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+.tab-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    color: #666;
+}
+
+.tab-close:hover {
+    background: #ddd;
+    color: #000;
+}
+
+.new-tab-button {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 8px;
+    color: #666;
+}
+
+.new-tab-button:hover {
+    background: #e8e8e8;
+}
+
+/* Tab Content */
+.tab-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.tab-content:not(.active) {
+    display: none;
+}
+
 /* Toolbar */
 .toolbar {
     display: flex;
@@ -215,6 +302,40 @@ body {
 body.theme-dark {
     background: #1e1e1e;
     color: #d4d4d4;
+}
+
+body.theme-dark .tab-bar {
+    background: #2d2d30;
+    border-bottom-color: #3e3e42;
+}
+
+body.theme-dark .tab {
+    background: #3c3c3c;
+    border-color: #555;
+    color: #d4d4d4;
+}
+
+body.theme-dark .tab.active {
+    background: #1e1e1e;
+    border-color: #666;
+}
+
+body.theme-dark .tab-close {
+    color: #ccc;
+}
+
+body.theme-dark .tab-close:hover {
+    background: #555;
+    color: #fff;
+}
+
+body.theme-dark .new-tab-button {
+    border-color: #555;
+    color: #ccc;
+}
+
+body.theme-dark .new-tab-button:hover {
+    background: #3c3c3c;
 }
 
 body.theme-dark .toolbar {
