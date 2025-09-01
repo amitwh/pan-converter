@@ -7,12 +7,14 @@ A cross-platform Markdown editor and converter powered by Pandoc.
 ## Features
 
 ### ✨ Advanced Markdown Editor
+- 🗂️ **Tabbed Interface** - Work with multiple files simultaneously in separate tabs
 - 📝 **Rich Text Editor** - Full-featured editor with syntax highlighting and comprehensive toolbar
 - 🔍 **Find & Replace** - Powerful search and replace with match highlighting and navigation
 - 🔢 **Line Numbers** - Toggle line numbers for easier code editing and navigation
 - ↩️ **Smart Auto-Indentation** - Automatic list continuation and intelligent indentation
 - ⏪ **Undo/Redo** - Full undo/redo support with keyboard shortcuts
 - ⌨️ **Advanced Shortcuts** - Tab indentation, line selection, and smart text formatting
+- 📂 **File Association Support** - Open markdown files directly from file manager
 
 ### 🎨 Themes & Interface
 - 👁️ **Live Preview** - See your markdown rendered in real-time with synchronized scrolling
@@ -20,9 +22,10 @@ A cross-platform Markdown editor and converter powered by Pandoc.
 - 💾 **Auto-Save** - Never lose your work with automatic saving every 30 seconds
 
 ### 📤 Export & Conversion
-- 📄 **Document Export** - Convert to HTML, PDF, DOCX, LaTeX, RTF, ODT, EPUB, PowerPoint (PPTX), and OpenDocument Presentation (ODP)
+- 📄 **Enhanced PDF Export** - Robust PDF generation with multiple LaTeX engine fallbacks (XeLaTeX, PDFLaTeX, wkhtmltopdf)
+- 📄 **Document Export** - Convert to HTML, DOCX, LaTeX, RTF, ODT, EPUB, PowerPoint (PPTX), and OpenDocument Presentation (ODP)
 - 📊 **Spreadsheet Export** - Export markdown tables to Excel (XLSX/XLS) and OpenDocument Spreadsheet (ODS) formats
-- 📥 **Document Import & Conversion** - Import various document formats and convert between formats via Pandoc
+- 📥 **Document Import** - Import DOCX, ODT, RTF, HTML, PDF, and presentation files to markdown
 - 📋 **Table Creation Helper** - Built-in table generator for easy markdown table creation
 
 ### 🖥️ Platform Support
@@ -36,13 +39,20 @@ A cross-platform Markdown editor and converter powered by Pandoc.
   - **macOS**: `brew install pandoc`
   - **Windows**: Download installer from Pandoc website
 
+### PDF Export Requirements
+For optimal PDF export, install a LaTeX engine (recommended):
+- **Ubuntu/Debian**: `sudo apt-get install texlive-xetex texlive-latex-base`
+- **macOS**: `brew install --cask mactex`
+- **Windows**: Install MiKTeX or TeX Live
+- **Alternative**: `sudo apt-get install wkhtmltopdf` (fallback option)
+
 ### Download
 Download the latest release for your platform from the [Releases](https://github.com/amitwh/pan-converter/releases) page.
 
 #### Linux
-- **AppImage**: `PanConverter-1.2.1.AppImage` (universal, may require `--no-sandbox` flag)
-- **Debian Package**: `pan-converter_1.2.1_amd64.deb`
-- **Snap Package**: `pan-converter_1.2.1_amd64.snap`
+- **AppImage**: `PanConverter-1.3.0.AppImage` (universal, may require `--no-sandbox` flag)
+- **Debian Package**: `pan-converter_1.3.0_amd64.deb`
+- **Snap Package**: `pan-converter_1.3.0_amd64.snap`
 
 ### Install from Source
 ```bash
@@ -78,7 +88,10 @@ npm start
 ## Keyboard Shortcuts
 
 ### File Operations
-- `Ctrl/Cmd + N` - New file
+- `Ctrl/Cmd + N` - New file/tab
+- `Ctrl/Cmd + T` - New tab
+- `Ctrl/Cmd + W` - Close current tab
+- `Ctrl/Cmd + Tab` - Switch to next tab
 - `Ctrl/Cmd + O` - Open file
 - `Ctrl/Cmd + S` - Save file
 - `Ctrl/Cmd + Shift + S` - Save as
@@ -120,6 +133,7 @@ npm run dist:all
 
 ## Version History
 
+- **v1.3.0** - Major update: Tabbed interface for multiple files, enhanced PDF export with LaTeX engines, fixed file associations, removed redundant converter menu, improved UI architecture
 - **v1.2.1** - Comprehensive editor enhancements: Find & Replace, Line Numbers, Undo/Redo, Auto-indentation, PowerPoint export, document conversion menu, table creation helper, spreadsheet export
 - **v1.1.0** - Added Excel/ODS spreadsheet export, updated author information, renamed to PanConverter
 - **v1.0.0** - Initial release with basic markdown editing, themes, and Pandoc export
