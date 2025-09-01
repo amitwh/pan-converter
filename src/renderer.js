@@ -17,583 +17,524 @@ marked.setOptions({
     gfm: true
 });
 
-// Elements
-const editor = document.getElementById('editor');
-const preview = document.getElementById('preview');
-const previewPane = document.getElementById('preview-pane');
-const editorPane = document.getElementById('editor-pane');
-const statusText = document.getElementById('status-text');
-const wordCount = document.getElementById('word-count');
-const lineNumbers = document.getElementById('line-numbers');
-const findDialog = document.getElementById('find-dialog');
-const findInput = document.getElementById('find-input');
-const replaceInput = document.getElementById('replace-input');
-const findCount = document.getElementById('find-count');
+// Tab Management
+class TabManager {
+    constructor() {
+        this.tabs = new Map();
+        this.activeTabId = 1;
+        this.nextTabId = 2;
+        this.isPreviewVisible = true;
+        this.showLineNumbers = false;
+        
+        // Initialize first tab
+        this.tabs.set(1, {
+            id: 1,
+            title: 'Untitled',
+            content: '',
+            filePath: null,
+            isDirty: false,
+            undoStack: [],
+            redoStack: [],
+            findMatches: [],
+            currentMatchIndex: -1
+        });
+        
+        this.setupEventListeners();
+        this.updateUI();
+    }
+    
+    setupEventListeners() {
+        // Tab bar events
+        document.getElementById('new-tab-btn').addEventListener('click', () => this.createNewTab());
+        document.getElementById('tab-bar').addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab-close')) {
+                e.stopPropagation();
+                const tabId = parseInt(e.target.closest('.tab').dataset.tabId);
+                this.closeTab(tabId);
+            } else if (e.target.closest('.tab')) {
+                const tabId = parseInt(e.target.closest('.tab').dataset.tabId);
+                this.switchToTab(tabId);
+            }
+        });
+        
+        // Editor events for active tab
+        this.setupEditorEvents();
+        
+        // Toolbar events
+        this.setupToolbarEvents();
+        
+        // Find dialog events
+        this.setupFindEvents();
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case 'n':
+                        e.preventDefault();
+                        this.createNewTab();
+                        break;
+                    case 'w':
+                        if (this.tabs.size > 1) {
+                            e.preventDefault();
+                            this.closeTab(this.activeTabId);
+                        }
+                        break;
+                    case 't':
+                        e.preventDefault();
+                        this.createNewTab();
+                        break;
+                    case 'Tab':
+                        if (this.tabs.size > 1) {
+                            e.preventDefault();
+                            this.switchToNextTab();
+                        }
+                        break;
+                }
+            }
+        });
+    }
+    
+    createNewTab() {
+        const newTabId = this.nextTabId++;
+        const tab = {
+            id: newTabId,
+            title: 'Untitled',
+            content: '',
+            filePath: null,
+            isDirty: false,
+            undoStack: [],
+            redoStack: [],
+            findMatches: [],
+            currentMatchIndex: -1
+        };
+        
+        this.tabs.set(newTabId, tab);
+        this.createTabElements(tab);
+        this.switchToTab(newTabId);
+        this.updateTabBar();
+    }
+    
+    createTabElements(tab) {
+        // Create tab content container
+        const tabContent = document.createElement('div');
+        tabContent.className = 'tab-content';
+        tabContent.id = `tab-content-${tab.id}`;
+        tabContent.dataset.tabId = tab.id;
+        
+        tabContent.innerHTML = `
+            <div id="editor-pane-${tab.id}" class="pane">
+                <div class="editor-wrapper">
+                    <div id="line-numbers-${tab.id}" class="line-numbers hidden"></div>
+                    <textarea id="editor-${tab.id}" class="editor-textarea"></textarea>
+                </div>
+            </div>
+            <div id="preview-pane-${tab.id}" class="pane">
+                <div id="preview-${tab.id}" class="preview-content"></div>
+            </div>
+        `;
+        
+        document.querySelector('.editor-container').appendChild(tabContent);
+    }
+    
+    switchToTab(tabId) {
+        if (!this.tabs.has(tabId)) return;
+        
+        // Save current tab state before switching
+        if (this.activeTabId && this.tabs.has(this.activeTabId)) {
+            this.saveCurrentTabState();
+        }
+        
+        this.activeTabId = tabId;
+        this.updateUI();
+        this.restoreTabState(tabId);
+        this.focusActiveEditor();
+        
+        // Notify main process about current file for exports
+        const tab = this.tabs.get(tabId);
+        if (tab && tab.filePath) {
+            ipcRenderer.send('set-current-file', tab.filePath);
+        }
+    }
+    
+    switchToNextTab() {
+        const tabIds = Array.from(this.tabs.keys());
+        const currentIndex = tabIds.indexOf(this.activeTabId);
+        const nextIndex = (currentIndex + 1) % tabIds.length;
+        this.switchToTab(tabIds[nextIndex]);
+    }
+    
+    closeTab(tabId) {
+        if (this.tabs.size === 1) return; // Don't close the last tab
+        
+        const tab = this.tabs.get(tabId);
+        if (tab.isDirty) {
+            // TODO: Show confirmation dialog
+        }
+        
+        // Remove tab elements
+        const tabElement = document.querySelector(`[data-tab-id="${tabId}"]`);
+        const tabContent = document.getElementById(`tab-content-${tabId}`);
+        
+        if (tabElement && tabElement.classList.contains('tab')) {
+            tabElement.remove();
+        }
+        if (tabContent) {
+            tabContent.remove();
+        }
+        
+        this.tabs.delete(tabId);
+        
+        // Switch to another tab if this was active
+        if (this.activeTabId === tabId) {
+            const remainingTabs = Array.from(this.tabs.keys());
+            this.switchToTab(remainingTabs[0]);
+        }
+        
+        this.updateTabBar();
+    }
+    
+    updateTabBar() {
+        const tabBar = document.getElementById('tab-bar');
+        const existingTabs = tabBar.querySelectorAll('.tab');
+        
+        // Remove all existing tab elements except the new tab button
+        existingTabs.forEach(tab => tab.remove());
+        
+        // Add tabs in order
+        const sortedTabs = Array.from(this.tabs.values()).sort((a, b) => a.id - b.id);
+        const newTabBtn = document.getElementById('new-tab-btn');
+        
+        sortedTabs.forEach(tab => {
+            const tabElement = document.createElement('div');
+            tabElement.className = `tab ${tab.id === this.activeTabId ? 'active' : ''}`;
+            tabElement.dataset.tabId = tab.id;
+            
+            const title = tab.filePath ? 
+                tab.filePath.split('/').pop() : 
+                tab.title;
+                
+            const dirtyIndicator = tab.isDirty ? ' •' : '';
+            
+            tabElement.innerHTML = `
+                <span class="tab-title">${title}${dirtyIndicator}</span>
+                <button class="tab-close" title="Close tab">×</button>
+            `;
+            
+            tabBar.insertBefore(tabElement, newTabBtn);
+        });
+    }
+    
+    updateUI() {
+        // Show/hide tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        const activeContent = document.getElementById(`tab-content-${this.activeTabId}`);
+        if (activeContent) {
+            activeContent.classList.add('active');
+        }
+        
+        // Update preview visibility
+        this.updatePreviewVisibility();
+        this.updateLineNumbers();
+        this.updateTabBar();
+    }
+    
+    saveCurrentTabState() {
+        const tab = this.tabs.get(this.activeTabId);
+        if (!tab) return;
+        
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        if (editor) {
+            tab.content = editor.value;
+            tab.isDirty = tab.content !== (tab.originalContent || '');
+        }
+    }
+    
+    restoreTabState(tabId) {
+        const tab = this.tabs.get(tabId);
+        if (!tab) return;
+        
+        const editor = document.getElementById(`editor-${tabId}`);
+        const preview = document.getElementById(`preview-${tabId}`);
+        
+        if (editor) {
+            editor.value = tab.content;
+            this.updatePreview(tabId);
+            this.updateWordCount();
+        }
+    }
+    
+    focusActiveEditor() {
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        if (editor) {
+            editor.focus();
+        }
+    }
+    
+    updatePreview(tabId = this.activeTabId) {
+        const tab = this.tabs.get(tabId);
+        const preview = document.getElementById(`preview-${tabId}`);
+        
+        if (!tab || !preview) return;
+        
+        try {
+            const html = marked.parse(tab.content);
+            const sanitizedHtml = DOMPurify.sanitize(html);
+            preview.innerHTML = sanitizedHtml;
+        } catch (error) {
+            preview.innerHTML = '<p>Error rendering preview</p>';
+        }
+    }
+    
+    updatePreviewVisibility() {
+        document.querySelectorAll('.tab-content').forEach(content => {
+            const previewPane = content.querySelector('.pane:last-child');
+            const editorPane = content.querySelector('.pane:first-child');
+            
+            if (this.isPreviewVisible) {
+                previewPane.classList.remove('hidden');
+                editorPane.classList.remove('full-width');
+            } else {
+                previewPane.classList.add('hidden');
+                editorPane.classList.add('full-width');
+            }
+        });
+    }
+    
+    updateLineNumbers() {
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        const lineNumbers = document.getElementById(`line-numbers-${this.activeTabId}`);
+        
+        if (!editor || !lineNumbers) return;
+        
+        if (this.showLineNumbers) {
+            const lines = editor.value.split('\\n');
+            lineNumbers.innerHTML = lines.map((_, i) => 
+                `<div class="line-number">${i + 1}</div>`
+            ).join('');
+            lineNumbers.classList.remove('hidden');
+        } else {
+            lineNumbers.classList.add('hidden');
+        }
+    }
+    
+    updateWordCount() {
+        const tab = this.tabs.get(this.activeTabId);
+        if (!tab) return;
+        
+        const words = tab.content.trim().split(/\\s+/).filter(word => word.length > 0).length;
+        const chars = tab.content.length;
+        document.getElementById('word-count').textContent = `Words: ${words} | Characters: ${chars}`;
+    }
+    
+    setupEditorEvents() {
+        // Set up editor events using event delegation
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('editor-textarea')) {
+                const tabId = parseInt(e.target.id.split('-')[1]);
+                if (tabId === this.activeTabId) {
+                    this.handleEditorInput(tabId);
+                }
+            }
+        });
+        
+        document.addEventListener('scroll', (e) => {
+            if (e.target.classList.contains('editor-textarea')) {
+                const tabId = parseInt(e.target.id.split('-')[1]);
+                if (tabId === this.activeTabId) {
+                    this.updateLineNumbers();
+                }
+            }
+        });
+    }
+    
+    handleEditorInput(tabId) {
+        const tab = this.tabs.get(tabId);
+        if (!tab) return;
+        
+        const editor = document.getElementById(`editor-${tabId}`);
+        tab.content = editor.value;
+        tab.isDirty = true;
+        
+        this.updatePreview(tabId);
+        this.updateWordCount();
+        this.updateLineNumbers();
+        this.updateTabBar();
+        
+        // Add to undo stack
+        this.pushUndoState(tabId);
+    }
+    
+    pushUndoState(tabId) {
+        const tab = this.tabs.get(tabId);
+        if (!tab) return;
+        
+        tab.undoStack.push(tab.content);
+        if (tab.undoStack.length > 50) {
+            tab.undoStack.shift();
+        }
+        tab.redoStack = [];
+    }
+    
+    undo() {
+        const tab = this.tabs.get(this.activeTabId);
+        if (!tab || tab.undoStack.length === 0) return;
+        
+        tab.redoStack.push(tab.content);
+        tab.content = tab.undoStack.pop();
+        
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        if (editor) {
+            editor.value = tab.content;
+            this.updatePreview();
+            this.updateWordCount();
+        }
+    }
+    
+    redo() {
+        const tab = this.tabs.get(this.activeTabId);
+        if (!tab || tab.redoStack.length === 0) return;
+        
+        tab.undoStack.push(tab.content);
+        tab.content = tab.redoStack.pop();
+        
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        if (editor) {
+            editor.value = tab.content;
+            this.updatePreview();
+            this.updateWordCount();
+        }
+    }
+    
+    setupToolbarEvents() {
+        // Existing toolbar setup...
+        document.getElementById('btn-preview-toggle').addEventListener('click', () => {
+            this.isPreviewVisible = !this.isPreviewVisible;
+            this.updatePreviewVisibility();
+        });
+        
+        document.getElementById('btn-line-numbers').addEventListener('click', () => {
+            this.showLineNumbers = !this.showLineNumbers;
+            this.updateLineNumbers();
+        });
+        
+        // Add other toolbar events...
+    }
+    
+    setupFindEvents() {
+        // Find dialog implementation...
+        document.getElementById('btn-find').addEventListener('click', () => {
+            document.getElementById('find-dialog').classList.remove('hidden');
+            document.getElementById('find-input').focus();
+        });
+        
+        document.getElementById('btn-find-close').addEventListener('click', () => {
+            document.getElementById('find-dialog').classList.add('hidden');
+        });
+    }
+    
+    // File operations
+    openFile(filePath, content) {
+        let tab = this.tabs.get(this.activeTabId);
+        
+        // If current tab is empty and untitled, reuse it
+        if (!tab.filePath && !tab.isDirty && tab.content === '') {
+            tab.filePath = filePath;
+            tab.title = filePath.split('/').pop();
+            tab.content = content;
+            tab.originalContent = content;
+            tab.isDirty = false;
+        } else {
+            // Create new tab for the file
+            this.createNewTab();
+            tab = this.tabs.get(this.activeTabId);
+            tab.filePath = filePath;
+            tab.title = filePath.split('/').pop();
+            tab.content = content;
+            tab.originalContent = content;
+            tab.isDirty = false;
+        }
+        
+        this.restoreTabState(this.activeTabId);
+        this.updateTabBar();
+    }
+    
+    getCurrentContent() {
+        const tab = this.tabs.get(this.activeTabId);
+        return tab ? tab.content : '';
+    }
+    
+    getCurrentFilePath() {
+        const tab = this.tabs.get(this.activeTabId);
+        return tab ? tab.filePath : null;
+    }
+}
 
-// State
-let isPreviewVisible = true;
-let currentContent = '';
-let isDirty = false;
-let showLineNumbers = false;
-let findMatches = [];
-let currentMatchIndex = -1;
-let undoStack = [];
-let redoStack = [];
-let maxUndoSize = 50;
+// Initialize tab manager
+let tabManager;
 
-// Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    tabManager = new TabManager();
+    
     // Request current theme
     ipcRenderer.send('get-theme');
     
     // Set up auto-save interval
-    setInterval(autoSave, 30000); // Auto-save every 30 seconds
-    
-    // Initialize with empty content
-    updatePreview();
-    updateWordCount();
+    setInterval(() => {
+        // Auto-save logic for all tabs
+        tabManager.tabs.forEach(tab => {
+            if (tab.isDirty && tab.filePath) {
+                ipcRenderer.send('save-current-file', tab.content);
+            }
+        });
+    }, 30000);
 });
 
-// Editor input handler
-editor.addEventListener('input', () => {
-    currentContent = editor.value;
-    isDirty = true;
-    updatePreview();
-    updateWordCount();
-    updateStatus('Modified');
-});
-
-// Toolbar button handlers
-document.getElementById('btn-bold').addEventListener('click', () => insertMarkdown('**', '**'));
-document.getElementById('btn-italic').addEventListener('click', () => insertMarkdown('*', '*'));
-document.getElementById('btn-heading').addEventListener('click', () => insertMarkdown('## ', ''));
-document.getElementById('btn-link').addEventListener('click', () => insertMarkdown('[', '](url)'));
-document.getElementById('btn-code').addEventListener('click', () => insertMarkdown('`', '`'));
-document.getElementById('btn-list').addEventListener('click', () => insertMarkdown('- ', ''));
-document.getElementById('btn-quote').addEventListener('click', () => insertMarkdown('> ', ''));
-document.getElementById('btn-table').addEventListener('click', insertTable);
-document.getElementById('btn-find').addEventListener('click', toggleFindDialog);
-document.getElementById('btn-line-numbers').addEventListener('click', toggleLineNumbers);
-document.getElementById('btn-preview-toggle').addEventListener('click', togglePreview);
-
-// Find dialog handlers
-document.getElementById('btn-find-close').addEventListener('click', closeFindDialog);
-document.getElementById('btn-find-next').addEventListener('click', findNext);
-document.getElementById('btn-find-prev').addEventListener('click', findPrev);
-document.getElementById('btn-replace').addEventListener('click', replaceOne);
-document.getElementById('btn-replace-all').addEventListener('click', replaceAll);
-findInput.addEventListener('input', performFind);
-replaceInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') replaceOne();
-});
-
-// Table insertion function
-function insertTable() {
-    const rows = prompt('Number of rows:', '3');
-    const cols = prompt('Number of columns:', '3');
-    
-    if (!rows || !cols) return;
-    
-    const numRows = parseInt(rows);
-    const numCols = parseInt(cols);
-    
-    if (isNaN(numRows) || isNaN(numCols) || numRows < 1 || numCols < 1) {
-        alert('Please enter valid numbers for rows and columns');
-        return;
-    }
-    
-    let table = '\n';
-    
-    // Header row
-    table += '|';
-    for (let j = 0; j < numCols; j++) {
-        table += ` Header ${j + 1} |`;
-    }
-    table += '\n';
-    
-    // Separator row
-    table += '|';
-    for (let j = 0; j < numCols; j++) {
-        table += ' --- |';
-    }
-    table += '\n';
-    
-    // Data rows
-    for (let i = 0; i < numRows; i++) {
-        table += '|';
-        for (let j = 0; j < numCols; j++) {
-            table += ` Cell ${i + 1}-${j + 1} |`;
-        }
-        table += '\n';
-    }
-    table += '\n';
-    
-    // Insert table at cursor position
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    
-    editor.value = editor.value.substring(0, start) + table + editor.value.substring(end);
-    
-    // Set cursor after the table
-    editor.selectionStart = editor.selectionEnd = start + table.length;
-    editor.focus();
-    
-    // Trigger input event
-    editor.dispatchEvent(new Event('input'));
-}
-
-// Markdown insertion helper
-function insertMarkdown(before, after) {
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    const selectedText = editor.value.substring(start, end);
-    const replacement = before + (selectedText || 'text') + after;
-    
-    editor.value = editor.value.substring(0, start) + replacement + editor.value.substring(end);
-    
-    // Set cursor position
-    if (selectedText) {
-        editor.selectionStart = start;
-        editor.selectionEnd = start + replacement.length;
-    } else {
-        editor.selectionStart = start + before.length;
-        editor.selectionEnd = start + before.length + 4; // Select "text"
-    }
-    
-    editor.focus();
-    
-    // Trigger input event
-    editor.dispatchEvent(new Event('input'));
-}
-
-// Update preview
-function updatePreview() {
-    const html = marked.parse(editor.value);
-    const clean = DOMPurify.sanitize(html);
-    preview.innerHTML = clean;
-    
-    // Re-highlight code blocks
-    preview.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block);
-    });
-}
-
-// Toggle preview visibility
-function togglePreview() {
-    isPreviewVisible = !isPreviewVisible;
-    
-    if (isPreviewVisible) {
-        previewPane.classList.remove('hidden');
-        editorPane.classList.remove('full-width');
-    } else {
-        previewPane.classList.add('hidden');
-        editorPane.classList.add('full-width');
-    }
-}
-
-// Update word count
-function updateWordCount() {
-    const text = editor.value;
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    const chars = text.length;
-    wordCount.textContent = `Words: ${words} | Characters: ${chars}`;
-}
-
-// Update status
-function updateStatus(text) {
-    statusText.textContent = text;
-}
-
-// Auto-save function
-function autoSave() {
-    if (isDirty && currentContent) {
-        ipcRenderer.send('save-current-file', currentContent);
-        isDirty = false;
-        updateStatus('Auto-saved');
-        setTimeout(() => updateStatus('Ready'), 2000);
-    }
-}
-
-// IPC event handlers
+// IPC event listeners
 ipcRenderer.on('file-new', () => {
-    if (isDirty) {
-        if (confirm('You have unsaved changes. Do you want to continue?')) {
-            editor.value = '';
-            currentContent = '';
-            isDirty = false;
-            updatePreview();
-            updateWordCount();
-            updateStatus('New file');
-        }
-    } else {
-        editor.value = '';
-        currentContent = '';
-        updatePreview();
-        updateWordCount();
-        updateStatus('New file');
-    }
+    tabManager.createNewTab();
 });
 
-ipcRenderer.on('file-opened', (event, { path, content }) => {
-    editor.value = content;
-    currentContent = content;
-    isDirty = false;
-    updatePreview();
-    updateWordCount();
-    updateStatus(`Opened: ${path}`);
+ipcRenderer.on('file-opened', (event, data) => {
+    tabManager.openFile(data.path, data.content);
 });
 
 ipcRenderer.on('file-save', () => {
-    ipcRenderer.send('save-current-file', editor.value);
-    isDirty = false;
-    updateStatus('Saved');
-});
-
-ipcRenderer.on('get-content-for-save', (event, path) => {
-    ipcRenderer.send('save-file', { path, content: editor.value });
-    isDirty = false;
-    updateStatus(`Saved: ${path}`);
-});
-
-ipcRenderer.on('toggle-preview', () => {
-    togglePreview();
-});
-
-ipcRenderer.on('theme-changed', (event, theme) => {
-    // Remove all theme classes
-    document.body.classList.remove('theme-light', 'theme-dark', 'theme-solarized', 'theme-monokai', 'theme-github');
-    
-    // Add new theme class
-    if (theme !== 'light') {
-        document.body.classList.add(`theme-${theme}`);
+    const currentContent = tabManager.getCurrentContent();
+    const currentFilePath = tabManager.getCurrentFilePath();
+    if (currentFilePath) {
+        ipcRenderer.send('save-current-file', currentContent);
     }
-    
-    updateStatus(`Theme: ${theme}`);
+});
+
+ipcRenderer.on('get-content-for-save', (event, filePath) => {
+    const currentContent = tabManager.getCurrentContent();
+    ipcRenderer.send('save-file', { path: filePath, content: currentContent });
 });
 
 ipcRenderer.on('get-content-for-spreadsheet', (event, format) => {
-    ipcRenderer.send('export-spreadsheet', { content: editor.value, format });
+    const currentContent = tabManager.getCurrentContent();
+    ipcRenderer.send('export-spreadsheet', { content: currentContent, format });
+});
+
+ipcRenderer.on('toggle-preview', () => {
+    tabManager.isPreviewVisible = !tabManager.isPreviewVisible;
+    tabManager.updatePreviewVisibility();
 });
 
 ipcRenderer.on('toggle-find', () => {
-    toggleFindDialog();
-});
-
-// Enhanced editor input handler with undo/redo and auto-indentation
-editor.addEventListener('input', (e) => {
-    // Save state for undo
-    if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') {
-        pushUndo();
-    }
-    
-    updateLineNumbers();
-});
-
-// Push current state to undo stack
-function pushUndo() {
-    if (undoStack.length >= maxUndoSize) {
-        undoStack.shift();
-    }
-    undoStack.push({
-        content: currentContent,
-        selectionStart: editor.selectionStart,
-        selectionEnd: editor.selectionEnd
-    });
-    redoStack = []; // Clear redo stack when new changes are made
-}
-
-// Undo function
-function undo() {
-    if (undoStack.length > 1) {
-        redoStack.push(undoStack.pop());
-        const state = undoStack[undoStack.length - 1];
-        editor.value = state.content;
-        editor.selectionStart = state.selectionStart;
-        editor.selectionEnd = state.selectionEnd;
-        currentContent = state.content;
-        updatePreview();
-        updateWordCount();
-        updateLineNumbers();
-    }
-}
-
-// Redo function
-function redo() {
-    if (redoStack.length > 0) {
-        const state = redoStack.pop();
-        undoStack.push(state);
-        editor.value = state.content;
-        editor.selectionStart = state.selectionStart;
-        editor.selectionEnd = state.selectionEnd;
-        currentContent = state.content;
-        updatePreview();
-        updateWordCount();
-        updateLineNumbers();
-    }
-}
-
-// Find & Replace functionality
-function toggleFindDialog() {
+    const findDialog = document.getElementById('find-dialog');
     if (findDialog.classList.contains('hidden')) {
         findDialog.classList.remove('hidden');
-        findInput.focus();
-        if (editor.selectionStart !== editor.selectionEnd) {
-            findInput.value = editor.value.substring(editor.selectionStart, editor.selectionEnd);
-            performFind();
-        }
+        document.getElementById('find-input').focus();
     } else {
-        closeFindDialog();
-    }
-}
-
-function closeFindDialog() {
-    findDialog.classList.add('hidden');
-    clearHighlights();
-    editor.focus();
-}
-
-function performFind() {
-    const searchText = findInput.value;
-    clearHighlights();
-    findMatches = [];
-    currentMatchIndex = -1;
-    
-    if (!searchText) {
-        findCount.textContent = '0 matches';
-        return;
-    }
-    
-    const content = editor.value;
-    let index = 0;
-    while ((index = content.indexOf(searchText, index)) !== -1) {
-        findMatches.push(index);
-        index += searchText.length;
-    }
-    
-    findCount.textContent = `${findMatches.length} matches`;
-    
-    if (findMatches.length > 0) {
-        currentMatchIndex = 0;
-        highlightMatch();
-    }
-}
-
-function findNext() {
-    if (findMatches.length === 0) return;
-    currentMatchIndex = (currentMatchIndex + 1) % findMatches.length;
-    highlightMatch();
-}
-
-function findPrev() {
-    if (findMatches.length === 0) return;
-    currentMatchIndex = currentMatchIndex === 0 ? findMatches.length - 1 : currentMatchIndex - 1;
-    highlightMatch();
-}
-
-function highlightMatch() {
-    if (currentMatchIndex === -1 || !findMatches[currentMatchIndex]) return;
-    
-    const matchStart = findMatches[currentMatchIndex];
-    const matchEnd = matchStart + findInput.value.length;
-    
-    editor.selectionStart = matchStart;
-    editor.selectionEnd = matchEnd;
-    editor.focus();
-    
-    // Scroll to match
-    const lineHeight = 20; // Approximate line height
-    const lineNumber = editor.value.substring(0, matchStart).split('\n').length;
-    editor.scrollTop = Math.max(0, (lineNumber - 10) * lineHeight);
-}
-
-function replaceOne() {
-    if (currentMatchIndex === -1 || !findMatches[currentMatchIndex]) return;
-    
-    const searchText = findInput.value;
-    const replaceText = replaceInput.value;
-    const matchStart = findMatches[currentMatchIndex];
-    const matchEnd = matchStart + searchText.length;
-    
-    editor.value = editor.value.substring(0, matchStart) + 
-                   replaceText + 
-                   editor.value.substring(matchEnd);
-    
-    editor.selectionStart = matchStart;
-    editor.selectionEnd = matchStart + replaceText.length;
-    
-    // Trigger input event
-    editor.dispatchEvent(new Event('input'));
-    
-    // Refresh find
-    setTimeout(() => performFind(), 10);
-}
-
-function replaceAll() {
-    const searchText = findInput.value;
-    const replaceText = replaceInput.value;
-    
-    if (!searchText) return;
-    
-    let content = editor.value;
-    let replacements = 0;
-    
-    while (content.includes(searchText)) {
-        content = content.replace(searchText, replaceText);
-        replacements++;
-    }
-    
-    if (replacements > 0) {
-        editor.value = content;
-        editor.dispatchEvent(new Event('input'));
-        updateStatus(`Replaced ${replacements} occurrences`);
-        performFind();
-    }
-}
-
-function clearHighlights() {
-    // Clear any highlights (in a real implementation, you'd remove highlight spans)
-}
-
-// Line Numbers functionality
-function toggleLineNumbers() {
-    showLineNumbers = !showLineNumbers;
-    if (showLineNumbers) {
-        lineNumbers.classList.remove('hidden');
-        updateLineNumbers();
-    } else {
-        lineNumbers.classList.add('hidden');
-    }
-}
-
-function updateLineNumbers() {
-    if (!showLineNumbers) return;
-    
-    const lines = editor.value.split('\n');
-    const lineNumbersHtml = lines.map((_, index) => 
-        `<span class="line-number">${index + 1}</span>`
-    ).join('');
-    lineNumbers.innerHTML = lineNumbersHtml;
-    
-    // Sync scroll
-    lineNumbers.scrollTop = editor.scrollTop;
-}
-
-// Sync line numbers scroll with editor
-editor.addEventListener('scroll', () => {
-    if (showLineNumbers) {
-        lineNumbers.scrollTop = editor.scrollTop;
+        findDialog.classList.add('hidden');
     }
 });
 
-// Auto-indentation for lists
-function handleEnterKey(e) {
-    const cursorPos = editor.selectionStart;
-    const beforeCursor = editor.value.substring(0, cursorPos);
-    const lines = beforeCursor.split('\n');
-    const currentLine = lines[lines.length - 1];
-    
-    // Check for list patterns
-    const listMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s/);
-    if (listMatch) {
-        e.preventDefault();
-        const indent = listMatch[1];
-        const marker = listMatch[2];
-        
-        // If current line is just the marker, remove it
-        if (currentLine.trim() === marker) {
-            const lineStart = beforeCursor.lastIndexOf('\n') + 1;
-            editor.value = editor.value.substring(0, lineStart) + 
-                          editor.value.substring(cursorPos);
-            editor.selectionStart = editor.selectionEnd = lineStart;
-        } else {
-            // Continue the list
-            let newMarker = marker;
-            if (/^\d+\./.test(marker)) {
-                const num = parseInt(marker) + 1;
-                newMarker = num + '.';
-            }
-            const insertion = '\n' + indent + newMarker + ' ';
-            editor.value = editor.value.substring(0, cursorPos) + 
-                          insertion + 
-                          editor.value.substring(cursorPos);
-            editor.selectionStart = editor.selectionEnd = cursorPos + insertion.length;
-        }
-        
-        editor.dispatchEvent(new Event('input'));
-    }
-}
-
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    // Ctrl/Cmd + F for find
-    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault();
-        toggleFindDialog();
-    }
-    
-    // Ctrl/Cmd + Z for undo
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-    }
-    
-    // Ctrl/Cmd + Shift + Z for redo
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
-        e.preventDefault();
-        redo();
-    }
-    
-    // Ctrl/Cmd + Enter to toggle preview
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        togglePreview();
-    }
-    
-    // Enhanced Tab handling in editor
-    if (e.key === 'Tab' && e.target === editor) {
-        e.preventDefault();
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-        
-        if (start === end) {
-            // Simple tab insertion
-            editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
-            editor.selectionStart = editor.selectionEnd = start + 4;
-        } else {
-            // Indent/outdent selected lines
-            const beforeSelection = editor.value.substring(0, start);
-            const selection = editor.value.substring(start, end);
-            const afterSelection = editor.value.substring(end);
-            
-            const lines = selection.split('\n');
-            const indentedLines = e.shiftKey ? 
-                lines.map(line => line.replace(/^    /, '')) : // Outdent
-                lines.map(line => '    ' + line); // Indent
-            
-            const newSelection = indentedLines.join('\n');
-            editor.value = beforeSelection + newSelection + afterSelection;
-            
-            editor.selectionStart = start;
-            editor.selectionEnd = start + newSelection.length;
-        }
-        
-        editor.dispatchEvent(new Event('input'));
-    }
-    
-    // Enter key handling for auto-indentation
-    if (e.key === 'Enter' && e.target === editor) {
-        handleEnterKey(e);
-    }
-    
-    // Escape to close find dialog
-    if (e.key === 'Escape' && !findDialog.classList.contains('hidden')) {
-        closeFindDialog();
-    }
-});
-
-// Prevent accidental navigation
-window.addEventListener('beforeunload', (e) => {
-    if (isDirty) {
-        e.preventDefault();
-        e.returnValue = '';
-    }
+ipcRenderer.on('theme-changed', (event, theme) => {
+    document.body.className = `theme-${theme}`;
 });

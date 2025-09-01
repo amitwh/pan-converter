@@ -28,7 +28,7 @@ const store = {
 };
 
 let mainWindow;
-let currentFile = null;
+let currentFile = null; // This will now represent the active tab's file
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -48,6 +48,14 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  // Handle pending file from file association
+  if (app.pendingFile) {
+    mainWindow.webContents.once('dom-ready', () => {
+      openFileFromPath(app.pendingFile);
+      app.pendingFile = null;
+    });
+  }
 }
 
 function createMenu() {
@@ -76,6 +84,11 @@ function createMenu() {
           click: saveAsFile
         },
         { type: 'separator' },
+        {
+          label: 'Import Document...',
+          accelerator: 'CmdOrCtrl+I',
+          click: importDocument
+        },
         {
           label: 'Export',
           submenu: [
@@ -122,32 +135,6 @@ function createMenu() {
       ]
     },
     {
-      label: 'Convert',
-      submenu: [
-        {
-          label: 'Import Document...',
-          accelerator: 'CmdOrCtrl+I',
-          click: importDocument
-        },
-        { type: 'separator' },
-        {
-          label: 'Convert Current File',
-          submenu: [
-            { label: 'To Markdown', click: () => convertToFormat('md') },
-            { label: 'To HTML', click: () => convertToFormat('html') },
-            { label: 'To PDF', click: () => convertToFormat('pdf') },
-            { label: 'To DOCX', click: () => convertToFormat('docx') },
-            { label: 'To LaTeX', click: () => convertToFormat('latex') },
-            { label: 'To RTF', click: () => convertToFormat('rtf') },
-            { label: 'To ODT', click: () => convertToFormat('odt') },
-            { label: 'To EPUB', click: () => convertToFormat('epub') },
-            { label: 'To PPTX', click: () => convertToFormat('pptx') },
-            { label: 'To ODP', click: () => convertToFormat('odp') }
-          ]
-        }
-      ]
-    },
-    {
       label: 'View',
       submenu: [
         {
@@ -184,7 +171,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.2.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Advanced markdown editing with live preview\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.3.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
               buttons: ['OK']
             });
           }
@@ -246,21 +233,60 @@ function exportFile(format) {
   });
 
   if (outputFile) {
-    const pandocCmd = `pandoc "${currentFile}" -o "${outputFile}"`;
+    let pandocCmd = `pandoc "${currentFile}" -o "${outputFile}"`;
     
-    exec(pandocCmd, (error, stdout, stderr) => {
-      if (error) {
-        dialog.showErrorBox('Export Error', `Failed to export: ${error.message}\n\nMake sure Pandoc is installed.`);
-      } else {
-        dialog.showMessageBox(mainWindow, {
-          type: 'info',
-          title: 'Export Complete',
-          message: `File exported successfully to ${outputFile}`,
-          buttons: ['OK']
-        });
-      }
-    });
+    // Add specific options for PDF export to ensure proper generation
+    if (format === 'pdf') {
+      pandocCmd = `pandoc "${currentFile}" --pdf-engine=xelatex -V geometry:margin=1in -o "${outputFile}"`;
+      // Try with different PDF engines if xelatex fails
+      exec(pandocCmd, (error, stdout, stderr) => {
+        if (error) {
+          // Fallback to pdflatex
+          const fallbackCmd = `pandoc "${currentFile}" --pdf-engine=pdflatex -V geometry:margin=1in -o "${outputFile}"`;
+          exec(fallbackCmd, (fallbackError, fallbackStdout, fallbackStderr) => {
+            if (fallbackError) {
+              // Final fallback to wkhtmltopdf
+              const htmlToPdfCmd = `pandoc "${currentFile}" -t html5 | wkhtmltopdf - "${outputFile}"`;
+              exec(htmlToPdfCmd, (finalError) => {
+                if (finalError) {
+                  dialog.showErrorBox('PDF Export Error', 
+                    `Failed to export PDF. Please ensure you have one of the following installed:\n` +
+                    `• XeLaTeX (recommended): sudo apt-get install texlive-xetex\n` +
+                    `• PDFLaTeX: sudo apt-get install texlive-latex-base\n` +
+                    `• wkhtmltopdf: sudo apt-get install wkhtmltopdf\n\n` +
+                    `Error: ${finalError.message}`
+                  );
+                } else {
+                  showExportSuccess(outputFile);
+                }
+              });
+            } else {
+              showExportSuccess(outputFile);
+            }
+          });
+        } else {
+          showExportSuccess(outputFile);
+        }
+      });
+    } else {
+      exec(pandocCmd, (error, stdout, stderr) => {
+        if (error) {
+          dialog.showErrorBox('Export Error', `Failed to export: ${error.message}\n\nMake sure Pandoc is installed.`);
+        } else {
+          showExportSuccess(outputFile);
+        }
+      });
+    }
   }
+}
+
+function showExportSuccess(outputFile) {
+  dialog.showMessageBox(mainWindow, {
+    type: 'info',
+    title: 'Export Complete',
+    message: `File exported successfully to ${outputFile}`,
+    buttons: ['OK']
+  });
 }
 
 function exportSpreadsheet(format) {
@@ -310,40 +336,6 @@ function importDocument() {
   }
 }
 
-function convertToFormat(format) {
-  if (!currentFile) {
-    dialog.showErrorBox('Error', 'Please save or open a file first');
-    return;
-  }
-
-  const outputFile = dialog.showSaveDialogSync(mainWindow, {
-    defaultPath: currentFile.replace(/\.[^/.]+$/, `.${format}`),
-    filters: [
-      { name: format.toUpperCase(), extensions: [format] }
-    ]
-  });
-
-  if (outputFile) {
-    // For presentations, add slide level for better conversion
-    let pandocCmd = `pandoc "${currentFile}" -o "${outputFile}"`;
-    if (format === 'pptx' || format === 'odp') {
-      pandocCmd = `pandoc "${currentFile}" --slide-level=2 -o "${outputFile}"`;
-    }
-    
-    exec(pandocCmd, (error, stdout, stderr) => {
-      if (error) {
-        dialog.showErrorBox('Conversion Error', `Failed to convert: ${error.message}\n\nMake sure Pandoc is installed.`);
-      } else {
-        dialog.showMessageBox(mainWindow, {
-          type: 'info',
-          title: 'Conversion Complete',
-          message: `File converted successfully to ${outputFile}`,
-          buttons: ['OK']
-        });
-      }
-    });
-  }
-}
 
 function setTheme(theme) {
   store.set('theme', theme);
@@ -367,6 +359,11 @@ ipcMain.on('save-current-file', (event, content) => {
 ipcMain.on('get-theme', (event) => {
   const theme = store.get('theme', 'light');
   event.reply('theme-changed', theme);
+});
+
+// Handle tab file tracking for exports
+ipcMain.on('set-current-file', (event, filePath) => {
+  currentFile = filePath;
 });
 
 ipcMain.on('export-spreadsheet', (event, { content, format }) => {
@@ -452,7 +449,17 @@ function extractTablesFromMarkdown(markdown) {
   return tables;
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  
+  // Handle file association on app startup
+  if (process.argv.length > 1) {
+    const filePath = process.argv.find(arg => arg.endsWith('.md') || arg.endsWith('.markdown'));
+    if (filePath && fs.existsSync(filePath)) {
+      openFileFromPath(filePath);
+    }
+  }
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -465,3 +472,25 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+// Handle file opening on macOS
+app.on('open-file', (event, filePath) => {
+  event.preventDefault();
+  if (mainWindow) {
+    openFileFromPath(filePath);
+  } else {
+    // Store the file path to open after window is created
+    app.pendingFile = filePath;
+  }
+});
+
+// Handle file opening from command line or file association
+function openFileFromPath(filePath) {
+  if (fs.existsSync(filePath)) {
+    currentFile = filePath;
+    const content = fs.readFileSync(filePath, 'utf-8');
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.send('file-opened', { path: filePath, content });
+    }
+  }
+}

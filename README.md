@@ -40,9 +40,9 @@ A cross-platform Markdown editor and converter powered by Pandoc.
 Download the latest release for your platform from the [Releases](https://github.com/amitwh/pan-converter/releases) page.
 
 #### Linux
-- **AppImage**: `PanConverter-1.2.0.AppImage` (universal, may require `--no-sandbox` flag)
-- **Debian Package**: `pan-converter_1.2.0_amd64.deb`
-- **Snap Package**: `pan-converter_1.2.0_amd64.snap`
+- **AppImage**: `PanConverter-1.2.1.AppImage` (universal, may require `--no-sandbox` flag)
+- **Debian Package**: `pan-converter_1.2.1_amd64.deb`
+- **Snap Package**: `pan-converter_1.2.1_amd64.snap`
 
 ### Install from Source
 ```bash
@@ -120,7 +120,7 @@ npm run dist:all
 
 ## Version History
 
-- **v1.2.0** - Major editor enhancements: Find & Replace, Line Numbers, Undo/Redo, Auto-indentation, PowerPoint export, document conversion menu, table creation helper, spreadsheet export
+- **v1.2.1** - Comprehensive editor enhancements: Find & Replace, Line Numbers, Undo/Redo, Auto-indentation, PowerPoint export, document conversion menu, table creation helper, spreadsheet export
 - **v1.1.0** - Added Excel/ODS spreadsheet export, updated author information, renamed to PanConverter
 - **v1.0.0** - Initial release with basic markdown editing, themes, and Pandoc export
 
