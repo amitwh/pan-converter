@@ -171,7 +171,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.3.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.3.1\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• File association support for .md files\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
               buttons: ['OK']
             });
           }
@@ -453,10 +453,13 @@ app.whenReady().then(() => {
   createWindow();
   
   // Handle file association on app startup
-  if (process.argv.length > 1) {
-    const filePath = process.argv.find(arg => arg.endsWith('.md') || arg.endsWith('.markdown'));
-    if (filePath && fs.existsSync(filePath)) {
-      openFileFromPath(filePath);
+  // Process all command line arguments except the first two (node and script path)
+  const fileArgs = process.argv.slice(2);
+  for (const arg of fileArgs) {
+    if ((arg.endsWith('.md') || arg.endsWith('.markdown')) && fs.existsSync(arg)) {
+      // Store the file to open after window is ready
+      app.pendingFile = arg;
+      break;
     }
   }
 });
