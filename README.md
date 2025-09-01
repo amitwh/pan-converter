@@ -6,15 +6,27 @@ A cross-platform Markdown editor and converter powered by Pandoc.
 
 ## Features
 
-- 📝 **Rich Markdown Editor** - Full-featured editor with syntax highlighting and toolbar
-- 👁️ **Live Preview** - See your markdown rendered in real-time
+### ✨ Advanced Markdown Editor
+- 📝 **Rich Text Editor** - Full-featured editor with syntax highlighting and comprehensive toolbar
+- 🔍 **Find & Replace** - Powerful search and replace with match highlighting and navigation
+- 🔢 **Line Numbers** - Toggle line numbers for easier code editing and navigation
+- ↩️ **Smart Auto-Indentation** - Automatic list continuation and intelligent indentation
+- ⏪ **Undo/Redo** - Full undo/redo support with keyboard shortcuts
+- ⌨️ **Advanced Shortcuts** - Tab indentation, line selection, and smart text formatting
+
+### 🎨 Themes & Interface
+- 👁️ **Live Preview** - See your markdown rendered in real-time with synchronized scrolling
 - 🎨 **Multiple Themes** - Choose from Light, Dark, Solarized, Monokai, or GitHub themes
-- 📤 **Document Export** - Convert to HTML, PDF, DOCX, LaTeX, RTF, ODT, EPUB, PowerPoint (PPTX), and OpenDocument Presentation (ODP)
+- 💾 **Auto-Save** - Never lose your work with automatic saving every 30 seconds
+
+### 📤 Export & Conversion
+- 📄 **Document Export** - Convert to HTML, PDF, DOCX, LaTeX, RTF, ODT, EPUB, PowerPoint (PPTX), and OpenDocument Presentation (ODP)
 - 📊 **Spreadsheet Export** - Export markdown tables to Excel (XLSX/XLS) and OpenDocument Spreadsheet (ODS) formats
 - 📥 **Document Import & Conversion** - Import various document formats and convert between formats via Pandoc
 - 📋 **Table Creation Helper** - Built-in table generator for easy markdown table creation
-- 💾 **Auto-Save** - Never lose your work with automatic saving every 30 seconds
-- 🖥️ **Cross-Platform** - Works on Windows, macOS, and Linux
+
+### 🖥️ Platform Support
+- **Cross-Platform** - Works seamlessly on Windows, macOS, and Linux
 
 ## Installation
 
@@ -65,14 +77,25 @@ npm start
 
 ## Keyboard Shortcuts
 
+### File Operations
 - `Ctrl/Cmd + N` - New file
 - `Ctrl/Cmd + O` - Open file
 - `Ctrl/Cmd + S` - Save file
 - `Ctrl/Cmd + Shift + S` - Save as
 - `Ctrl/Cmd + I` - Import document
+
+### Editor Features
+- `Ctrl/Cmd + F` - Find & Replace
+- `Ctrl/Cmd + Z` - Undo
+- `Ctrl/Cmd + Shift + Z` - Redo
+- `Tab` - Indent lines or insert 4 spaces
+- `Shift + Tab` - Outdent selected lines
+- `Enter` - Auto-continue lists with proper indentation
+
+### View & Navigation
 - `Ctrl/Cmd + P` - Toggle preview
 - `Ctrl/Cmd + Enter` - Toggle preview (alternative)
-- `Tab` - Insert 4 spaces (in editor)
+- `Escape` - Close find dialog
 
 ## Building
 
@@ -97,7 +120,7 @@ npm run dist:all
 
 ## Version History
 
-- **v1.2.0** - Added PowerPoint export, document conversion menu, table creation helper, spreadsheet export
+- **v1.2.0** - Major editor enhancements: Find & Replace, Line Numbers, Undo/Redo, Auto-indentation, PowerPoint export, document conversion menu, table creation helper, spreadsheet export
 - **v1.1.0** - Added Excel/ODS spreadsheet export, updated author information, renamed to PanConverter
 - **v1.0.0** - Initial release with basic markdown editing, themes, and Pandoc export
 

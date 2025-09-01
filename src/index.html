@@ -69,6 +69,20 @@
                 </svg>
             </button>
             <div class="toolbar-separator"></div>
+            <button id="btn-find" title="Find & Replace (Ctrl+F)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </button>
+            <button id="btn-line-numbers" title="Toggle Line Numbers">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18"></path>
+                    <path d="M3 12h18"></path>
+                    <path d="M3 18h18"></path>
+                </svg>
+            </button>
+            <div class="toolbar-separator"></div>
             <button id="btn-preview-toggle" title="Toggle Preview">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -77,9 +91,28 @@
             </button>
         </div>
         
+        <!-- Find & Replace Dialog -->
+        <div id="find-dialog" class="find-dialog hidden">
+            <div class="find-controls">
+                <input type="text" id="find-input" placeholder="Find...">
+                <input type="text" id="replace-input" placeholder="Replace...">
+                <button id="btn-find-prev" title="Previous">↑</button>
+                <button id="btn-find-next" title="Next">↓</button>
+                <button id="btn-replace" title="Replace">Replace</button>
+                <button id="btn-replace-all" title="Replace All">All</button>
+                <button id="btn-find-close" title="Close">×</button>
+            </div>
+            <div class="find-info">
+                <span id="find-count">0 matches</span>
+            </div>
+        </div>
+        
         <div class="editor-container">
             <div id="editor-pane" class="pane">
-                <textarea id="editor"></textarea>
+                <div class="editor-wrapper">
+                    <div id="line-numbers" class="line-numbers hidden"></div>
+                    <textarea id="editor"></textarea>
+                </div>
             </div>
             <div id="preview-pane" class="pane">
                 <div id="preview"></div>
