@@ -2,9 +2,29 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
-const Store = require('electron-store');
 
-const store = new Store();
+// Simple storage implementation to replace electron-store
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+const store = {
+  get: (key, defaultValue) => {
+    try {
+      const data = fs.readFileSync(settingsPath, 'utf-8');
+      const settings = JSON.parse(data);
+      return settings[key] || defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  },
+  set: (key, value) => {
+    let settings = {};
+    try {
+      const data = fs.readFileSync(settingsPath, 'utf-8');
+      settings = JSON.parse(data);
+    } catch {}
+    settings[key] = value;
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  }
+};
 
 let mainWindow;
 let currentFile = null;
