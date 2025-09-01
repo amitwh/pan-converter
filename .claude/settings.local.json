@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "Bash(rmdir:*)",
+      "Bash(powershell:*)",
+      "Bash(npx electron-builder:*)",
+      "Bash(dir dist)",
+      "Bash(git tag:*)",
+      "Bash(git push:*)",
+      "Bash(gh release create:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh release delete:*)",
+      "Bash(gh release list:*)",
+      "Bash(gh release upload:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

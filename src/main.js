@@ -192,7 +192,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.3.4\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• File association support for .md files\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.3.6\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
               buttons: ['OK']
             });
           }
@@ -268,15 +268,126 @@ function exportFile(format) {
             if (fallbackError) {
               // Final fallback to wkhtmltopdf
               const htmlToPdfCmd = `pandoc "${currentFile}" -t html5 | wkhtmltopdf - "${outputFile}"`;
-              exec(htmlToPdfCmd, (finalError) => {
+              exec(htmlToPdfCmd, async (finalError) => {
                 if (finalError) {
-                  dialog.showErrorBox('PDF Export Error', 
-                    `Failed to export PDF. Please ensure you have one of the following installed:\n` +
-                    `• XeLaTeX (recommended): sudo apt-get install texlive-xetex\n` +
-                    `• PDFLaTeX: sudo apt-get install texlive-latex-base\n` +
-                    `• wkhtmltopdf: sudo apt-get install wkhtmltopdf\n\n` +
-                    `Error: ${finalError.message}`
-                  );
+                  // Ultimate fallback: Use Electron's built-in PDF export
+                  try {
+                    const marked = require('marked');
+                    const fs = require('fs');
+                    
+                    // Read markdown file
+                    const markdownContent = fs.readFileSync(currentFile, 'utf8');
+                    
+                    // Convert markdown to HTML
+                    const htmlContent = marked.parse(markdownContent);
+                    
+                    // Create full HTML document with styling
+                    const fullHtml = `
+                      <!DOCTYPE html>
+                      <html>
+                      <head>
+                        <meta charset="UTF-8">
+                        <style>
+                          body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                            line-height: 1.6;
+                            color: #333;
+                            max-width: 800px;
+                            margin: 0 auto;
+                            padding: 40px;
+                          }
+                          h1, h2, h3, h4, h5, h6 {
+                            margin-top: 1.5em;
+                            margin-bottom: 0.5em;
+                          }
+                          code {
+                            background: #f4f4f4;
+                            padding: 2px 4px;
+                            border-radius: 3px;
+                            font-family: Consolas, Monaco, 'Courier New', monospace;
+                          }
+                          pre {
+                            background: #f4f4f4;
+                            padding: 1em;
+                            border-radius: 5px;
+                            overflow-x: auto;
+                          }
+                          pre code {
+                            background: transparent;
+                            padding: 0;
+                          }
+                          blockquote {
+                            border-left: 4px solid #ddd;
+                            margin-left: 0;
+                            padding-left: 1em;
+                            color: #666;
+                          }
+                          table {
+                            border-collapse: collapse;
+                            width: 100%;
+                            margin: 1em 0;
+                          }
+                          th, td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                          }
+                          th {
+                            background-color: #f4f4f4;
+                          }
+                          a {
+                            color: #0066cc;
+                            text-decoration: none;
+                          }
+                          a:hover {
+                            text-decoration: underline;
+                          }
+                          img {
+                            max-width: 100%;
+                            height: auto;
+                          }
+                        </style>
+                      </head>
+                      <body>
+                        ${htmlContent}
+                      </body>
+                      </html>
+                    `;
+                    
+                    // Create a hidden window to render and export PDF
+                    const { BrowserWindow } = require('electron');
+                    const pdfWindow = new BrowserWindow({
+                      show: false,
+                      webPreferences: {
+                        nodeIntegration: true,
+                        contextIsolation: false
+                      }
+                    });
+                    
+                    await pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(fullHtml)}`);
+                    
+                    const pdfData = await pdfWindow.webContents.printToPDF({
+                      marginsType: 1, // Use default margins
+                      pageSize: 'A4',
+                      printBackground: true,
+                      printSelectionOnly: false,
+                      landscape: false
+                    });
+                    
+                    fs.writeFileSync(outputFile, pdfData);
+                    pdfWindow.close();
+                    
+                    showExportSuccess(outputFile);
+                  } catch (electronPdfError) {
+                    dialog.showErrorBox('PDF Export Error', 
+                      `Failed to export PDF. The built-in PDF export encountered an error.\n\n` +
+                      `For better PDF export, please install one of the following:\n` +
+                      `• XeLaTeX (recommended)\n` +
+                      `• PDFLaTeX\n` +
+                      `• wkhtmltopdf\n\n` +
+                      `Error: ${electronPdfError.message}`
+                    );
+                  }
                 } else {
                   showExportSuccess(outputFile);
                 }
