@@ -172,13 +172,16 @@ body {
 }
 
 .pane:last-child {
-    padding: 20px;
+    padding: 0;
     background: #fff;
 }
 
 .preview-content {
-    max-width: 800px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
+    padding: 20px 24px 24px 24px;
+    line-height: 1.6;
+    font-size: 14px;
 }
 
 /* Legacy support for old selectors */
@@ -220,31 +223,33 @@ body {
 }
 
 /* Preview Styles */
-#preview h1, #preview h2, #preview h3, #preview h4, #preview h5, #preview h6 {
+#preview h1, #preview h2, #preview h3, #preview h4, #preview h5, #preview h6,
+.preview-content h1, .preview-content h2, .preview-content h3, .preview-content h4, .preview-content h5, .preview-content h6 {
     margin-top: 24px;
     margin-bottom: 16px;
     font-weight: 600;
     line-height: 1.25;
 }
 
-#preview h1 {
+#preview h1, .preview-content h1 {
     font-size: 2em;
     border-bottom: 1px solid #eaecef;
     padding-bottom: 0.3em;
+    margin-top: 0;
 }
 
-#preview h2 {
+#preview h2, .preview-content h2 {
     font-size: 1.5em;
     border-bottom: 1px solid #eaecef;
     padding-bottom: 0.3em;
 }
 
-#preview p {
+#preview p, .preview-content p {
     margin-bottom: 16px;
     line-height: 1.6;
 }
 
-#preview code {
+#preview code, .preview-content code {
     padding: 0.2em 0.4em;
     margin: 0;
     font-size: 85%;
@@ -253,7 +258,7 @@ body {
     font-family: 'SF Mono', Monaco, 'Courier New', monospace;
 }
 
-#preview pre {
+#preview pre, .preview-content pre {
     padding: 16px;
     overflow: auto;
     font-size: 85%;
@@ -263,7 +268,7 @@ body {
     margin-bottom: 16px;
 }
 
-#preview pre code {
+#preview pre code, .preview-content pre code {
     display: inline;
     max-width: auto;
     padding: 0;
@@ -275,54 +280,54 @@ body {
     border: 0;
 }
 
-#preview blockquote {
+#preview blockquote, .preview-content blockquote {
     padding: 0 1em;
     color: #6a737d;
     border-left: 0.25em solid #dfe2e5;
     margin-bottom: 16px;
 }
 
-#preview ul, #preview ol {
+#preview ul, #preview ol, .preview-content ul, .preview-content ol {
     padding-left: 2em;
     margin-bottom: 16px;
 }
 
-#preview li {
+#preview li, .preview-content li {
     margin-bottom: 4px;
 }
 
-#preview a {
+#preview a, .preview-content a {
     color: #0366d6;
     text-decoration: none;
 }
 
-#preview a:hover {
+#preview a:hover, .preview-content a:hover {
     text-decoration: underline;
 }
 
-#preview img {
+#preview img, .preview-content img {
     max-width: 100%;
     height: auto;
 }
 
-#preview table {
+#preview table, .preview-content table {
     border-collapse: collapse;
     margin-bottom: 16px;
     width: 100%;
 }
 
-#preview table th,
-#preview table td {
+#preview table th, #preview table td,
+.preview-content table th, .preview-content table td {
     padding: 6px 13px;
     border: 1px solid #dfe2e5;
 }
 
-#preview table th {
+#preview table th, .preview-content table th {
     font-weight: 600;
     background-color: #f6f8fa;
 }
 
-#preview table tr:nth-child(2n) {
+#preview table tr:nth-child(2n), .preview-content table tr:nth-child(2n) {
     background-color: #f6f8fa;
 }
 
@@ -394,7 +399,7 @@ body.theme-dark .editor-textarea {
 }
 
 body.theme-dark .pane:last-child {
-    background: #252526;
+    background: #1e1e1e;
 }
 
 /* Legacy support */
@@ -411,42 +416,42 @@ body.theme-dark #preview-pane {
     background: #252526;
 }
 
-body.theme-dark #preview {
+body.theme-dark #preview, body.theme-dark .preview-content {
     color: #d4d4d4;
 }
 
-body.theme-dark #preview h1,
-body.theme-dark #preview h2 {
+body.theme-dark #preview h1, body.theme-dark #preview h2,
+body.theme-dark .preview-content h1, body.theme-dark .preview-content h2 {
     border-bottom-color: #3e3e42;
 }
 
-body.theme-dark #preview code {
+body.theme-dark #preview code, body.theme-dark .preview-content code {
     background-color: rgba(255,255,255,0.1);
 }
 
-body.theme-dark #preview pre {
+body.theme-dark #preview pre, body.theme-dark .preview-content pre {
     background-color: #2d2d30;
 }
 
-body.theme-dark #preview blockquote {
+body.theme-dark #preview blockquote, body.theme-dark .preview-content blockquote {
     color: #808080;
     border-left-color: #3e3e42;
 }
 
-body.theme-dark #preview a {
+body.theme-dark #preview a, body.theme-dark .preview-content a {
     color: #569cd6;
 }
 
-body.theme-dark #preview table th,
-body.theme-dark #preview table td {
+body.theme-dark #preview table th, body.theme-dark #preview table td,
+body.theme-dark .preview-content table th, body.theme-dark .preview-content table td {
     border-color: #3e3e42;
 }
 
-body.theme-dark #preview table th {
+body.theme-dark #preview table th, body.theme-dark .preview-content table th {
     background-color: #2d2d30;
 }
 
-body.theme-dark #preview table tr:nth-child(2n) {
+body.theme-dark #preview table tr:nth-child(2n), body.theme-dark .preview-content table tr:nth-child(2n) {
     background-color: #2d2d30;
 }
 
@@ -481,19 +486,19 @@ body.theme-solarized #editor {
     color: #657b83;
 }
 
-body.theme-solarized #preview {
+body.theme-solarized #preview, body.theme-solarized .preview-content {
     color: #586e75;
 }
 
-body.theme-solarized #preview code {
+body.theme-solarized #preview code, body.theme-solarized .preview-content code {
     background-color: #eee8d5;
 }
 
-body.theme-solarized #preview pre {
+body.theme-solarized #preview pre, body.theme-solarized .preview-content pre {
     background-color: #eee8d5;
 }
 
-body.theme-solarized #preview a {
+body.theme-solarized #preview a, body.theme-solarized .preview-content a {
     color: #268bd2;
 }
 
@@ -526,29 +531,29 @@ body.theme-monokai #preview-pane {
     background: #272822;
 }
 
-body.theme-monokai #preview {
+body.theme-monokai #preview, body.theme-monokai .preview-content {
     color: #f8f8f2;
 }
 
-body.theme-monokai #preview h1,
-body.theme-monokai #preview h2 {
+body.theme-monokai #preview h1, body.theme-monokai #preview h2,
+body.theme-monokai .preview-content h1, body.theme-monokai .preview-content h2 {
     border-bottom-color: #75715e;
 }
 
-body.theme-monokai #preview code {
+body.theme-monokai #preview code, body.theme-monokai .preview-content code {
     background-color: #3e3d32;
 }
 
-body.theme-monokai #preview pre {
+body.theme-monokai #preview pre, body.theme-monokai .preview-content pre {
     background-color: #3e3d32;
 }
 
-body.theme-monokai #preview blockquote {
+body.theme-monokai #preview blockquote, body.theme-monokai .preview-content blockquote {
     color: #75715e;
     border-left-color: #75715e;
 }
 
-body.theme-monokai #preview a {
+body.theme-monokai #preview a, body.theme-monokai .preview-content a {
     color: #66d9ef;
 }
 
@@ -583,29 +588,29 @@ body.theme-github #editor {
     color: #24292e;
 }
 
-body.theme-github #preview {
+body.theme-github #preview, body.theme-github .preview-content {
     color: #24292e;
 }
 
-body.theme-github #preview h1,
-body.theme-github #preview h2 {
+body.theme-github #preview h1, body.theme-github #preview h2,
+body.theme-github .preview-content h1, body.theme-github .preview-content h2 {
     border-bottom-color: #eaecef;
 }
 
-body.theme-github #preview code {
+body.theme-github #preview code, body.theme-github .preview-content code {
     background-color: rgba(27,31,35,0.05);
 }
 
-body.theme-github #preview pre {
+body.theme-github #preview pre, body.theme-github .preview-content pre {
     background-color: #f6f8fa;
 }
 
-body.theme-github #preview blockquote {
+body.theme-github #preview blockquote, body.theme-github .preview-content blockquote {
     color: #6a737d;
     border-left-color: #dfe2e5;
 }
 
-body.theme-github #preview a {
+body.theme-github #preview a, body.theme-github .preview-content a {
     color: #0366d6;
 }
 

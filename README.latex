@@ -1,0 +1,378 @@
+\hypertarget{panconverter}{%
+\section{PanConverter}\label{panconverter}}
+
+A cross-platform Markdown editor and converter powered by Pandoc.
+
+\begin{figure}
+\centering
+\includegraphics{assets/icon.png}
+\caption{PanConverter}
+\end{figure}
+
+\hypertarget{features}{%
+\subsection{Features}\label{features}}
+
+\hypertarget{advanced-markdown-editor}{%
+\subsubsection{✨ Advanced Markdown
+Editor}\label{advanced-markdown-editor}}
+
+\begin{itemize}
+\tightlist
+\item
+  🗂️ \textbf{Tabbed Interface} - Work with multiple files simultaneously
+  in separate tabs
+\item
+  📝 \textbf{Rich Text Editor} - Full-featured editor with syntax
+  highlighting and comprehensive toolbar
+\item
+  🔍 \textbf{Find \& Replace} - Powerful search and replace with match
+  highlighting and navigation
+\item
+  🔢 \textbf{Line Numbers} - Toggle line numbers for easier code editing
+  and navigation
+\item
+  ↩️ \textbf{Smart Auto-Indentation} - Automatic list continuation and
+  intelligent indentation
+\item
+  ⏪ \textbf{Undo/Redo} - Full undo/redo support with keyboard shortcuts
+\item
+  ⌨️ \textbf{Advanced Shortcuts} - Tab indentation, line selection, and
+  smart text formatting
+\item
+  📂 \textbf{File Association Support} - Open markdown files directly
+  from file manager
+\end{itemize}
+
+\hypertarget{themes-interface}{%
+\subsubsection{🎨 Themes \& Interface}\label{themes-interface}}
+
+\begin{itemize}
+\tightlist
+\item
+  👁️ \textbf{Live Preview} - See your markdown rendered in real-time
+  with synchronized scrolling
+\item
+  🎨 \textbf{Multiple Themes} - Choose from Light, Dark, Solarized,
+  Monokai, or GitHub themes
+\item
+  💾 \textbf{Auto-Save} - Never lose your work with automatic saving
+  every 30 seconds
+\end{itemize}
+
+\hypertarget{export-conversion}{%
+\subsubsection{📤 Export \& Conversion}\label{export-conversion}}
+
+\begin{itemize}
+\tightlist
+\item
+  📄 \textbf{Enhanced PDF Export} - Robust PDF generation with multiple
+  LaTeX engine fallbacks (XeLaTeX, PDFLaTeX, wkhtmltopdf)
+\item
+  📄 \textbf{Document Export} - Convert to HTML, DOCX, LaTeX, RTF, ODT,
+  EPUB, PowerPoint (PPTX), and OpenDocument Presentation (ODP)
+\item
+  📊 \textbf{Spreadsheet Export} - Export markdown tables to Excel
+  (XLSX/XLS) and OpenDocument Spreadsheet (ODS) formats
+\item
+  📥 \textbf{Document Import} - Import DOCX, ODT, RTF, HTML, PDF, and
+  presentation files to markdown
+\item
+  📋 \textbf{Table Creation Helper} - Built-in table generator for easy
+  markdown table creation
+\end{itemize}
+
+\hypertarget{platform-support}{%
+\subsubsection{🖥️ Platform Support}\label{platform-support}}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Cross-Platform} - Works seamlessly on Windows, macOS, and
+  Linux
+\end{itemize}
+
+\hypertarget{installation}{%
+\subsection{Installation}\label{installation}}
+
+\hypertarget{prerequisites}{%
+\subsubsection{Prerequisites}\label{prerequisites}}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{https://pandoc.org/installing.html}{Pandoc} must be installed
+  for export functionality
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \textbf{Ubuntu/Debian}: \texttt{sudo\ apt-get\ install\ pandoc}
+  \item
+    \textbf{macOS}: \texttt{brew\ install\ pandoc}
+  \item
+    \textbf{Windows}: Download installer from Pandoc website
+  \end{itemize}
+\end{itemize}
+
+\hypertarget{pdf-export-requirements}{%
+\subsubsection{PDF Export Requirements}\label{pdf-export-requirements}}
+
+For optimal PDF export, install a LaTeX engine (recommended): -
+\textbf{Ubuntu/Debian}:
+\texttt{sudo\ apt-get\ install\ texlive-xetex\ texlive-latex-base} -
+\textbf{macOS}: \texttt{brew\ install\ -\/-cask\ mactex} -
+\textbf{Windows}: Install MiKTeX or TeX Live - \textbf{Alternative}:
+\texttt{sudo\ apt-get\ install\ wkhtmltopdf} (fallback option)
+
+\hypertarget{download}{%
+\subsubsection{Download}\label{download}}
+
+Download the latest release for your platform from the
+\href{https://github.com/amitwh/pan-converter/releases}{Releases} page.
+
+\hypertarget{linux}{%
+\paragraph{Linux}\label{linux}}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{AppImage}: \texttt{PanConverter-1.3.1.AppImage} (universal,
+  may require \texttt{-\/-no-sandbox} flag)
+\item
+  \textbf{Debian Package}: \texttt{pan-converter\_1.3.1\_amd64.deb}
+\item
+  \textbf{Snap Package}: \texttt{pan-converter\_1.3.1\_amd64.snap}
+\end{itemize}
+
+\hypertarget{install-from-source}{%
+\subsubsection{Install from Source}\label{install-from-source}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{git}\NormalTok{ clone https://github.com/amitwh/pan{-}converter.git}
+\BuiltInTok{cd}\NormalTok{ pan{-}converter}
+\ExtensionTok{npm}\NormalTok{ install}
+\ExtensionTok{npm}\NormalTok{ start}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{usage}{%
+\subsection{Usage}\label{usage}}
+
+\hypertarget{basic-workflow}{%
+\subsubsection{Basic Workflow}\label{basic-workflow}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Write} - Use the editor to write your Markdown content
+\item
+  \textbf{Preview} - Toggle the preview pane to see rendered output
+\item
+  \textbf{Theme} - Choose your preferred theme from the View menu
+\item
+  \textbf{Export} - Export your document to various formats
+\end{enumerate}
+
+\hypertarget{export-options}{%
+\subsubsection{Export Options}\label{export-options}}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Documents}: HTML, PDF, DOCX, LaTeX, RTF, ODT, EPUB
+\item
+  \textbf{Presentations}: PowerPoint (PPTX), OpenDocument Presentation
+  (ODP)
+\item
+  \textbf{Spreadsheets}: Excel (XLSX/XLS), OpenDocument Spreadsheet
+  (ODS)
+\end{itemize}
+
+\hypertarget{import-conversion}{%
+\subsubsection{Import \& Conversion}\label{import-conversion}}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Import Documents}: Convert DOCX, ODT, RTF, HTML, PDF, and
+  presentation files to Markdown
+\item
+  \textbf{Cross-Format Conversion}: Convert current file between
+  multiple formats
+\item
+  \textbf{Smart Presentation Handling}: Automatic slide-level formatting
+  for PPTX/ODP exports
+\end{itemize}
+
+\hypertarget{table-creation}{%
+\subsubsection{Table Creation}\label{table-creation}}
+
+\begin{itemize}
+\tightlist
+\item
+  Click the table button in the toolbar
+\item
+  Specify number of rows and columns
+\item
+  Automatically generates properly formatted Markdown tables
+\end{itemize}
+
+\hypertarget{keyboard-shortcuts}{%
+\subsection{Keyboard Shortcuts}\label{keyboard-shortcuts}}
+
+\hypertarget{file-operations}{%
+\subsubsection{File Operations}\label{file-operations}}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{Ctrl/Cmd\ +\ N} - New file/tab
+\item
+  \texttt{Ctrl/Cmd\ +\ T} - New tab
+\item
+  \texttt{Ctrl/Cmd\ +\ W} - Close current tab
+\item
+  \texttt{Ctrl/Cmd\ +\ Tab} - Switch to next tab
+\item
+  \texttt{Ctrl/Cmd\ +\ O} - Open file
+\item
+  \texttt{Ctrl/Cmd\ +\ S} - Save file
+\item
+  \texttt{Ctrl/Cmd\ +\ Shift\ +\ S} - Save as
+\item
+  \texttt{Ctrl/Cmd\ +\ I} - Import document
+\end{itemize}
+
+\hypertarget{editor-features}{%
+\subsubsection{Editor Features}\label{editor-features}}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{Ctrl/Cmd\ +\ F} - Find \& Replace
+\item
+  \texttt{Ctrl/Cmd\ +\ Z} - Undo
+\item
+  \texttt{Ctrl/Cmd\ +\ Shift\ +\ Z} - Redo
+\item
+  \texttt{Tab} - Indent lines or insert 4 spaces
+\item
+  \texttt{Shift\ +\ Tab} - Outdent selected lines
+\item
+  \texttt{Enter} - Auto-continue lists with proper indentation
+\end{itemize}
+
+\hypertarget{view-navigation}{%
+\subsubsection{View \& Navigation}\label{view-navigation}}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{Ctrl/Cmd\ +\ P} - Toggle preview
+\item
+  \texttt{Ctrl/Cmd\ +\ Enter} - Toggle preview (alternative)
+\item
+  \texttt{Escape} - Close find dialog
+\end{itemize}
+
+\hypertarget{building}{%
+\subsection{Building}\label{building}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Install dependencies}
+\ExtensionTok{npm}\NormalTok{ install}
+
+\CommentTok{\# Generate icons}
+\ExtensionTok{npm}\NormalTok{ run generate{-}icons}
+
+\CommentTok{\# Build for current platform}
+\ExtensionTok{npm}\NormalTok{ run build}
+
+\CommentTok{\# Build for specific platform}
+\ExtensionTok{npm}\NormalTok{ run build:win    }\CommentTok{\# Windows}
+\ExtensionTok{npm}\NormalTok{ run build:mac    }\CommentTok{\# macOS  }
+\ExtensionTok{npm}\NormalTok{ run build:linux  }\CommentTok{\# Linux (generates .deb, .AppImage, and .snap)}
+
+\CommentTok{\# Build for all platforms}
+\ExtensionTok{npm}\NormalTok{ run dist:all}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{version-history}{%
+\subsection{Version History}\label{version-history}}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{v1.3.1} - Bug fixes: Fixed file associations for
+  double-clicking .md files, corrected 50/50 layout alignment for
+  editor/preview panes
+\item
+  \textbf{v1.3.0} - Major update: Tabbed interface for multiple files,
+  enhanced PDF export with LaTeX engines, fixed file associations,
+  removed redundant converter menu, improved UI architecture
+\item
+  \textbf{v1.2.1} - Comprehensive editor enhancements: Find \& Replace,
+  Line Numbers, Undo/Redo, Auto-indentation, PowerPoint export, document
+  conversion menu, table creation helper, spreadsheet export
+\item
+  \textbf{v1.1.0} - Added Excel/ODS spreadsheet export, updated author
+  information, renamed to PanConverter
+\item
+  \textbf{v1.0.0} - Initial release with basic markdown editing, themes,
+  and Pandoc export
+\end{itemize}
+
+\hypertarget{known-issues}{%
+\subsection{Known Issues}\label{known-issues}}
+
+\begin{itemize}
+\tightlist
+\item
+  AppImage may require \texttt{-\/-no-sandbox} flag on some Linux
+  systems
+\item
+  Windows/Mac builds require platform-specific build environments
+\item
+  Large files may cause performance issues
+\end{itemize}
+
+\hypertarget{contributing}{%
+\subsection{Contributing}\label{contributing}}
+
+Contributions are welcome! Please feel free to submit a Pull Request to
+the \href{https://github.com/amitwh/pan-converter}{GitHub repository}.
+
+\hypertarget{license}{%
+\subsection{License}\label{license}}
+
+MIT License - see LICENSE file for details.
+
+\hypertarget{author}{%
+\subsection{Author}\label{author}}
+
+\textbf{Amit Haridas} -
+\href{mailto:amit.wh@gmail.com}{\nolinkurl{amit.wh@gmail.com}}
+
+\hypertarget{acknowledgments}{%
+\subsection{Acknowledgments}\label{acknowledgments}}
+
+\begin{itemize}
+\tightlist
+\item
+  Built with \href{https://www.electronjs.org/}{Electron}
+\item
+  Markdown parsing by \href{https://marked.js.org/}{marked}
+\item
+  Export functionality powered by \href{https://pandoc.org/}{Pandoc}
+\item
+  Syntax highlighting by \href{https://highlightjs.org/}{highlight.js}
+\item
+  Spreadsheet export by \href{https://www.npmjs.com/package/xlsx}{XLSX}
+\item
+  HTML sanitization by
+  \href{https://www.npmjs.com/package/dompurify}{DOMPurify}
+\end{itemize}
