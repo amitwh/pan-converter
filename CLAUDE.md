@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.2.1  
+**Current Version**: v1.3.3  
 **Author**: Amit Haridas (amit.wh@gmail.com)  
 **License**: MIT  
 **Repository**: https://github.com/amitwh/pan-converter
@@ -23,14 +23,15 @@
 ```
 src/
 ├── main.js        # Electron main process, menu system, IPC handlers
-├── renderer.js    # UI logic, editor functionality, event handling
-├── index.html     # Application layout and components
+├── renderer.js    # TabManager class, multi-file editing, event handling
+├── index.html     # Application layout with tabbed interface
 └── styles.css     # Comprehensive styling with multi-theme support
 
 assets/
 └── icon.png       # Application icon
 
 package.json       # Dependencies and build configuration
+CLAUDE.md          # Development documentation for AI assistants
 ```
 
 ## Development Commands
@@ -107,6 +108,36 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 ```
 
 ## Feature Implementation Guide
+
+### v1.3.x Tabbed Interface & Enhanced Features
+
+#### 🗂️ Tabbed Multi-File Support (v1.3.0)
+**TabManager Class** (`src/renderer.js`)
+- Complete tab management system for multiple files
+- Tab switching, creation, and closure
+- State preservation per tab (content, cursor position, scroll)
+- File path tracking for each tab
+- Keyboard shortcuts: `Ctrl/Cmd+T` (new tab), `Ctrl/Cmd+W` (close tab)
+
+#### 🎯 Enhanced PDF Export (v1.3.0)
+**Multi-Engine Fallback System** (`src/main.js:239-280`)
+- Primary: XeLaTeX with proper margins
+- Fallback 1: PDFLaTeX
+- Fallback 2: wkhtmltopdf
+- Automatic engine detection and switching
+
+#### 📁 File Association Support (v1.3.1)
+**OS Integration** (`src/main.js:452-498`, `package.json:50-65`)
+- Double-click .md files to open in PanConverter
+- Command-line argument handling
+- Pending file queue for startup loading
+
+#### 🎨 Typography & Spacing (v1.3.2-1.3.3)
+**Preview Enhancement** (`src/styles.css`)
+- Restored ideal text spacing from v1.0
+- Font sizes increased to 15px for better readability
+- Comprehensive selector coverage for legacy and new containers
+- Theme-aware typography for all content types
 
 ### v1.2.1 Comprehensive Editor Enhancements
 
@@ -300,4 +331,4 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 ---
 
 **Last Updated**: September 1, 2025  
-**Claude Assistant**: Development completed for v1.2.1 comprehensive editor enhancements
+**Claude Assistant**: Development completed for v1.3.3 with tabbed interface, enhanced PDF export, file associations, and improved typography

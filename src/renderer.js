@@ -538,3 +538,35 @@ ipcRenderer.on('toggle-find', () => {
 ipcRenderer.on('theme-changed', (event, theme) => {
     document.body.className = `theme-${theme}`;
 });
+
+// Font size adjustment
+let currentFontSize = parseInt(localStorage.getItem('fontSize')) || 15;
+
+function updateFontSizes(size) {
+    const editors = document.querySelectorAll('#editor, .editor-textarea');
+    const previews = document.querySelectorAll('#preview, .preview-content');
+    
+    editors.forEach(editor => {
+        editor.style.fontSize = `${size}px`;
+    });
+    
+    previews.forEach(preview => {
+        preview.style.fontSize = `${size}px`;
+    });
+    
+    localStorage.setItem('fontSize', size);
+}
+
+// Apply saved font size on load
+updateFontSizes(currentFontSize);
+
+ipcRenderer.on('adjust-font-size', (event, action) => {
+    if (action === 'increase' && currentFontSize < 24) {
+        currentFontSize++;
+    } else if (action === 'decrease' && currentFontSize > 10) {
+        currentFontSize--;
+    } else if (action === 'reset') {
+        currentFontSize = 15;
+    }
+    updateFontSizes(currentFontSize);
+});

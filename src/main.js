@@ -153,6 +153,27 @@ function createMenu() {
           ]
         },
         { type: 'separator' },
+        {
+          label: 'Font Size',
+          submenu: [
+            { 
+              label: 'Increase Font Size', 
+              accelerator: 'CmdOrCtrl+Shift+Plus',
+              click: () => mainWindow.webContents.send('adjust-font-size', 'increase')
+            },
+            { 
+              label: 'Decrease Font Size', 
+              accelerator: 'CmdOrCtrl+Shift+-',
+              click: () => mainWindow.webContents.send('adjust-font-size', 'decrease')
+            },
+            { 
+              label: 'Reset Font Size',
+              accelerator: 'CmdOrCtrl+Shift+0',
+              click: () => mainWindow.webContents.send('adjust-font-size', 'reset')
+            }
+          ]
+        },
+        { type: 'separator' },
         { label: 'Reload', accelerator: 'CmdOrCtrl+R', role: 'reload' },
         { label: 'Toggle DevTools', accelerator: 'F12', role: 'toggleDevTools' },
         { type: 'separator' },
@@ -171,7 +192,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.3.3\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• File association support for .md files\n• Improved preview typography and spacing\n• Enhanced font sizes for better readability\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.3.4\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• File association support for .md files\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
               buttons: ['OK']
             });
           }

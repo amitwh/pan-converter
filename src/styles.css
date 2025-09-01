@@ -469,6 +469,40 @@ body.theme-solarized {
     color: #657b83;
 }
 
+body.theme-solarized .tab-bar {
+    background: #eee8d5;
+    border-bottom-color: #93a1a1;
+}
+
+body.theme-solarized .tab {
+    background: #fdf6e3;
+    border-color: #93a1a1;
+    color: #657b83;
+}
+
+body.theme-solarized .tab.active {
+    background: #fdf6e3;
+    border-color: #859900;
+}
+
+body.theme-solarized .tab-close {
+    color: #657b83;
+}
+
+body.theme-solarized .tab-close:hover {
+    background: #93a1a1;
+    color: #dc322f;
+}
+
+body.theme-solarized .new-tab-button {
+    border-color: #93a1a1;
+    color: #657b83;
+}
+
+body.theme-solarized .new-tab-button:hover {
+    background: #eee8d5;
+}
+
 body.theme-solarized .toolbar {
     background: #eee8d5;
     border-bottom-color: #93a1a1;
@@ -510,6 +544,40 @@ body.theme-monokai {
     color: #f8f8f2;
 }
 
+body.theme-monokai .tab-bar {
+    background: #3e3d32;
+    border-bottom-color: #75715e;
+}
+
+body.theme-monokai .tab {
+    background: #49483e;
+    border-color: #75715e;
+    color: #f8f8f2;
+}
+
+body.theme-monokai .tab.active {
+    background: #272822;
+    border-color: #a6e22e;
+}
+
+body.theme-monokai .tab-close {
+    color: #f8f8f2;
+}
+
+body.theme-monokai .tab-close:hover {
+    background: #75715e;
+    color: #f92672;
+}
+
+body.theme-monokai .new-tab-button {
+    border-color: #75715e;
+    color: #f8f8f2;
+}
+
+body.theme-monokai .new-tab-button:hover {
+    background: #49483e;
+}
+
 body.theme-monokai .toolbar {
     background: #3e3d32;
     border-bottom-color: #75715e;
@@ -525,6 +593,11 @@ body.theme-monokai .toolbar button:hover {
 }
 
 body.theme-monokai #editor {
+    background: #272822;
+    color: #f8f8f2;
+}
+
+body.theme-monokai .editor-textarea {
     background: #272822;
     color: #f8f8f2;
 }
@@ -569,6 +642,40 @@ body.theme-monokai .status-bar {
 body.theme-github {
     background: #fff;
     color: #24292e;
+}
+
+body.theme-github .tab-bar {
+    background: #fafbfc;
+    border-bottom-color: #e1e4e8;
+}
+
+body.theme-github .tab {
+    background: #f6f8fa;
+    border-color: #e1e4e8;
+    color: #24292e;
+}
+
+body.theme-github .tab.active {
+    background: #fff;
+    border-color: #0366d6;
+}
+
+body.theme-github .tab-close {
+    color: #586069;
+}
+
+body.theme-github .tab-close:hover {
+    background: #e1e4e8;
+    color: #cb2431;
+}
+
+body.theme-github .new-tab-button {
+    border-color: #e1e4e8;
+    color: #586069;
+}
+
+body.theme-github .new-tab-button:hover {
+    background: #f6f8fa;
 }
 
 body.theme-github .toolbar {
