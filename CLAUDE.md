@@ -1,13 +1,16 @@
-# Pan Converter
+# PanConverter
 
 ## Overview
-Pan Converter is a cross-platform desktop application for editing and converting Markdown files using Pandoc. It features a rich markdown editor with live preview, multiple themes, and support for exporting to various formats.
+PanConverter is a cross-platform desktop application for editing and converting Markdown files using Pandoc. It features a rich markdown editor with live preview, multiple themes, and comprehensive support for exporting to various document formats.
 
 ## Features
-- **Markdown Editor**: Full-featured editor with syntax highlighting
+- **Markdown Editor**: Full-featured editor with syntax highlighting and toolbar
 - **Live Preview**: Real-time preview of your markdown content
 - **Multiple Themes**: Light, Dark, Solarized, Monokai, and GitHub themes
-- **Format Conversion**: Export to HTML, PDF, DOCX, LaTeX, RTF, ODT, and EPUB using Pandoc
+- **Document Export**: Export to HTML, PDF, DOCX, LaTeX, RTF, ODT, EPUB, PowerPoint (PPTX), and OpenDocument Presentation (ODP)
+- **Spreadsheet Export**: Export markdown tables to Excel (XLSX/XLS) and OpenDocument Spreadsheet (ODS) formats
+- **Document Import & Conversion**: Import various document formats and convert between formats via Pandoc
+- **Table Creation Helper**: Built-in table generator for easy markdown table creation
 - **Cross-Platform**: Runs on Windows, macOS, and Linux
 - **Auto-Save**: Automatic saving every 30 seconds
 
@@ -102,8 +105,9 @@ pan-converter/
 - **marked**: Markdown parsing
 - **highlight.js**: Syntax highlighting
 - **DOMPurify**: HTML sanitization
-- **electron-store**: Persistent storage
+- **XLSX**: Spreadsheet generation for Excel/ODS export
 - **electron-builder**: Application packaging
+- **Custom Storage**: File-based storage system for settings persistence
 
 ## Features Implementation
 
@@ -126,10 +130,26 @@ pan-converter/
 - Five built-in themes
 
 ### Export System
-- Uses Pandoc command-line tool
-- Supports multiple output formats
+- Uses Pandoc command-line tool for document exports
+- Supports multiple output formats (HTML, PDF, DOCX, LaTeX, RTF, ODT, EPUB, PPTX, ODP)
+- Spreadsheet export using XLSX library for table data
+- Import functionality for converting documents to markdown
 - Maintains original file structure
 - Shows error messages if Pandoc not installed
+
+### Table Creation Helper
+- Interactive table generator in toolbar
+- Prompts for row and column count
+- Generates properly formatted markdown tables
+- Includes headers and separator rows
+- Automatically inserts at cursor position
+
+### Document Conversion Menu
+- Separate Convert menu for cross-format operations
+- Import documents from various formats to markdown
+- Convert current file to different formats
+- Supports presentations with proper slide-level formatting
+- Error handling for missing Pandoc installation
 
 ## Platform-Specific Branches
 
@@ -156,11 +176,13 @@ The generated `.deb` file will:
 
 ### Manual Testing
 1. File Operations: New, Open, Save, Save As
-2. Editor Features: Bold, Italic, Headings, Links, Code, Lists, Quotes
+2. Editor Features: Bold, Italic, Headings, Links, Code, Lists, Quotes, Table Creation
 3. Preview Toggle: Show/hide preview pane
 4. Theme Switching: Test all five themes
-5. Export Functions: Test each export format
-6. Auto-save: Verify 30-second auto-save works
+5. Export Functions: Test each export format including PowerPoint and spreadsheets
+6. Import/Conversion: Test document import and format conversion
+7. Table Helper: Test table generation with different row/column counts
+8. Auto-save: Verify 30-second auto-save works
 
 ### Platform Testing
 Test on:
@@ -170,8 +192,15 @@ Test on:
 
 ## Known Issues
 - ICO and ICNS icons need manual conversion from PNG
-- Pandoc must be installed separately
+- Pandoc must be installed separately for all export functionality
 - Large files may cause performance issues
+- AppImage requires --no-sandbox flag on some systems
+- Windows/Mac builds require platform-specific build environments
+
+## Version History
+- **v1.2.0**: Added PowerPoint export, document conversion menu, table creation helper, spreadsheet export
+- **v1.1.0**: Added Excel/ODS spreadsheet export, updated author information, renamed to PanConverter
+- **v1.0.0**: Initial release with basic markdown editing, themes, and Pandoc export
 
 ## Future Enhancements
 - [ ] Add spell checking
@@ -181,6 +210,7 @@ Test on:
 - [ ] Plugin system for custom exporters
 - [ ] Cloud sync capabilities
 - [ ] Collaborative editing
+- [ ] Improved table editing interface
 
 ## License
 MIT License

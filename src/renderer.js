@@ -60,7 +60,63 @@ document.getElementById('btn-link').addEventListener('click', () => insertMarkdo
 document.getElementById('btn-code').addEventListener('click', () => insertMarkdown('`', '`'));
 document.getElementById('btn-list').addEventListener('click', () => insertMarkdown('- ', ''));
 document.getElementById('btn-quote').addEventListener('click', () => insertMarkdown('> ', ''));
+document.getElementById('btn-table').addEventListener('click', insertTable);
 document.getElementById('btn-preview-toggle').addEventListener('click', togglePreview);
+
+// Table insertion function
+function insertTable() {
+    const rows = prompt('Number of rows:', '3');
+    const cols = prompt('Number of columns:', '3');
+    
+    if (!rows || !cols) return;
+    
+    const numRows = parseInt(rows);
+    const numCols = parseInt(cols);
+    
+    if (isNaN(numRows) || isNaN(numCols) || numRows < 1 || numCols < 1) {
+        alert('Please enter valid numbers for rows and columns');
+        return;
+    }
+    
+    let table = '\n';
+    
+    // Header row
+    table += '|';
+    for (let j = 0; j < numCols; j++) {
+        table += ` Header ${j + 1} |`;
+    }
+    table += '\n';
+    
+    // Separator row
+    table += '|';
+    for (let j = 0; j < numCols; j++) {
+        table += ' --- |';
+    }
+    table += '\n';
+    
+    // Data rows
+    for (let i = 0; i < numRows; i++) {
+        table += '|';
+        for (let j = 0; j < numCols; j++) {
+            table += ` Cell ${i + 1}-${j + 1} |`;
+        }
+        table += '\n';
+    }
+    table += '\n';
+    
+    // Insert table at cursor position
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    
+    editor.value = editor.value.substring(0, start) + table + editor.value.substring(end);
+    
+    // Set cursor after the table
+    editor.selectionStart = editor.selectionEnd = start + table.length;
+    editor.focus();
+    
+    // Trigger input event
+    editor.dispatchEvent(new Event('input'));
+}
 
 // Markdown insertion helper
 function insertMarkdown(before, after) {

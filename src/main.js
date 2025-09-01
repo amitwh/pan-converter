@@ -87,6 +87,9 @@ function createMenu() {
             { label: 'ODT', click: () => exportFile('odt') },
             { label: 'EPUB', click: () => exportFile('epub') },
             { type: 'separator' },
+            { label: 'PowerPoint (PPTX)', click: () => exportFile('pptx') },
+            { label: 'OpenDocument Presentation (ODP)', click: () => exportFile('odp') },
+            { type: 'separator' },
             { label: 'Excel (XLSX)', click: () => exportSpreadsheet('xlsx') },
             { label: 'Excel Legacy (XLS)', click: () => exportSpreadsheet('xls') },
             { label: 'OpenDocument Spreadsheet (ODS)', click: () => exportSpreadsheet('ods') }
@@ -110,6 +113,32 @@ function createMenu() {
         { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
         { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' },
         { label: 'Select All', accelerator: 'CmdOrCtrl+A', role: 'selectAll' }
+      ]
+    },
+    {
+      label: 'Convert',
+      submenu: [
+        {
+          label: 'Import Document...',
+          accelerator: 'CmdOrCtrl+I',
+          click: importDocument
+        },
+        { type: 'separator' },
+        {
+          label: 'Convert Current File',
+          submenu: [
+            { label: 'To Markdown', click: () => convertToFormat('md') },
+            { label: 'To HTML', click: () => convertToFormat('html') },
+            { label: 'To PDF', click: () => convertToFormat('pdf') },
+            { label: 'To DOCX', click: () => convertToFormat('docx') },
+            { label: 'To LaTeX', click: () => convertToFormat('latex') },
+            { label: 'To RTF', click: () => convertToFormat('rtf') },
+            { label: 'To ODT', click: () => convertToFormat('odt') },
+            { label: 'To EPUB', click: () => convertToFormat('epub') },
+            { label: 'To PPTX', click: () => convertToFormat('pptx') },
+            { label: 'To ODP', click: () => convertToFormat('odp') }
+          ]
+        }
       ]
     },
     {
@@ -236,6 +265,78 @@ function exportSpreadsheet(format) {
 
   // Request content from renderer
   mainWindow.webContents.send('get-content-for-spreadsheet', format);
+}
+
+function importDocument() {
+  const files = dialog.showOpenDialogSync(mainWindow, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'Documents', extensions: ['docx', 'odt', 'rtf', 'html', 'tex', 'epub', 'pdf'] },
+      { name: 'Presentations', extensions: ['pptx', 'odp'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  });
+
+  if (files && files[0]) {
+    const inputFile = files[0];
+    const outputFile = inputFile.replace(/\.[^/.]+$/, '.md');
+    
+    // Convert to markdown using pandoc
+    const pandocCmd = `pandoc "${inputFile}" -t markdown -o "${outputFile}"`;
+    
+    exec(pandocCmd, (error, stdout, stderr) => {
+      if (error) {
+        dialog.showErrorBox('Import Error', `Failed to import: ${error.message}\n\nMake sure Pandoc is installed.`);
+      } else {
+        // Open the converted markdown file
+        currentFile = outputFile;
+        const content = fs.readFileSync(outputFile, 'utf-8');
+        mainWindow.webContents.send('file-opened', { path: outputFile, content });
+        
+        dialog.showMessageBox(mainWindow, {
+          type: 'info',
+          title: 'Import Complete',
+          message: `Document imported successfully as ${outputFile}`,
+          buttons: ['OK']
+        });
+      }
+    });
+  }
+}
+
+function convertToFormat(format) {
+  if (!currentFile) {
+    dialog.showErrorBox('Error', 'Please save or open a file first');
+    return;
+  }
+
+  const outputFile = dialog.showSaveDialogSync(mainWindow, {
+    defaultPath: currentFile.replace(/\.[^/.]+$/, `.${format}`),
+    filters: [
+      { name: format.toUpperCase(), extensions: [format] }
+    ]
+  });
+
+  if (outputFile) {
+    // For presentations, add slide level for better conversion
+    let pandocCmd = `pandoc "${currentFile}" -o "${outputFile}"`;
+    if (format === 'pptx' || format === 'odp') {
+      pandocCmd = `pandoc "${currentFile}" --slide-level=2 -o "${outputFile}"`;
+    }
+    
+    exec(pandocCmd, (error, stdout, stderr) => {
+      if (error) {
+        dialog.showErrorBox('Conversion Error', `Failed to convert: ${error.message}\n\nMake sure Pandoc is installed.`);
+      } else {
+        dialog.showMessageBox(mainWindow, {
+          type: 'info',
+          title: 'Conversion Complete',
+          message: `File converted successfully to ${outputFile}`,
+          buttons: ['OK']
+        });
+      }
+    });
+  }
 }
 
 function setTheme(theme) {
