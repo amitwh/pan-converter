@@ -178,7 +178,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.1.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Markdown editing with live preview\n• Export to multiple formats via Pandoc\n• Export tables to Excel/ODS spreadsheets\n• Multiple themes support',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.2.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Markdown editing with live preview\n• Export to multiple formats via Pandoc\n• Export tables to Excel/ODS spreadsheets\n• PowerPoint & presentation export\n• Document import & conversion\n• Table creation helper\n• Multiple themes support',
               buttons: ['OK']
             });
           }
