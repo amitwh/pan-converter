@@ -24,11 +24,22 @@ const previewPane = document.getElementById('preview-pane');
 const editorPane = document.getElementById('editor-pane');
 const statusText = document.getElementById('status-text');
 const wordCount = document.getElementById('word-count');
+const lineNumbers = document.getElementById('line-numbers');
+const findDialog = document.getElementById('find-dialog');
+const findInput = document.getElementById('find-input');
+const replaceInput = document.getElementById('replace-input');
+const findCount = document.getElementById('find-count');
 
 // State
 let isPreviewVisible = true;
 let currentContent = '';
 let isDirty = false;
+let showLineNumbers = false;
+let findMatches = [];
+let currentMatchIndex = -1;
+let undoStack = [];
+let redoStack = [];
+let maxUndoSize = 50;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -61,7 +72,20 @@ document.getElementById('btn-code').addEventListener('click', () => insertMarkdo
 document.getElementById('btn-list').addEventListener('click', () => insertMarkdown('- ', ''));
 document.getElementById('btn-quote').addEventListener('click', () => insertMarkdown('> ', ''));
 document.getElementById('btn-table').addEventListener('click', insertTable);
+document.getElementById('btn-find').addEventListener('click', toggleFindDialog);
+document.getElementById('btn-line-numbers').addEventListener('click', toggleLineNumbers);
 document.getElementById('btn-preview-toggle').addEventListener('click', togglePreview);
+
+// Find dialog handlers
+document.getElementById('btn-find-close').addEventListener('click', closeFindDialog);
+document.getElementById('btn-find-next').addEventListener('click', findNext);
+document.getElementById('btn-find-prev').addEventListener('click', findPrev);
+document.getElementById('btn-replace').addEventListener('click', replaceOne);
+document.getElementById('btn-replace-all').addEventListener('click', replaceAll);
+findInput.addEventListener('input', performFind);
+replaceInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') replaceOne();
+});
 
 // Table insertion function
 function insertTable() {
@@ -251,21 +275,318 @@ ipcRenderer.on('get-content-for-spreadsheet', (event, format) => {
     ipcRenderer.send('export-spreadsheet', { content: editor.value, format });
 });
 
+ipcRenderer.on('toggle-find', () => {
+    toggleFindDialog();
+});
+
+// Enhanced editor input handler with undo/redo and auto-indentation
+editor.addEventListener('input', (e) => {
+    // Save state for undo
+    if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') {
+        pushUndo();
+    }
+    
+    updateLineNumbers();
+});
+
+// Push current state to undo stack
+function pushUndo() {
+    if (undoStack.length >= maxUndoSize) {
+        undoStack.shift();
+    }
+    undoStack.push({
+        content: currentContent,
+        selectionStart: editor.selectionStart,
+        selectionEnd: editor.selectionEnd
+    });
+    redoStack = []; // Clear redo stack when new changes are made
+}
+
+// Undo function
+function undo() {
+    if (undoStack.length > 1) {
+        redoStack.push(undoStack.pop());
+        const state = undoStack[undoStack.length - 1];
+        editor.value = state.content;
+        editor.selectionStart = state.selectionStart;
+        editor.selectionEnd = state.selectionEnd;
+        currentContent = state.content;
+        updatePreview();
+        updateWordCount();
+        updateLineNumbers();
+    }
+}
+
+// Redo function
+function redo() {
+    if (redoStack.length > 0) {
+        const state = redoStack.pop();
+        undoStack.push(state);
+        editor.value = state.content;
+        editor.selectionStart = state.selectionStart;
+        editor.selectionEnd = state.selectionEnd;
+        currentContent = state.content;
+        updatePreview();
+        updateWordCount();
+        updateLineNumbers();
+    }
+}
+
+// Find & Replace functionality
+function toggleFindDialog() {
+    if (findDialog.classList.contains('hidden')) {
+        findDialog.classList.remove('hidden');
+        findInput.focus();
+        if (editor.selectionStart !== editor.selectionEnd) {
+            findInput.value = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+            performFind();
+        }
+    } else {
+        closeFindDialog();
+    }
+}
+
+function closeFindDialog() {
+    findDialog.classList.add('hidden');
+    clearHighlights();
+    editor.focus();
+}
+
+function performFind() {
+    const searchText = findInput.value;
+    clearHighlights();
+    findMatches = [];
+    currentMatchIndex = -1;
+    
+    if (!searchText) {
+        findCount.textContent = '0 matches';
+        return;
+    }
+    
+    const content = editor.value;
+    let index = 0;
+    while ((index = content.indexOf(searchText, index)) !== -1) {
+        findMatches.push(index);
+        index += searchText.length;
+    }
+    
+    findCount.textContent = `${findMatches.length} matches`;
+    
+    if (findMatches.length > 0) {
+        currentMatchIndex = 0;
+        highlightMatch();
+    }
+}
+
+function findNext() {
+    if (findMatches.length === 0) return;
+    currentMatchIndex = (currentMatchIndex + 1) % findMatches.length;
+    highlightMatch();
+}
+
+function findPrev() {
+    if (findMatches.length === 0) return;
+    currentMatchIndex = currentMatchIndex === 0 ? findMatches.length - 1 : currentMatchIndex - 1;
+    highlightMatch();
+}
+
+function highlightMatch() {
+    if (currentMatchIndex === -1 || !findMatches[currentMatchIndex]) return;
+    
+    const matchStart = findMatches[currentMatchIndex];
+    const matchEnd = matchStart + findInput.value.length;
+    
+    editor.selectionStart = matchStart;
+    editor.selectionEnd = matchEnd;
+    editor.focus();
+    
+    // Scroll to match
+    const lineHeight = 20; // Approximate line height
+    const lineNumber = editor.value.substring(0, matchStart).split('\n').length;
+    editor.scrollTop = Math.max(0, (lineNumber - 10) * lineHeight);
+}
+
+function replaceOne() {
+    if (currentMatchIndex === -1 || !findMatches[currentMatchIndex]) return;
+    
+    const searchText = findInput.value;
+    const replaceText = replaceInput.value;
+    const matchStart = findMatches[currentMatchIndex];
+    const matchEnd = matchStart + searchText.length;
+    
+    editor.value = editor.value.substring(0, matchStart) + 
+                   replaceText + 
+                   editor.value.substring(matchEnd);
+    
+    editor.selectionStart = matchStart;
+    editor.selectionEnd = matchStart + replaceText.length;
+    
+    // Trigger input event
+    editor.dispatchEvent(new Event('input'));
+    
+    // Refresh find
+    setTimeout(() => performFind(), 10);
+}
+
+function replaceAll() {
+    const searchText = findInput.value;
+    const replaceText = replaceInput.value;
+    
+    if (!searchText) return;
+    
+    let content = editor.value;
+    let replacements = 0;
+    
+    while (content.includes(searchText)) {
+        content = content.replace(searchText, replaceText);
+        replacements++;
+    }
+    
+    if (replacements > 0) {
+        editor.value = content;
+        editor.dispatchEvent(new Event('input'));
+        updateStatus(`Replaced ${replacements} occurrences`);
+        performFind();
+    }
+}
+
+function clearHighlights() {
+    // Clear any highlights (in a real implementation, you'd remove highlight spans)
+}
+
+// Line Numbers functionality
+function toggleLineNumbers() {
+    showLineNumbers = !showLineNumbers;
+    if (showLineNumbers) {
+        lineNumbers.classList.remove('hidden');
+        updateLineNumbers();
+    } else {
+        lineNumbers.classList.add('hidden');
+    }
+}
+
+function updateLineNumbers() {
+    if (!showLineNumbers) return;
+    
+    const lines = editor.value.split('\n');
+    const lineNumbersHtml = lines.map((_, index) => 
+        `<span class="line-number">${index + 1}</span>`
+    ).join('');
+    lineNumbers.innerHTML = lineNumbersHtml;
+    
+    // Sync scroll
+    lineNumbers.scrollTop = editor.scrollTop;
+}
+
+// Sync line numbers scroll with editor
+editor.addEventListener('scroll', () => {
+    if (showLineNumbers) {
+        lineNumbers.scrollTop = editor.scrollTop;
+    }
+});
+
+// Auto-indentation for lists
+function handleEnterKey(e) {
+    const cursorPos = editor.selectionStart;
+    const beforeCursor = editor.value.substring(0, cursorPos);
+    const lines = beforeCursor.split('\n');
+    const currentLine = lines[lines.length - 1];
+    
+    // Check for list patterns
+    const listMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s/);
+    if (listMatch) {
+        e.preventDefault();
+        const indent = listMatch[1];
+        const marker = listMatch[2];
+        
+        // If current line is just the marker, remove it
+        if (currentLine.trim() === marker) {
+            const lineStart = beforeCursor.lastIndexOf('\n') + 1;
+            editor.value = editor.value.substring(0, lineStart) + 
+                          editor.value.substring(cursorPos);
+            editor.selectionStart = editor.selectionEnd = lineStart;
+        } else {
+            // Continue the list
+            let newMarker = marker;
+            if (/^\d+\./.test(marker)) {
+                const num = parseInt(marker) + 1;
+                newMarker = num + '.';
+            }
+            const insertion = '\n' + indent + newMarker + ' ';
+            editor.value = editor.value.substring(0, cursorPos) + 
+                          insertion + 
+                          editor.value.substring(cursorPos);
+            editor.selectionStart = editor.selectionEnd = cursorPos + insertion.length;
+        }
+        
+        editor.dispatchEvent(new Event('input'));
+    }
+}
+
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + F for find
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        toggleFindDialog();
+    }
+    
+    // Ctrl/Cmd + Z for undo
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+    }
+    
+    // Ctrl/Cmd + Shift + Z for redo
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        redo();
+    }
+    
     // Ctrl/Cmd + Enter to toggle preview
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         togglePreview();
     }
     
-    // Tab key in editor
+    // Enhanced Tab handling in editor
     if (e.key === 'Tab' && e.target === editor) {
         e.preventDefault();
         const start = editor.selectionStart;
         const end = editor.selectionEnd;
         
-        editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
-        editor.selectionStart = editor.selectionEnd = start + 4;
+        if (start === end) {
+            // Simple tab insertion
+            editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + 4;
+        } else {
+            // Indent/outdent selected lines
+            const beforeSelection = editor.value.substring(0, start);
+            const selection = editor.value.substring(start, end);
+            const afterSelection = editor.value.substring(end);
+            
+            const lines = selection.split('\n');
+            const indentedLines = e.shiftKey ? 
+                lines.map(line => line.replace(/^    /, '')) : // Outdent
+                lines.map(line => '    ' + line); // Indent
+            
+            const newSelection = indentedLines.join('\n');
+            editor.value = beforeSelection + newSelection + afterSelection;
+            
+            editor.selectionStart = start;
+            editor.selectionEnd = start + newSelection.length;
+        }
+        
+        editor.dispatchEvent(new Event('input'));
+    }
+    
+    // Enter key handling for auto-indentation
+    if (e.key === 'Enter' && e.target === editor) {
+        handleEnterKey(e);
+    }
+    
+    // Escape to close find dialog
+    if (e.key === 'Escape' && !findDialog.classList.contains('hidden')) {
+        closeFindDialog();
     }
 });
 
