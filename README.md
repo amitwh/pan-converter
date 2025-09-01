@@ -50,9 +50,9 @@ For optimal PDF export, install a LaTeX engine (recommended):
 Download the latest release for your platform from the [Releases](https://github.com/amitwh/pan-converter/releases) page.
 
 #### Linux
-- **AppImage**: `PanConverter-1.3.0.AppImage` (universal, may require `--no-sandbox` flag)
-- **Debian Package**: `pan-converter_1.3.0_amd64.deb`
-- **Snap Package**: `pan-converter_1.3.0_amd64.snap`
+- **AppImage**: `PanConverter-1.3.1.AppImage` (universal, may require `--no-sandbox` flag)
+- **Debian Package**: `pan-converter_1.3.1_amd64.deb`
+- **Snap Package**: `pan-converter_1.3.1_amd64.snap`
 
 ### Install from Source
 ```bash
@@ -133,6 +133,7 @@ npm run dist:all
 
 ## Version History
 
+- **v1.3.1** - Bug fixes: Fixed file associations for double-clicking .md files, corrected 50/50 layout alignment for editor/preview panes
 - **v1.3.0** - Major update: Tabbed interface for multiple files, enhanced PDF export with LaTeX engines, fixed file associations, removed redundant converter menu, improved UI architecture
 - **v1.2.1** - Comprehensive editor enhancements: Find & Replace, Line Numbers, Undo/Redo, Auto-indentation, PowerPoint export, document conversion menu, table creation helper, spreadsheet export
 - **v1.1.0** - Added Excel/ODS spreadsheet export, updated author information, renamed to PanConverter
