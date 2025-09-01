@@ -2,6 +2,7 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const XLSX = require('xlsx');
 
 // Simple storage implementation to replace electron-store
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
@@ -84,7 +85,11 @@ function createMenu() {
             { label: 'LaTeX', click: () => exportFile('latex') },
             { label: 'RTF', click: () => exportFile('rtf') },
             { label: 'ODT', click: () => exportFile('odt') },
-            { label: 'EPUB', click: () => exportFile('epub') }
+            { label: 'EPUB', click: () => exportFile('epub') },
+            { type: 'separator' },
+            { label: 'Excel (XLSX)', click: () => exportSpreadsheet('xlsx') },
+            { label: 'Excel Legacy (XLS)', click: () => exportSpreadsheet('xls') },
+            { label: 'OpenDocument Spreadsheet (ODS)', click: () => exportSpreadsheet('ods') }
           ]
         },
         { type: 'separator' },
@@ -142,16 +147,16 @@ function createMenu() {
           click: () => {
             dialog.showMessageBox(mainWindow, {
               type: 'info',
-              title: 'About Pan Converter',
-              message: 'Pan Converter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.0.0\nLicense: MIT',
+              title: 'About PanConverter',
+              message: 'PanConverter',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.1.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Markdown editing with live preview\n• Export to multiple formats via Pandoc\n• Export tables to Excel/ODS spreadsheets\n• Multiple themes support',
               buttons: ['OK']
             });
           }
         },
         {
           label: 'Documentation',
-          click: () => shell.openExternal('https://github.com/yourusername/pan-converter')
+          click: () => shell.openExternal('https://github.com/amitwh/pan-converter')
         }
       ]
     }
@@ -223,6 +228,16 @@ function exportFile(format) {
   }
 }
 
+function exportSpreadsheet(format) {
+  if (!currentFile) {
+    dialog.showErrorBox('Error', 'Please save the file first');
+    return;
+  }
+
+  // Request content from renderer
+  mainWindow.webContents.send('get-content-for-spreadsheet', format);
+}
+
 function setTheme(theme) {
   store.set('theme', theme);
   mainWindow.webContents.send('theme-changed', theme);
@@ -246,6 +261,89 @@ ipcMain.on('get-theme', (event) => {
   const theme = store.get('theme', 'light');
   event.reply('theme-changed', theme);
 });
+
+ipcMain.on('export-spreadsheet', (event, { content, format }) => {
+  const outputFile = dialog.showSaveDialogSync(mainWindow, {
+    defaultPath: currentFile.replace(/\.[^/.]+$/, `.${format}`),
+    filters: [
+      { name: format.toUpperCase(), extensions: [format] }
+    ]
+  });
+
+  if (outputFile) {
+    try {
+      // Parse markdown content to extract tables
+      const tables = extractTablesFromMarkdown(content);
+      
+      if (tables.length === 0) {
+        dialog.showErrorBox('Export Error', 'No tables found in the markdown content');
+        return;
+      }
+
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      
+      tables.forEach((table, index) => {
+        const ws = XLSX.utils.aoa_to_sheet(table);
+        XLSX.utils.book_append_sheet(wb, ws, `Table ${index + 1}`);
+      });
+
+      // Write file
+      XLSX.writeFile(wb, outputFile);
+      
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Export Complete',
+        message: `Spreadsheet exported successfully to ${outputFile}`,
+        buttons: ['OK']
+      });
+    } catch (error) {
+      dialog.showErrorBox('Export Error', `Failed to export: ${error.message}`);
+    }
+  }
+});
+
+// Helper function to extract tables from markdown
+function extractTablesFromMarkdown(markdown) {
+  const tables = [];
+  const lines = markdown.split('\n');
+  let currentTable = [];
+  let inTable = false;
+  
+  for (const line of lines) {
+    if (line.includes('|')) {
+      if (!inTable) {
+        inTable = true;
+        currentTable = [];
+      }
+      
+      // Skip separator lines (|---|---|)
+      if (!line.match(/^\s*\|?\s*:?-+:?\s*\|/)) {
+        const cells = line.split('|')
+          .map(cell => cell.trim())
+          .filter(cell => cell !== '');
+        
+        if (cells.length > 0) {
+          currentTable.push(cells);
+        }
+      }
+    } else if (inTable && line.trim() === '') {
+      // End of table
+      if (currentTable.length > 0) {
+        tables.push(currentTable);
+      }
+      currentTable = [];
+      inTable = false;
+    }
+  }
+  
+  // Add last table if exists
+  if (currentTable.length > 0) {
+    tables.push(currentTable);
+  }
+  
+  return tables;
+}
 
 app.whenReady().then(createWindow);
 

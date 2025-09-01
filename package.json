@@ -1,6 +1,6 @@
 {
   "name": "pan-converter",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Cross-platform Markdown editor and converter using Pandoc",
   "main": "src/main.js",
   "scripts": {
@@ -14,8 +14,13 @@
     "dist:all": "electron-builder -mwl",
     "generate-icons": "node scripts/generate-icons.js"
   },
-  "keywords": ["markdown", "pandoc", "converter", "editor"],
-  "author": "Your Name",
+  "keywords": [
+    "markdown",
+    "pandoc",
+    "converter",
+    "editor"
+  ],
+  "author": "Amit Haridas <amit.wh@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "electron": "^37.4.0",
@@ -27,11 +32,12 @@
     "dompurify": "^3.2.6",
     "electron-store": "^10.1.0",
     "highlight.js": "^11.11.1",
-    "marked": "^16.2.1"
+    "marked": "^16.2.1",
+    "xlsx": "^0.18.5"
   },
   "build": {
     "appId": "com.panconverter.app",
-    "productName": "Pan Converter",
+    "productName": "PanConverter",
     "directories": {
       "output": "dist"
     },
@@ -63,7 +69,7 @@
         "pandoc"
       ],
       "description": "Markdown editor and converter using Pandoc",
-      "maintainer": "Your Name <your.email@example.com>"
+      "maintainer": "Amit Haridas <amit.wh@gmail.com>"
     }
   }
 }

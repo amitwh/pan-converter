@@ -191,6 +191,10 @@ ipcRenderer.on('theme-changed', (event, theme) => {
     updateStatus(`Theme: ${theme}`);
 });
 
+ipcRenderer.on('get-content-for-spreadsheet', (event, format) => {
+    ipcRenderer.send('export-spreadsheet', { content: editor.value, format });
+});
+
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
     // Ctrl/Cmd + Enter to toggle preview
