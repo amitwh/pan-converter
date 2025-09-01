@@ -460,3 +460,139 @@ body.theme-github .status-bar {
 #editor-pane.full-width {
     border-right: none;
 }
+
+/* Find & Replace Dialog */
+.find-dialog {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    min-width: 400px;
+    padding: 12px;
+}
+
+.find-dialog.hidden {
+    display: none;
+}
+
+.find-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.find-controls input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.find-controls button {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    background: #f5f5f5;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.find-controls button:hover {
+    background: #e5e5e5;
+}
+
+.find-info {
+    font-size: 12px;
+    color: #666;
+    text-align: right;
+}
+
+/* Editor Wrapper with Line Numbers */
+.editor-wrapper {
+    position: relative;
+    display: flex;
+    height: 100%;
+}
+
+.line-numbers {
+    min-width: 40px;
+    padding: 8px 4px;
+    background: #f8f8f8;
+    border-right: 1px solid #ddd;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #666;
+    text-align: right;
+    user-select: none;
+    overflow: hidden;
+}
+
+.line-numbers.hidden {
+    display: none;
+}
+
+.line-numbers .line-number {
+    display: block;
+    white-space: nowrap;
+}
+
+/* Adjust editor when line numbers are shown */
+.editor-wrapper #editor {
+    flex: 1;
+}
+
+/* Theme support for find dialog */
+body.theme-dark .find-dialog {
+    background: #2d2d2d;
+    border-color: #555;
+    color: #f0f0f0;
+}
+
+body.theme-dark .find-controls input {
+    background: #333;
+    border-color: #555;
+    color: #f0f0f0;
+}
+
+body.theme-dark .find-controls button {
+    background: #404040;
+    border-color: #555;
+    color: #f0f0f0;
+}
+
+body.theme-dark .find-controls button:hover {
+    background: #4a4a4a;
+}
+
+body.theme-dark .line-numbers {
+    background: #2a2a2a;
+    border-right-color: #555;
+    color: #888;
+}
+
+/* Additional theme support for line numbers */
+body.theme-solarized .line-numbers {
+    background: #fdf6e3;
+    border-right-color: #eee8d5;
+    color: #93a1a1;
+}
+
+body.theme-monokai .line-numbers {
+    background: #2f2f2f;
+    border-right-color: #555;
+    color: #75715e;
+}
+
+body.theme-github .line-numbers {
+    background: #fafbfc;
+    border-right-color: #e1e4e8;
+    color: #586069;
+}
