@@ -474,12 +474,9 @@ class TabManager {
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         const content = event.target.result;
-                        // Use file name since file.path is not available in browser context
-                        console.log('Opening dropped file:', file.name);
                         this.openFile(file.name, content);
                     };
                     reader.onerror = (error) => {
-                        console.error('Error reading file:', error);
                         this.showStatus('Error reading file', 3000);
                     };
                     reader.readAsText(file);
@@ -550,11 +547,10 @@ let pendingFileData = null;
 
 // Set up IPC listeners immediately to handle early events
 ipcRenderer.on('file-opened', (event, data) => {
-    console.log('Received file-opened event:', data);
     if (tabManager) {
         tabManager.openFile(data.path, data.content);
     } else {
-        console.log('TabManager not ready, storing pending file data');
+        // TabManager not ready, store pending file data
         pendingFileData = data;
     }
 });
@@ -564,7 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Handle any pending file data
     if (pendingFileData) {
-        console.log('Processing pending file data:', pendingFileData);
         tabManager.openFile(pendingFileData.path, pendingFileData.content);
         pendingFileData = null;
     }
