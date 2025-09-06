@@ -16,6 +16,11 @@ body {
     height: 100vh;
 }
 
+.container.drag-over {
+    background: rgba(0, 123, 255, 0.1);
+    border: 2px dashed #007bff;
+}
+
 /* Tab Bar */
 .tab-bar {
     display: flex;
