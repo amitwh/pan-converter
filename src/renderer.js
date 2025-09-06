@@ -546,9 +546,28 @@ class TabManager {
 
 // Initialize tab manager
 let tabManager;
+let pendingFileData = null;
+
+// Set up IPC listeners immediately to handle early events
+ipcRenderer.on('file-opened', (event, data) => {
+    console.log('Received file-opened event:', data);
+    if (tabManager) {
+        tabManager.openFile(data.path, data.content);
+    } else {
+        console.log('TabManager not ready, storing pending file data');
+        pendingFileData = data;
+    }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     tabManager = new TabManager();
+    
+    // Handle any pending file data
+    if (pendingFileData) {
+        console.log('Processing pending file data:', pendingFileData);
+        tabManager.openFile(pendingFileData.path, pendingFileData.content);
+        pendingFileData = null;
+    }
     
     // Request current theme
     ipcRenderer.send('get-theme');
@@ -566,13 +585,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // IPC event listeners that depend on tabManager
     ipcRenderer.on('file-new', () => {
         tabManager.createNewTab();
-    });
-
-    ipcRenderer.on('file-opened', (event, data) => {
-        console.log('Received file-opened event:', data);
-        if (tabManager) {
-            tabManager.openFile(data.path, data.content);
-        }
     });
 
     ipcRenderer.on('file-save', () => {

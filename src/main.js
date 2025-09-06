@@ -51,10 +51,14 @@ function createWindow() {
 
   // Handle pending file from file association
   if (app.pendingFile) {
+    console.log('Setting up dom-ready handler for pending file:', app.pendingFile);
     mainWindow.webContents.once('dom-ready', () => {
+      console.log('DOM ready, opening pending file:', app.pendingFile);
       openFileFromPath(app.pendingFile);
       app.pendingFile = null;
     });
+  } else {
+    console.log('No pending file to handle');
   }
 }
 
@@ -587,12 +591,26 @@ app.whenReady().then(() => {
   // Handle file association on app startup
   // Process all command line arguments except the first two (node and script path)
   const fileArgs = process.argv.slice(2);
+  console.log('Command line arguments:', fileArgs);
   for (const arg of fileArgs) {
+    console.log('Checking argument:', arg);
+    // Skip flags and options
+    if (arg.startsWith('-')) {
+      console.log('Skipping flag:', arg);
+      continue;
+    }
     if ((arg.endsWith('.md') || arg.endsWith('.markdown')) && fs.existsSync(arg)) {
       // Store the file to open after window is ready
+      console.log('Found markdown file to open:', arg);
       app.pendingFile = arg;
       break;
     }
+  }
+  
+  if (app.pendingFile) {
+    console.log('Pending file set:', app.pendingFile);
+  } else {
+    console.log('No pending file found');
   }
 });
 
@@ -621,11 +639,18 @@ app.on('open-file', (event, filePath) => {
 
 // Handle file opening from command line or file association
 function openFileFromPath(filePath) {
+  console.log('openFileFromPath called with:', filePath);
   if (fs.existsSync(filePath)) {
     currentFile = filePath;
     const content = fs.readFileSync(filePath, 'utf-8');
+    console.log('File read successfully, content length:', content.length);
     if (mainWindow && mainWindow.webContents) {
+      console.log('Sending file-opened event to renderer');
       mainWindow.webContents.send('file-opened', { path: filePath, content });
+    } else {
+      console.error('mainWindow or webContents not available');
     }
+  } else {
+    console.error('File does not exist:', filePath);
   }
 }
