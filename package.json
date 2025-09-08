@@ -45,6 +45,7 @@
     "files": [
       "src/**/*",
       "assets/**/*",
+      "scripts/**/*",
       "node_modules/**/*",
       "package.json"
     ],
@@ -71,6 +72,14 @@
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PanConverter",
+      "include": "scripts/nsis-installer.nsh"
     },
     "linux": {
       "target": [

@@ -581,7 +581,151 @@ function extractTablesFromMarkdown(markdown) {
   return tables;
 }
 
+// Handle command line interface for file conversion
+function handleCLIConversion(args) {
+  const command = args[0];
+  const filePath = args[args.length - 1]; // File path is always last argument
+  
+  if (!fs.existsSync(filePath)) {
+    console.error(`Error: File not found: ${filePath}`);
+    app.quit();
+    return;
+  }
+
+  // Show conversion dialog for --convert command
+  if (command === '--convert') {
+    showConversionDialog(filePath);
+    return;
+  }
+
+  // Direct conversion for --convert-to command
+  if (command === '--convert-to' && args.length >= 3) {
+    const format = args[1];
+    performCLIConversion(filePath, format);
+    return;
+  }
+
+  console.error('Usage: --convert <file> OR --convert-to <format> <file>');
+  app.quit();
+}
+
+// Show conversion dialog for CLI
+function showConversionDialog(filePath) {
+  const { dialog } = require('electron');
+  
+  // Create a hidden window for dialog operations
+  const hiddenWindow = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  const formats = [
+    { name: 'PDF', value: 'pdf' },
+    { name: 'HTML', value: 'html' },
+    { name: 'DOCX', value: 'docx' },
+    { name: 'LaTeX', value: 'latex' },
+    { name: 'RTF', value: 'rtf' },
+    { name: 'ODT', value: 'odt' },
+    { name: 'PowerPoint', value: 'pptx' }
+  ];
+
+  // Create format selection dialog using message box
+  const formatButtons = formats.map(f => f.name);
+  formatButtons.push('Cancel');
+
+  dialog.showMessageBox(hiddenWindow, {
+    type: 'question',
+    title: 'PanConverter - Choose Format',
+    message: `Convert "${path.basename(filePath)}" to:`,
+    detail: 'Select the output format for conversion',
+    buttons: formatButtons,
+    defaultId: 0,
+    cancelId: formatButtons.length - 1
+  }).then(result => {
+    if (result.response < formats.length) {
+      const selectedFormat = formats[result.response].value;
+      performCLIConversion(filePath, selectedFormat);
+    } else {
+      console.log('Conversion cancelled');
+      app.quit();
+    }
+    hiddenWindow.destroy();
+  });
+}
+
+// Perform CLI conversion
+function performCLIConversion(inputPath, format) {
+  try {
+    const content = fs.readFileSync(inputPath, 'utf-8');
+    const outputPath = inputPath.replace(/\.[^/.]+$/, `.${format}`);
+    
+    console.log(`Converting "${path.basename(inputPath)}" to ${format.toUpperCase()}...`);
+    
+    // Use existing export functions but with CLI output
+    const pandocCommand = buildPandocCommand(content, format, outputPath);
+    
+    exec(pandocCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Conversion failed: ${error.message}`);
+        if (stderr) console.error(`Details: ${stderr}`);
+        app.quit();
+        return;
+      }
+      
+      console.log(`Successfully converted to: ${outputPath}`);
+      
+      // Show Windows notification
+      if (process.platform === 'win32') {
+        exec(`powershell -Command "New-BurntToastNotification -Text 'PanConverter', 'File converted to ${format.toUpperCase()}' -AppLogo '${path.join(__dirname, '../assets/icon.png')}'"`, () => {});
+      }
+      
+      app.quit();
+    });
+  } catch (error) {
+    console.error(`Error reading file: ${error.message}`);
+    app.quit();
+  }
+}
+
+// Build Pandoc command for CLI conversion
+function buildPandocCommand(content, format, outputPath) {
+  const inputFile = path.join(require('os').tmpdir(), `panconverter_temp_${Date.now()}.md`);
+  fs.writeFileSync(inputFile, content, 'utf-8');
+  
+  let command = `pandoc "${inputFile}" -o "${outputPath}"`;
+  
+  switch (format) {
+    case 'pdf':
+      command += ' --pdf-engine=xelatex --variable geometry:margin=1in';
+      break;
+    case 'html':
+      command += ' --self-contained --css';
+      break;
+    case 'docx':
+      command += ' --reference-doc';
+      break;
+    case 'latex':
+      command += ' --standalone';
+      break;
+    case 'pptx':
+      command += ' --slide-level=2';
+      break;
+  }
+  
+  return command;
+}
+
 app.whenReady().then(() => {
+  // Check for command line conversion requests
+  const args = process.argv.slice(2);
+  if (args.length >= 2 && (args[0] === '--convert' || args[0] === '--convert-to')) {
+    handleCLIConversion(args);
+    return; // Don't create window for CLI operations
+  }
+  
   createWindow();
   
   // Handle file association on app startup
