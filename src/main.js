@@ -49,13 +49,7 @@ function createWindow() {
     mainWindow = null;
   });
 
-  // Handle pending file from file association
-  if (app.pendingFile) {
-    mainWindow.webContents.once('dom-ready', () => {
-      openFileFromPath(app.pendingFile);
-      app.pendingFile = null;
-    });
-  }
+  // Handle pending file from file association will be handled by renderer-ready event
 }
 
 function createMenu() {
@@ -183,6 +177,15 @@ function createMenu() {
       ]
     },
     {
+      label: 'Batch',
+      submenu: [
+        {
+          label: 'Convert Folder...',
+          click: () => showBatchConversionDialog()
+        }
+      ]
+    },
+    {
       label: 'Help',
       submenu: [
         {
@@ -192,7 +195,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.3.7\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• File association support for .md files\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.4.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• File association support for .md files (Fixed in v1.4.0)\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
               buttons: ['OK']
             });
           }
@@ -246,6 +249,19 @@ function exportFile(format) {
     return;
   }
 
+  // Show export options dialog
+  showExportOptionsDialog(format);
+}
+
+function showExportOptionsDialog(format) {
+  mainWindow.webContents.send('show-export-dialog', format);
+}
+
+function showBatchConversionDialog() {
+  mainWindow.webContents.send('show-batch-dialog');
+}
+
+function performExportWithOptions(format, options) {
   const outputFile = dialog.showSaveDialogSync(mainWindow, {
     defaultPath: currentFile.replace(/\.[^/.]+$/, `.${format}`),
     filters: [
@@ -255,36 +271,50 @@ function exportFile(format) {
 
   if (outputFile) {
     let pandocCmd = `pandoc "${currentFile}" -o "${outputFile}"`;
-    
+
+    // Add template if specified
+    if (options.template && options.template !== 'default') {
+      pandocCmd += ` --template="${options.template}"`;
+    }
+
+    // Add metadata
+    if (options.metadata) {
+      for (const [key, value] of Object.entries(options.metadata)) {
+        if (value.trim()) {
+          pandocCmd += ` -M ${key}="${value.replace(/"/g, '\\"')}"`;
+        }
+      }
+    }
+
+    // Add variables
+    if (options.variables) {
+      for (const [key, value] of Object.entries(options.variables)) {
+        if (value.trim()) {
+          pandocCmd += ` -V ${key}="${value.replace(/"/g, '\\"')}"`;
+        }
+      }
+    }
+
+    // Add other options
+    if (options.toc) pandocCmd += ' --toc';
+    if (options.tocDepth) pandocCmd += ` --toc-depth=${options.tocDepth}`;
+    if (options.numberSections) pandocCmd += ' --number-sections';
+    if (options.citeproc) pandocCmd += ' --citeproc';
+    if (options.bibliography) pandocCmd += ` --bibliography="${options.bibliography}"`;
+    if (options.csl) pandocCmd += ` --csl="${options.csl}"`;
+
     // Add specific options for PDF export to ensure proper generation
     if (format === 'pdf') {
-      pandocCmd = `pandoc "${currentFile}" --pdf-engine=xelatex -V geometry:margin=1in -o "${outputFile}"`;
-      // Try with different PDF engines if xelatex fails
+      const pdfEngine = options.pdfEngine || 'xelatex';
+      const geometry = options.geometry || 'margin=1in';
+      pandocCmd += ` --pdf-engine=${pdfEngine} -V geometry:${geometry}`;
+
+      // Try with specified PDF engine
       exec(pandocCmd, (error, stdout, stderr) => {
         if (error) {
-          // Fallback to pdflatex
-          const fallbackCmd = `pandoc "${currentFile}" --pdf-engine=pdflatex -V geometry:margin=1in -o "${outputFile}"`;
-          exec(fallbackCmd, (fallbackError, fallbackStdout, fallbackStderr) => {
-            if (fallbackError) {
-              // Final fallback to wkhtmltopdf
-              const htmlToPdfCmd = `pandoc "${currentFile}" -t html5 | wkhtmltopdf - "${outputFile}"`;
-              exec(htmlToPdfCmd, (finalError) => {
-                if (finalError) {
-                  dialog.showErrorBox('PDF Export Error', 
-                    `Failed to export PDF. Please ensure you have one of the following installed:\n` +
-                    `• XeLaTeX (recommended): sudo apt-get install texlive-xetex\n` +
-                    `• PDFLaTeX: sudo apt-get install texlive-latex-base\n` +
-                    `• wkhtmltopdf: sudo apt-get install wkhtmltopdf\n\n` +
-                    `Error: ${finalError.message}`
-                  );
-                } else {
-                  showExportSuccess(outputFile);
-                }
-              });
-            } else {
-              showExportSuccess(outputFile);
-            }
-          });
+          // Try fallback engines if the specified one fails
+          const fallbackEngines = ['pdflatex', 'lualatex'];
+          tryPdfFallback(currentFile, outputFile, fallbackEngines, 0, options, error);
         } else {
           showExportSuccess(outputFile);
         }
@@ -299,6 +329,44 @@ function exportFile(format) {
       });
     }
   }
+}
+
+function tryPdfFallback(inputFile, outputFile, engines, index, options, lastError) {
+  if (index >= engines.length) {
+    dialog.showErrorBox('PDF Export Error',
+      `Failed to export PDF with all available engines. Please ensure you have one of the following installed:\n` +
+      `• XeLaTeX (recommended): sudo apt-get install texlive-xetex\n` +
+      `• PDFLaTeX: sudo apt-get install texlive-latex-base\n` +
+      `• LuaLaTeX: sudo apt-get install texlive-luatex\n\n` +
+      `Last error: ${lastError.message}`
+    );
+    return;
+  }
+
+  const engine = engines[index];
+  const geometry = options.geometry || 'margin=1in';
+  let pandocCmd = `pandoc "${inputFile}" --pdf-engine=${engine} -V geometry:${geometry} -o "${outputFile}"`;
+
+  // Add all other options
+  if (options.template && options.template !== 'default') {
+    pandocCmd += ` --template="${options.template}"`;
+  }
+
+  if (options.metadata) {
+    for (const [key, value] of Object.entries(options.metadata)) {
+      if (value.trim()) {
+        pandocCmd += ` -M ${key}="${value.replace(/"/g, '\\"')}"`;
+      }
+    }
+  }
+
+  exec(pandocCmd, (error, stdout, stderr) => {
+    if (error) {
+      tryPdfFallback(inputFile, outputFile, engines, index + 1, options, error);
+    } else {
+      showExportSuccess(outputFile);
+    }
+  });
 }
 
 function showExportSuccess(outputFile) {
@@ -387,6 +455,35 @@ ipcMain.on('set-current-file', (event, filePath) => {
   currentFile = filePath;
 });
 
+// Handle renderer ready for file association
+ipcMain.on('renderer-ready', (event) => {
+  if (app.pendingFile) {
+    openFileFromPath(app.pendingFile);
+    app.pendingFile = null;
+  }
+});
+
+// Handle export with options
+ipcMain.on('export-with-options', (event, { format, options }) => {
+  performExportWithOptions(format, options);
+});
+
+// Handle batch conversion
+ipcMain.on('batch-convert', (event, { inputFolder, outputFolder, format, options }) => {
+  performBatchConversion(inputFolder, outputFolder, format, options);
+});
+
+// Handle folder selection for batch conversion
+ipcMain.on('select-folder', (event, type) => {
+  const folder = dialog.showOpenDialogSync(mainWindow, {
+    properties: ['openDirectory']
+  });
+
+  if (folder && folder[0]) {
+    event.reply('folder-selected', { type, path: folder[0] });
+  }
+});
+
 ipcMain.on('export-spreadsheet', (event, { content, format }) => {
   const outputFile = dialog.showSaveDialogSync(mainWindow, {
     defaultPath: currentFile.replace(/\.[^/.]+$/, `.${format}`),
@@ -468,6 +565,139 @@ function extractTablesFromMarkdown(markdown) {
   }
   
   return tables;
+}
+
+function performBatchConversion(inputFolder, outputFolder, format, options) {
+  if (!fs.existsSync(inputFolder)) {
+    dialog.showErrorBox('Error', 'Input folder does not exist');
+    return;
+  }
+
+  // Create output folder if it doesn't exist
+  if (!fs.existsSync(outputFolder)) {
+    try {
+      fs.mkdirSync(outputFolder, { recursive: true });
+    } catch (error) {
+      dialog.showErrorBox('Error', `Failed to create output folder: ${error.message}`);
+      return;
+    }
+  }
+
+  // Find all markdown files in input folder
+  const markdownFiles = [];
+
+  function findMarkdownFiles(dir) {
+    const files = fs.readdirSync(dir);
+
+    for (const file of files) {
+      const fullPath = path.join(dir, file);
+      const stat = fs.statSync(fullPath);
+
+      if (stat.isDirectory()) {
+        findMarkdownFiles(fullPath); // Recursive search
+      } else if (file.match(/\.(md|markdown)$/i)) {
+        markdownFiles.push(fullPath);
+      }
+    }
+  }
+
+  findMarkdownFiles(inputFolder);
+
+  if (markdownFiles.length === 0) {
+    dialog.showErrorBox('No Files Found', 'No markdown files found in the selected folder');
+    return;
+  }
+
+  // Show progress dialog
+  let completedCount = 0;
+  const totalCount = markdownFiles.length;
+
+  // Process each file
+  const processNextFile = (index) => {
+    if (index >= markdownFiles.length) {
+      // All files processed
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Batch Conversion Complete',
+        message: `Successfully converted ${completedCount} out of ${totalCount} files to ${format.toUpperCase()}.`,
+        buttons: ['OK']
+      });
+      return;
+    }
+
+    const inputFile = markdownFiles[index];
+    const relativePath = path.relative(inputFolder, inputFile);
+    const baseName = path.basename(relativePath, path.extname(relativePath));
+    const outputFile = path.join(outputFolder, relativePath.replace(/\.(md|markdown)$/i, `.${format}`));
+
+    // Create subdirectories in output folder if needed
+    const outputDir = path.dirname(outputFile);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Build pandoc command
+    let pandocCmd = `pandoc "${inputFile}" -o "${outputFile}"`;
+
+    // Add template if specified
+    if (options.template && options.template !== 'default') {
+      pandocCmd += ` --template="${options.template}"`;
+    }
+
+    // Add metadata
+    if (options.metadata) {
+      for (const [key, value] of Object.entries(options.metadata)) {
+        if (value.trim()) {
+          pandocCmd += ` -M ${key}="${value.replace(/"/g, '\\"')}"`;
+        }
+      }
+    }
+
+    // Add variables
+    if (options.variables) {
+      for (const [key, value] of Object.entries(options.variables)) {
+        if (value.trim()) {
+          pandocCmd += ` -V ${key}="${value.replace(/"/g, '\\"')}"`;
+        }
+      }
+    }
+
+    // Add other options
+    if (options.toc) pandocCmd += ' --toc';
+    if (options.tocDepth) pandocCmd += ` --toc-depth=${options.tocDepth}`;
+    if (options.numberSections) pandocCmd += ' --number-sections';
+    if (options.citeproc) pandocCmd += ' --citeproc';
+    if (options.bibliography) pandocCmd += ` --bibliography="${options.bibliography}"`;
+    if (options.csl) pandocCmd += ` --csl="${options.csl}"`;
+
+    // Add PDF-specific options
+    if (format === 'pdf') {
+      const pdfEngine = options.pdfEngine || 'xelatex';
+      const geometry = options.geometry || 'margin=1in';
+      pandocCmd += ` --pdf-engine=${pdfEngine} -V geometry:${geometry}`;
+    }
+
+    // Execute conversion
+    exec(pandocCmd, (error, stdout, stderr) => {
+      if (!error) {
+        completedCount++;
+      }
+
+      // Update progress (you could send this to renderer for a progress bar)
+      mainWindow.webContents.send('batch-progress', {
+        completed: index + 1,
+        total: totalCount,
+        currentFile: path.basename(inputFile),
+        success: !error
+      });
+
+      // Process next file
+      processNextFile(index + 1);
+    });
+  };
+
+  // Start processing
+  processNextFile(0);
 }
 
 app.whenReady().then(() => {

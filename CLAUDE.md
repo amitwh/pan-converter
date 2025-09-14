@@ -4,9 +4,9 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.3.3  
-**Author**: Amit Haridas (amit.wh@gmail.com)  
-**License**: MIT  
+**Current Version**: v1.4.0
+**Author**: Amit Haridas (amit.wh@gmail.com)
+**License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
 
 ## Architecture & Technology Stack
@@ -108,6 +108,42 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 ```
 
 ## Feature Implementation Guide
+
+### v1.4.0 Advanced Export & Batch Processing (Latest)
+
+#### 🔧 Fixed File Association Support
+**File Loading Fix** (`src/main.js:385-390`, `src/renderer.js:485-486`)
+- Fixed timing issue with file association loading
+- Added proper `renderer-ready` event to ensure TabManager is initialized
+- Files now open correctly when double-clicked or opened via right-click menu
+- Command-line file arguments are properly handled on startup
+
+#### 🎛️ Advanced Export Options Dialog
+**Template & Metadata Support** (`src/main.js:247-357`, `src/index.html:117-212`)
+- Comprehensive export options dialog with professional UI
+- Template selection (default or custom template files)
+- Metadata fields (title, author, date, subject) with dynamic field addition
+- Document options: Table of Contents, section numbering, citations
+- PDF-specific options: Engine selection (XeLaTeX, PDFLaTeX, LuaLaTeX), custom margins
+- Bibliography support: .bib, .yaml, .json files with CSL styling
+- All export formats now use enhanced options dialog
+
+#### 📁 Batch File Conversion System
+**Multi-File Processing** (`src/main.js:179-186`, `src/main.js:559-690`)
+- New "Batch" menu for converting entire folders
+- Recursive folder processing with progress tracking
+- Support for all export formats with advanced options
+- Real-time progress bar and file-by-file status updates
+- Maintains folder structure in output directory
+- Error handling with completion statistics
+
+#### 🎨 Enhanced UI Components
+**Dialog System** (`src/styles.css:838-1361`)
+- Professional modal dialogs with backdrop and animations
+- Theme-aware styling for all new components
+- Responsive layouts with proper accessibility
+- Form validation and user feedback systems
+- Progress indicators for long-running operations
 
 ### v1.3.x Tabbed Interface & Enhanced Features
 
@@ -220,19 +256,24 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 ## File Structure & Key Components
 
 ### Main Process (`src/main.js`)
-- **Menu System**: Comprehensive menu with file operations, editing, conversion, view options
+- **Menu System**: Comprehensive menu with file operations, editing, conversion, view options, batch processing
 - **IPC Handlers**: Communication between main and renderer processes
-- **File Operations**: Open, save, import/export functionality
+- **File Operations**: Open, save, import/export functionality with file association support
+- **Export System**: Advanced export with templates, metadata, and Pandoc integration
+- **Batch Processing**: Multi-file conversion with progress tracking and error handling
 - **Theme Management**: Persistent theme storage and application
 - **Spreadsheet Export**: Table extraction and XLSX generation
 - **About Dialog**: Application information and feature list
 
 ### Renderer Process (`src/renderer.js`)
 - **Editor Initialization**: CodeMirror-like functionality with custom implementation
+- **TabManager System**: Multi-file editing with state management
 - **Find & Replace Engine**: Search algorithms with regex support
 - **Undo/Redo Manager**: History stack management
 - **Auto-indentation Logic**: Smart list continuation
 - **Live Preview**: Real-time markdown rendering with DOMPurify
+- **Export Dialog Management**: Advanced options collection and validation
+- **Batch Conversion Interface**: Folder selection, progress tracking, and user feedback
 - **Event Handling**: Keyboard shortcuts and UI interactions
 - **Statistics Tracking**: Word/character counting
 
@@ -245,8 +286,11 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ### HTML Structure (`src/index.html`)
 - **Toolbar**: Feature buttons with SVG icons
+- **Tab Bar**: Multi-file navigation with close buttons
 - **Find Dialog**: Search and replace interface
-- **Editor Container**: Line numbers and text editor
+- **Export Options Dialog**: Advanced export configuration with templates and metadata
+- **Batch Conversion Dialog**: Folder selection and conversion progress
+- **Editor Container**: Line numbers and text editor with tab content management
 - **Preview Pane**: Rendered markdown display
 - **Status Bar**: Statistics and application status
 
@@ -258,6 +302,9 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 - [ ] Line numbers sync correctly with content
 - [ ] Undo/redo preserves cursor position
 - [ ] Auto-indentation works with various list types
+- [ ] File association loading (double-click .md files)
+- [ ] Export options dialog with templates and metadata
+- [ ] Batch conversion with progress tracking
 - [ ] All themes render correctly for new components
 - [ ] Export functions work with various document formats
 - [ ] Table creation and export functionality
@@ -330,5 +377,5 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ---
 
-**Last Updated**: September 1, 2025  
-**Claude Assistant**: Development completed for v1.3.3 with tabbed interface, enhanced PDF export, file associations, and improved typography
+**Last Updated**: September 14, 2025
+**Claude Assistant**: Development completed for v1.4.0 with fixed file associations, advanced export options with templates and metadata, batch file conversion system, and enhanced UI components.

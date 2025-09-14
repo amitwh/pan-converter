@@ -835,6 +835,531 @@ body.theme-github .status-bar {
     flex: 1;
 }
 
+/* Export Options Dialog */
+.export-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.export-dialog.hidden {
+    display: none;
+}
+
+.export-dialog-content {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.export-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.export-dialog-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.export-dialog-body {
+    padding: 20px;
+}
+
+.export-section {
+    margin-bottom: 20px;
+}
+
+.export-section label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.export-section select,
+.export-section input[type="text"],
+.export-section input[type="number"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.export-section select:focus,
+.export-section input:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+}
+
+.metadata-container {
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.metadata-field {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.metadata-field:last-child {
+    margin-bottom: 0;
+}
+
+.metadata-key {
+    flex: 0 0 120px;
+    font-weight: 600;
+}
+
+.metadata-value {
+    flex: 1;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    margin-bottom: 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin: 0;
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.form-row label {
+    flex: 0 0 120px;
+    margin-bottom: 0;
+}
+
+.form-row input,
+.form-row select {
+    flex: 1;
+}
+
+.form-row button {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.form-row button:hover {
+    background: #e8e8e8;
+}
+
+.pdf-only {
+    display: none;
+}
+
+.export-dialog[data-format="pdf"] .pdf-only {
+    display: block;
+}
+
+.export-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+    background: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+.export-dialog-footer button {
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.export-dialog-footer button.primary {
+    background: #007acc;
+    color: white;
+    border-color: #007acc;
+}
+
+.export-dialog-footer button.primary:hover {
+    background: #005fa3;
+    border-color: #005fa3;
+}
+
+.export-dialog-footer button:not(.primary) {
+    background: #f5f5f5;
+}
+
+.export-dialog-footer button:not(.primary):hover {
+    background: #e8e8e8;
+}
+
+#export-dialog-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+#export-dialog-close:hover {
+    background: #f0f0f0;
+}
+
+#add-metadata-field {
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #666;
+}
+
+#add-metadata-field:hover {
+    background: #e9ecef;
+}
+
+/* Theme support for export dialog */
+body.theme-dark .export-dialog-content {
+    background: #2d2d2d;
+    color: #f0f0f0;
+}
+
+body.theme-dark .export-dialog-header {
+    border-color: #444;
+}
+
+body.theme-dark .export-dialog-footer {
+    background: #333;
+    border-color: #444;
+}
+
+body.theme-dark .export-section label {
+    color: #f0f0f0;
+}
+
+body.theme-dark .export-section select,
+body.theme-dark .export-section input {
+    background: #1a1a1a;
+    border-color: #555;
+    color: #f0f0f0;
+}
+
+body.theme-dark .metadata-container {
+    border-color: #444;
+    background: #1a1a1a;
+}
+
+body.theme-dark .form-row button,
+body.theme-dark #add-metadata-field {
+    background: #1a1a1a;
+    border-color: #555;
+    color: #f0f0f0;
+}
+
+body.theme-dark .form-row button:hover,
+body.theme-dark #add-metadata-field:hover {
+    background: #333;
+}
+
+body.theme-dark #export-dialog-close:hover {
+    background: #444;
+}
+
+/* Batch Conversion Dialog */
+.batch-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.batch-dialog.hidden {
+    display: none;
+}
+
+.batch-dialog-content {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.batch-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.batch-dialog-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.batch-dialog-body {
+    padding: 20px;
+}
+
+.batch-section {
+    margin-bottom: 20px;
+}
+
+.batch-section label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.batch-section select,
+.batch-section input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.folder-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.folder-input-group input {
+    flex: 1;
+}
+
+.folder-input-group button {
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.folder-input-group button:hover {
+    background: #e8e8e8;
+}
+
+.batch-section label input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+#batch-show-options {
+    padding: 8px 16px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+}
+
+#batch-show-options:hover {
+    background: #e9ecef;
+}
+
+.batch-progress {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 16px;
+    background: #f8f9fa;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #007acc;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #666;
+}
+
+.batch-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+    background: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+.batch-dialog-footer button {
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.batch-dialog-footer button.primary {
+    background: #007acc;
+    color: white;
+    border-color: #007acc;
+}
+
+.batch-dialog-footer button.primary:hover:not(:disabled) {
+    background: #005fa3;
+    border-color: #005fa3;
+}
+
+.batch-dialog-footer button.primary:disabled {
+    background: #ccc;
+    border-color: #ccc;
+    cursor: not-allowed;
+}
+
+.batch-dialog-footer button:not(.primary) {
+    background: #f5f5f5;
+}
+
+.batch-dialog-footer button:not(.primary):hover {
+    background: #e8e8e8;
+}
+
+#batch-dialog-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+#batch-dialog-close:hover {
+    background: #f0f0f0;
+}
+
+/* Theme support for batch dialog */
+body.theme-dark .batch-dialog-content {
+    background: #2d2d2d;
+    color: #f0f0f0;
+}
+
+body.theme-dark .batch-dialog-header {
+    border-color: #444;
+}
+
+body.theme-dark .batch-dialog-footer {
+    background: #333;
+    border-color: #444;
+}
+
+body.theme-dark .batch-section label {
+    color: #f0f0f0;
+}
+
+body.theme-dark .batch-section select,
+body.theme-dark .batch-section input {
+    background: #1a1a1a;
+    border-color: #555;
+    color: #f0f0f0;
+}
+
+body.theme-dark .folder-input-group button,
+body.theme-dark #batch-show-options {
+    background: #1a1a1a;
+    border-color: #555;
+    color: #f0f0f0;
+}
+
+body.theme-dark .folder-input-group button:hover,
+body.theme-dark #batch-show-options:hover {
+    background: #333;
+}
+
+body.theme-dark .batch-progress {
+    background: #1a1a1a;
+    border-color: #444;
+}
+
+body.theme-dark .progress-text {
+    color: #ccc;
+}
+
+body.theme-dark #batch-dialog-close:hover {
+    background: #444;
+}
+
 /* Theme support for find dialog */
 body.theme-dark .find-dialog {
     background: #2d2d2d;

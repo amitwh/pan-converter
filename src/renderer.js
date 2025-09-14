@@ -478,9 +478,12 @@ let tabManager;
 
 document.addEventListener('DOMContentLoaded', () => {
     tabManager = new TabManager();
-    
+
     // Request current theme
     ipcRenderer.send('get-theme');
+
+    // Signal that renderer is ready for file operations
+    ipcRenderer.send('renderer-ready');
     
     // Set up auto-save interval
     setInterval(() => {
@@ -570,3 +573,372 @@ ipcRenderer.on('adjust-font-size', (event, action) => {
     }
     updateFontSizes(currentFontSize);
 });
+
+// Export Dialog functionality
+let currentExportFormat = null;
+
+ipcRenderer.on('show-export-dialog', (event, format) => {
+    currentExportFormat = format;
+    showExportDialog(format);
+});
+
+function showExportDialog(format) {
+    const dialog = document.getElementById('export-dialog');
+    const title = document.getElementById('export-dialog-title');
+
+    title.textContent = `Export as ${format.toUpperCase()}`;
+    dialog.setAttribute('data-format', format);
+    dialog.classList.remove('hidden');
+
+    // Initialize form values
+    initializeExportForm(format);
+}
+
+function hideExportDialog() {
+    const dialog = document.getElementById('export-dialog');
+    dialog.classList.add('hidden');
+    currentExportFormat = null;
+}
+
+function initializeExportForm(format) {
+    // Reset form to defaults
+    document.getElementById('export-template').value = 'default';
+    document.getElementById('custom-template-path').style.display = 'none';
+
+    // Clear metadata fields
+    const metadataFields = document.querySelectorAll('.metadata-field');
+    metadataFields.forEach((field, index) => {
+        if (index < 4) { // Keep first 4 default fields
+            field.querySelector('.metadata-key').value = ['title', 'author', 'date', 'subject'][index] || '';
+            field.querySelector('.metadata-value').value = '';
+        } else {
+            field.remove(); // Remove additional fields
+        }
+    });
+
+    // Reset checkboxes and other fields
+    document.getElementById('export-toc').checked = false;
+    document.getElementById('export-number-sections').checked = false;
+    document.getElementById('export-citeproc').checked = false;
+    document.getElementById('export-toc-depth').value = 3;
+
+    // PDF-specific fields
+    if (format === 'pdf') {
+        document.getElementById('pdf-engine').value = 'xelatex';
+        document.getElementById('pdf-geometry').value = 'margin=1in';
+        document.getElementById('custom-geometry').style.display = 'none';
+    }
+
+    // Clear bibliography fields
+    document.getElementById('bibliography-file').value = '';
+    document.getElementById('csl-file').value = '';
+}
+
+function collectExportOptions() {
+    const options = {
+        template: document.getElementById('export-template').value,
+        metadata: {},
+        variables: {},
+        toc: document.getElementById('export-toc').checked,
+        tocDepth: document.getElementById('export-toc-depth').value,
+        numberSections: document.getElementById('export-number-sections').checked,
+        citeproc: document.getElementById('export-citeproc').checked
+    };
+
+    // Collect custom template path
+    if (options.template === 'custom') {
+        options.template = document.getElementById('custom-template-path').value.trim();
+    }
+
+    // Collect metadata
+    const metadataFields = document.querySelectorAll('.metadata-field');
+    metadataFields.forEach(field => {
+        const key = field.querySelector('.metadata-key').value.trim();
+        const value = field.querySelector('.metadata-value').value.trim();
+        if (key && value) {
+            options.metadata[key] = value;
+        }
+    });
+
+    // PDF-specific options
+    if (currentExportFormat === 'pdf') {
+        options.pdfEngine = document.getElementById('pdf-engine').value;
+        const geometrySelect = document.getElementById('pdf-geometry');
+        if (geometrySelect.value === 'custom') {
+            options.geometry = document.getElementById('custom-geometry').value.trim() || 'margin=1in';
+        } else {
+            options.geometry = geometrySelect.value;
+        }
+    }
+
+    // Bibliography
+    const bibFile = document.getElementById('bibliography-file').value.trim();
+    const cslFile = document.getElementById('csl-file').value.trim();
+    if (bibFile) options.bibliography = bibFile;
+    if (cslFile) options.csl = cslFile;
+
+    return options;
+}
+
+// Event listeners for export dialog
+document.addEventListener('DOMContentLoaded', () => {
+    // Template selection
+    document.getElementById('export-template').addEventListener('change', (e) => {
+        const customPath = document.getElementById('custom-template-path');
+        const fileInput = document.getElementById('template-file-input');
+
+        if (e.target.value === 'custom') {
+            customPath.style.display = 'block';
+            fileInput.style.display = 'block';
+        } else {
+            customPath.style.display = 'none';
+            fileInput.style.display = 'none';
+            customPath.value = '';
+        }
+    });
+
+    // Template file input
+    document.getElementById('template-file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            document.getElementById('custom-template-path').value = file.path;
+        }
+    });
+
+    // PDF geometry selection
+    document.getElementById('pdf-geometry').addEventListener('change', (e) => {
+        const customGeometry = document.getElementById('custom-geometry');
+        if (e.target.value === 'custom') {
+            customGeometry.style.display = 'block';
+        } else {
+            customGeometry.style.display = 'none';
+        }
+    });
+
+    // Add metadata field
+    document.getElementById('add-metadata-field').addEventListener('click', () => {
+        const container = document.querySelector('.metadata-container');
+        const newField = document.createElement('div');
+        newField.className = 'metadata-field';
+        newField.innerHTML = `
+            <input type="text" placeholder="key" class="metadata-key">
+            <input type="text" placeholder="value" class="metadata-value">
+        `;
+        container.appendChild(newField);
+    });
+
+    // Browse bibliography
+    document.getElementById('browse-bibliography').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.bib,.yaml,.yml,.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('bibliography-file').value = file.path;
+            }
+        };
+        input.click();
+    });
+
+    // Browse CSL
+    document.getElementById('browse-csl').addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.csl';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('csl-file').value = file.path;
+            }
+        };
+        input.click();
+    });
+
+    // Dialog close buttons
+    document.getElementById('export-dialog-close').addEventListener('click', hideExportDialog);
+    document.getElementById('export-cancel').addEventListener('click', hideExportDialog);
+
+    // Export confirm
+    document.getElementById('export-confirm').addEventListener('click', () => {
+        const options = collectExportOptions();
+        ipcRenderer.send('export-with-options', {
+            format: currentExportFormat,
+            options: options
+        });
+        hideExportDialog();
+    });
+
+    // Close on backdrop click
+    document.getElementById('export-dialog').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('export-dialog')) {
+            hideExportDialog();
+        }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !document.getElementById('export-dialog').classList.contains('hidden')) {
+            hideExportDialog();
+        }
+    });
+});
+
+// Batch Conversion Dialog functionality
+let currentBatchOptions = {};
+
+ipcRenderer.on('show-batch-dialog', () => {
+    showBatchDialog();
+});
+
+ipcRenderer.on('batch-progress', (event, progress) => {
+    updateBatchProgress(progress);
+});
+
+ipcRenderer.on('folder-selected', (event, { type, path }) => {
+    if (type === 'input') {
+        document.getElementById('batch-input-folder').value = path;
+    } else if (type === 'output') {
+        document.getElementById('batch-output-folder').value = path;
+    }
+    validateBatchForm();
+});
+
+function showBatchDialog() {
+    const dialog = document.getElementById('batch-dialog');
+    dialog.classList.remove('hidden');
+
+    // Reset form
+    document.getElementById('batch-input-folder').value = '';
+    document.getElementById('batch-output-folder').value = '';
+    document.getElementById('batch-format').value = 'html';
+    document.getElementById('batch-include-subfolders').checked = true;
+    document.getElementById('batch-progress').classList.add('hidden');
+    document.getElementById('batch-start').disabled = true;
+
+    currentBatchOptions = {
+        template: 'default',
+        metadata: {},
+        variables: {},
+        toc: false,
+        tocDepth: 3,
+        numberSections: false,
+        citeproc: false
+    };
+}
+
+function hideBatchDialog() {
+    const dialog = document.getElementById('batch-dialog');
+    dialog.classList.add('hidden');
+}
+
+function updateBatchProgress(progress) {
+    const progressSection = document.getElementById('batch-progress');
+    const progressFill = document.getElementById('batch-progress-fill');
+    const progressText = document.getElementById('batch-progress-text');
+    const progressCount = document.getElementById('batch-progress-count');
+
+    progressSection.classList.remove('hidden');
+
+    const percentage = Math.round((progress.completed / progress.total) * 100);
+    progressFill.style.width = `${percentage}%`;
+
+    if (progress.completed === progress.total) {
+        progressText.textContent = 'Conversion complete!';
+    } else {
+        progressText.textContent = `Processing: ${progress.currentFile}`;
+    }
+
+    progressCount.textContent = `${progress.completed} / ${progress.total}`;
+}
+
+function validateBatchForm() {
+    const inputFolder = document.getElementById('batch-input-folder').value.trim();
+    const outputFolder = document.getElementById('batch-output-folder').value.trim();
+    const startButton = document.getElementById('batch-start');
+
+    startButton.disabled = !inputFolder || !outputFolder;
+}
+
+// Event listeners for batch dialog
+document.addEventListener('DOMContentLoaded', () => {
+    // Browse input folder
+    document.getElementById('browse-input-folder').addEventListener('click', () => {
+        ipcRenderer.send('select-folder', 'input');
+    });
+
+    // Browse output folder
+    document.getElementById('browse-output-folder').addEventListener('click', () => {
+        ipcRenderer.send('select-folder', 'output');
+    });
+
+    // Show advanced options
+    document.getElementById('batch-show-options').addEventListener('click', () => {
+        const format = document.getElementById('batch-format').value;
+        currentExportFormat = format;
+        showExportDialog(format);
+    });
+
+    // Dialog close buttons
+    document.getElementById('batch-dialog-close').addEventListener('click', hideBatchDialog);
+    document.getElementById('batch-cancel').addEventListener('click', hideBatchDialog);
+
+    // Start batch conversion
+    document.getElementById('batch-start').addEventListener('click', () => {
+        const inputFolder = document.getElementById('batch-input-folder').value.trim();
+        const outputFolder = document.getElementById('batch-output-folder').value.trim();
+        const format = document.getElementById('batch-format').value;
+
+        if (!inputFolder || !outputFolder) {
+            return;
+        }
+
+        // Use current export options from advanced dialog if they were set
+        const options = currentBatchOptions;
+
+        // Start batch conversion
+        ipcRenderer.send('batch-convert', {
+            inputFolder,
+            outputFolder,
+            format,
+            options
+        });
+
+        // Show progress
+        document.getElementById('batch-progress').classList.remove('hidden');
+        document.getElementById('batch-start').disabled = true;
+    });
+
+    // Close on backdrop click
+    document.getElementById('batch-dialog').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('batch-dialog')) {
+            hideBatchDialog();
+        }
+    });
+
+    // Close on Escape key (modified to handle both dialogs)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (!document.getElementById('export-dialog').classList.contains('hidden')) {
+                hideExportDialog();
+            } else if (!document.getElementById('batch-dialog').classList.contains('hidden')) {
+                hideBatchDialog();
+            }
+        }
+    });
+
+    // Input validation
+    document.getElementById('batch-input-folder').addEventListener('input', validateBatchForm);
+    document.getElementById('batch-output-folder').addEventListener('input', validateBatchForm);
+});
+
+// Override the export dialog confirm to also save batch options
+const originalExportConfirm = document.getElementById('export-confirm');
+if (originalExportConfirm) {
+    originalExportConfirm.addEventListener('click', () => {
+        // If batch dialog is open, save options for batch conversion
+        if (!document.getElementById('batch-dialog').classList.contains('hidden')) {
+            currentBatchOptions = collectExportOptions();
+        }
+    });
+}
