@@ -20,11 +20,14 @@ A cross-platform Markdown editor and converter powered by Pandoc.
 - 👁️ **Live Preview** - See your markdown rendered in real-time with synchronized scrolling
 - 🎨 **Multiple Themes** - Choose from Light, Dark, Solarized, Monokai, or GitHub themes
 - 💾 **Auto-Save** - Never lose your work with automatic saving every 30 seconds
+- 📊 **Enhanced Statistics** - Detailed document statistics including word count, character count, lines, paragraphs, sentences, and estimated reading time
+- 🕒 **Recent Files** - Quick access to recently opened files via File menu
+- 🧮 **Math Support** - Render mathematical expressions using KaTeX (supports $$, $, \\[\\], \\(\\) delimiters)
 
 ### 📤 Export & Conversion
 - 📄 **Enhanced PDF Export** - Robust PDF generation with multiple LaTeX engine fallbacks (XeLaTeX, PDFLaTeX, wkhtmltopdf)
 - 📄 **Document Export** - Convert to HTML, DOCX, LaTeX, RTF, ODT, EPUB, PowerPoint (PPTX), and OpenDocument Presentation (ODP)
-- 📊 **Spreadsheet Export** - Export markdown tables to Excel (XLSX/XLS) and OpenDocument Spreadsheet (ODS) formats
+- 📊 **Spreadsheet Export** - Export markdown tables to CSV format for compatibility with any spreadsheet application
 - 📥 **Document Import** - Import DOCX, ODT, RTF, HTML, PDF, and presentation files to markdown
 - 📋 **Table Creation Helper** - Built-in table generator for easy markdown table creation
 
@@ -50,9 +53,9 @@ For optimal PDF export, install a LaTeX engine (recommended):
 Download the latest release for your platform from the [Releases](https://github.com/amitwh/pan-converter/releases) page.
 
 #### Linux
-- **AppImage**: `PanConverter-1.3.1.AppImage` (universal, may require `--no-sandbox` flag)
-- **Debian Package**: `pan-converter_1.3.1_amd64.deb`
-- **Snap Package**: `pan-converter_1.3.1_amd64.snap`
+- **AppImage**: `PanConverter-1.5.0.AppImage` (universal, may require `--no-sandbox` flag)
+- **Debian Package**: `pan-converter_1.5.0_amd64.deb`
+- **Snap Package**: `pan-converter_1.5.0_amd64.snap`
 
 ### Install from Source
 ```bash
@@ -73,7 +76,9 @@ npm start
 ### Export Options
 - **Documents**: HTML, PDF, DOCX, LaTeX, RTF, ODT, EPUB
 - **Presentations**: PowerPoint (PPTX), OpenDocument Presentation (ODP)
-- **Spreadsheets**: Excel (XLSX/XLS), OpenDocument Spreadsheet (ODS)
+- **Spreadsheets**: CSV format for tables (compatible with Excel, LibreOffice, Google Sheets)
+- **Advanced Export Options**: Optional template support, metadata insertion, table of contents, section numbering, and PDF-specific settings
+- **Batch Conversion**: Convert entire folders of markdown files with progress tracking
 
 ### Import & Conversion
 - **Import Documents**: Convert DOCX, ODT, RTF, HTML, PDF, and presentation files to Markdown

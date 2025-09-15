@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.4.0
+**Current Version**: v1.5.0
 **Author**: Amit Haridas (amit.wh@gmail.com)
 **License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
@@ -13,10 +13,10 @@
 
 ### Core Technologies
 - **Electron** - Cross-platform desktop application framework
-- **Pandoc** - Universal document converter (required dependency)
+- **Pandoc** - Universal document converter (required system dependency)
 - **marked** - Markdown parsing and rendering
 - **highlight.js** - Syntax highlighting
-- **XLSX** - Spreadsheet export functionality
+- **KaTeX** - Mathematical expression rendering
 - **DOMPurify** - HTML sanitization
 
 ### Application Structure
@@ -109,7 +109,48 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ## Feature Implementation Guide
 
-### v1.4.0 Advanced Export & Batch Processing (Latest)
+### v1.5.0 Enhanced Features & Open Source Compatibility (Latest)
+
+#### 🔧 Export Function Fixes & Optional Advanced Options
+**Export Dialog Enhancement** (`src/index.html:125-133`, `src/renderer.js:960-985`)
+- Fixed export function issues after advanced export options integration
+- Added optional advanced export options via checkbox toggle (unchecked by default)
+- Basic export options always visible, advanced options hidden until enabled
+- Clean UI separation between simple and advanced export workflows
+
+#### 🏗️ Open Source Compatibility & Dependency Removal
+**Removed Proprietary Dependencies** (`src/main.js:430-450`, `package.json:32-37`)
+- Removed bundled Pandoc binaries - now requires system-installed Pandoc
+- Replaced proprietary XLSX dependency with open-source CSV export
+- Removed non-essential bundled binaries to ensure open-source compatibility
+- Updated export functions to use system Pandoc installation
+
+#### ✨ Advanced User Experience Features
+**Auto-Save System** (`src/renderer.js:445-484`)
+- Automatic saving every 30 seconds with visual indicators
+- Smooth slide-in animation for auto-save notifications
+- Prevents data loss during extended editing sessions
+- Integrated with file opening and tab creation workflows
+
+**Enhanced Document Statistics** (`src/renderer.js:385-444`)
+- Comprehensive statistics: words, characters, lines, paragraphs, sentences
+- Estimated reading time calculation (200 words per minute)
+- Real-time updates as user types
+- Professional presentation in status bar
+
+**Recent Files Management** (`src/main.js:69-114`, `src/renderer.js:487-512`)
+- Recent files menu with last 10 opened files
+- Persistent storage via localStorage and user data directory
+- Menu integration with File > Recent Files submenu
+- Clear recent files functionality with menu rebuild
+
+**Mathematical Expression Support** (`src/renderer.js:1099-1130`, `src/renderer.js:292-306`)
+- KaTeX integration for rendering mathematical expressions
+- Support for multiple delimiters: $$, $, \\[\\], \\(\\)
+- Real-time math rendering in preview pane
+- Fallback handling for missing KaTeX library
+
+### v1.4.0 Advanced Export & Batch Processing
 
 #### 🔧 Fixed File Association Support
 **File Loading Fix** (`src/main.js:385-390`, `src/renderer.js:485-486`)
@@ -377,5 +418,5 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ---
 
-**Last Updated**: September 14, 2025
-**Claude Assistant**: Development completed for v1.4.0 with fixed file associations, advanced export options with templates and metadata, batch file conversion system, and enhanced UI components.
+**Last Updated**: September 15, 2025
+**Claude Assistant**: Development completed for v1.5.0 with optional advanced export options, removed proprietary dependencies for open-source compatibility, enhanced auto-save functionality, comprehensive document statistics, recent files management, and mathematical expression support using KaTeX.

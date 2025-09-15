@@ -2,7 +2,21 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
-const XLSX = require('xlsx');
+
+// Get the system Pandoc path
+function getPandocPath() {
+  // Always use system pandoc - no bundled binaries
+  return 'pandoc';
+}
+
+// Check if Pandoc is available
+function checkPandocAvailable() {
+  return new Promise((resolve) => {
+    exec('pandoc --version', (error) => {
+      resolve(!error);
+    });
+  });
+}
 
 // Simple storage implementation to replace electron-store
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
@@ -52,6 +66,53 @@ function createWindow() {
   // Handle pending file from file association will be handled by renderer-ready event
 }
 
+function buildRecentFilesMenu() {
+  const recentFiles = getRecentFiles();
+
+  if (recentFiles.length === 0) {
+    return [
+      {
+        label: 'No recent files',
+        enabled: false
+      }
+    ];
+  }
+
+  const recentFileItems = recentFiles.map(filePath => ({
+    label: filePath.split(/[\\/]/).pop(), // Get filename only
+    click: () => {
+      if (fs.existsSync(filePath)) {
+        currentFile = filePath;
+        const content = fs.readFileSync(filePath, 'utf-8');
+        mainWindow.webContents.send('file-opened', { path: filePath, content });
+      } else {
+        dialog.showErrorBox('File Not Found', `The file "${filePath}" could not be found.`);
+      }
+    },
+    toolTip: filePath // Show full path in tooltip
+  }));
+
+  return [
+    ...recentFileItems,
+    { type: 'separator' },
+    {
+      label: 'Clear Recent Files',
+      click: () => {
+        mainWindow.webContents.send('clear-recent-files');
+      }
+    }
+  ];
+}
+
+function getRecentFiles() {
+  try {
+    const recentFiles = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'recent-files.json'), 'utf-8'));
+    return recentFiles.filter(file => fs.existsSync(file));
+  } catch (e) {
+    return [];
+  }
+}
+
 function createMenu() {
   const template = [
     {
@@ -79,6 +140,11 @@ function createMenu() {
         },
         { type: 'separator' },
         {
+          label: 'Recent Files',
+          submenu: buildRecentFilesMenu()
+        },
+        { type: 'separator' },
+        {
           label: 'Import Document...',
           accelerator: 'CmdOrCtrl+I',
           click: importDocument
@@ -97,9 +163,7 @@ function createMenu() {
             { label: 'PowerPoint (PPTX)', click: () => exportFile('pptx') },
             { label: 'OpenDocument Presentation (ODP)', click: () => exportFile('odp') },
             { type: 'separator' },
-            { label: 'Excel (XLSX)', click: () => exportSpreadsheet('xlsx') },
-            { label: 'Excel Legacy (XLS)', click: () => exportSpreadsheet('xls') },
-            { label: 'OpenDocument Spreadsheet (ODS)', click: () => exportSpreadsheet('ods') }
+            { label: 'CSV (Tables)', click: () => exportSpreadsheet('csv') }
           ]
         },
         { type: 'separator' },
@@ -195,7 +259,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.4.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• File association support for .md files (Fixed in v1.4.0)\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.5.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with LaTeX engines\n• Optional advanced export options\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to CSV format\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }
@@ -270,7 +334,7 @@ function performExportWithOptions(format, options) {
   });
 
   if (outputFile) {
-    let pandocCmd = `pandoc "${currentFile}" -o "${outputFile}"`;
+    let pandocCmd = `${getPandocPath()} "${currentFile}" -o "${outputFile}"`;
 
     // Add template if specified
     if (options.template && options.template !== 'default') {
@@ -345,7 +409,7 @@ function tryPdfFallback(inputFile, outputFile, engines, index, options, lastErro
 
   const engine = engines[index];
   const geometry = options.geometry || 'margin=1in';
-  let pandocCmd = `pandoc "${inputFile}" --pdf-engine=${engine} -V geometry:${geometry} -o "${outputFile}"`;
+  let pandocCmd = `${getPandocPath()} "${inputFile}" --pdf-engine=${engine} -V geometry:${geometry} -o "${outputFile}"`;
 
   // Add all other options
   if (options.template && options.template !== 'default') {
@@ -403,7 +467,7 @@ function importDocument() {
     const outputFile = inputFile.replace(/\.[^/.]+$/, '.md');
     
     // Convert to markdown using pandoc
-    const pandocCmd = `pandoc "${inputFile}" -t markdown -o "${outputFile}"`;
+    const pandocCmd = `${getPandocPath()} "${inputFile}" -t markdown -o "${outputFile}"`;
     
     exec(pandocCmd, (error, stdout, stderr) => {
       if (error) {
@@ -496,27 +560,36 @@ ipcMain.on('export-spreadsheet', (event, { content, format }) => {
     try {
       // Parse markdown content to extract tables
       const tables = extractTablesFromMarkdown(content);
-      
+
       if (tables.length === 0) {
         dialog.showErrorBox('Export Error', 'No tables found in the markdown content');
         return;
       }
 
-      // Create workbook
-      const wb = XLSX.utils.book_new();
-      
+      // Convert tables to CSV format
+      let csvContent = '';
       tables.forEach((table, index) => {
-        const ws = XLSX.utils.aoa_to_sheet(table);
-        XLSX.utils.book_append_sheet(wb, ws, `Table ${index + 1}`);
+        if (index > 0) csvContent += '\n\n'; // Separate multiple tables
+        if (tables.length > 1) csvContent += `"Table ${index + 1}"\n`;
+
+        table.forEach(row => {
+          const csvRow = row.map(cell => {
+            // Escape quotes and wrap in quotes if necessary
+            const cleanCell = cell.replace(/"/g, '""');
+            return cleanCell.includes(',') || cleanCell.includes('"') || cleanCell.includes('\n')
+              ? `"${cleanCell}"` : cleanCell;
+          }).join(',');
+          csvContent += csvRow + '\n';
+        });
       });
 
-      // Write file
-      XLSX.writeFile(wb, outputFile);
-      
+      // Write CSV file
+      fs.writeFileSync(outputFile, csvContent, 'utf-8');
+
       dialog.showMessageBox(mainWindow, {
         type: 'info',
         title: 'Export Complete',
-        message: `Spreadsheet exported successfully to ${outputFile}`,
+        message: `CSV exported successfully to ${outputFile}`,
         buttons: ['OK']
       });
     } catch (error) {
@@ -637,7 +710,7 @@ function performBatchConversion(inputFolder, outputFolder, format, options) {
     }
 
     // Build pandoc command
-    let pandocCmd = `pandoc "${inputFile}" -o "${outputFile}"`;
+    let pandocCmd = `${getPandocPath()} "${inputFile}" -o "${outputFile}"`;
 
     // Add template if specified
     if (options.template && options.template !== 'default') {
@@ -724,6 +797,30 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
+  }
+});
+
+// IPC handlers for recent files
+ipcMain.on('save-recent-files', (event, recentFiles) => {
+  try {
+    const userDataPath = app.getPath('userData');
+    const recentFilesPath = path.join(userDataPath, 'recent-files.json');
+    fs.writeFileSync(recentFilesPath, JSON.stringify(recentFiles, null, 2));
+  } catch (error) {
+    console.error('Error saving recent files:', error);
+  }
+});
+
+ipcMain.on('clear-recent-files', (event) => {
+  try {
+    const userDataPath = app.getPath('userData');
+    const recentFilesPath = path.join(userDataPath, 'recent-files.json');
+    fs.writeFileSync(recentFilesPath, JSON.stringify([], null, 2));
+    // Rebuild menu to reflect changes
+    createMenu();
+    event.reply('recent-files-cleared');
+  } catch (error) {
+    console.error('Error clearing recent files:', error);
   }
 });
 

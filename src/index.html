@@ -122,8 +122,20 @@
                     <button id="export-dialog-close" title="Close">×</button>
                 </div>
                 <div class="export-dialog-body">
-                    <div class="export-section">
-                        <label for="export-template">Template:</label>
+                    <!-- Simple/Advanced Export Toggle -->
+                    <div class="export-section export-mode-toggle">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="advanced-export-toggle">
+                            <span class="checkmark"></span>
+                            Show Advanced Options
+                        </label>
+                        <small class="export-help">Enable for templates, metadata, bibliography, and advanced PDF settings</small>
+                    </div>
+
+                    <!-- Advanced Export Options (hidden by default) -->
+                    <div id="advanced-export-options" class="advanced-options hidden">
+                        <div class="export-section">
+                            <label for="export-template">Template:</label>
                         <select id="export-template">
                             <option value="default">Default</option>
                             <option value="custom">Custom (Browse...)</option>
@@ -201,6 +213,16 @@
                         <div class="form-row">
                             <input type="text" id="csl-file" placeholder="Citation style file (.csl)">
                             <button id="browse-csl">Browse</button>
+                        </div>
+                    </div>
+                    </div> <!-- End advanced-export-options -->
+
+                    <!-- Basic Export Options (always visible) -->
+                    <div class="export-section basic-options">
+                        <label>Quick Export Settings:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" id="basic-toc"> Include Table of Contents</label>
+                            <label><input type="checkbox" id="basic-number-sections"> Number Sections</label>
                         </div>
                     </div>
                 </div>

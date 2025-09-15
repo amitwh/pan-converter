@@ -25,6 +25,9 @@ class TabManager {
         this.nextTabId = 2;
         this.isPreviewVisible = true;
         this.showLineNumbers = false;
+        this.autoSaveInterval = null;
+        this.autoSaveDelay = 30000; // 30 seconds
+        this.recentFiles = JSON.parse(localStorage.getItem('recentFiles') || '[]');
         
         // Initialize first tab
         this.tabs.set(1, {
@@ -112,6 +115,7 @@ class TabManager {
         this.tabs.set(newTabId, tab);
         this.createTabElements(tab);
         this.switchToTab(newTabId);
+        this.startAutoSave();
         this.updateTabBar();
     }
     
@@ -284,6 +288,22 @@ class TabManager {
             const html = marked.parse(tab.content);
             const sanitizedHtml = DOMPurify.sanitize(html);
             preview.innerHTML = sanitizedHtml;
+
+            // Render math expressions if KaTeX is available
+            if (window.katex && window.renderMathInElement) {
+                try {
+                    window.renderMathInElement(preview, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\[', right: '\\]', display: true},
+                            {left: '\\(', right: '\\)', display: false}
+                        ]
+                    });
+                } catch (mathError) {
+                    console.warn('Math rendering error:', mathError);
+                }
+            }
         } catch (error) {
             preview.innerHTML = '<p>Error rendering preview</p>';
         }
@@ -324,10 +344,33 @@ class TabManager {
     updateWordCount() {
         const tab = this.tabs.get(this.activeTabId);
         if (!tab) return;
-        
-        const words = tab.content.trim().split(/\\s+/).filter(word => word.length > 0).length;
-        const chars = tab.content.length;
-        document.getElementById('word-count').textContent = `Words: ${words} | Characters: ${chars}`;
+
+        const content = tab.content;
+        const words = content.trim() ? content.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
+        const chars = content.length;
+        const charsNoSpaces = content.replace(/\s/g, '').length;
+
+        // Enhanced statistics
+        const lines = content.split('\n').length;
+        const paragraphs = content.split(/\n\s*\n/).filter(p => p.trim()).length;
+        const readingTime = Math.ceil(words / 200); // Average reading speed: 200 words/minute
+        const sentences = content.split(/[.!?]+/).filter(s => s.trim()).length;
+
+        // Update the word count display with enhanced stats
+        const basicStats = `Words: ${words} | Characters: ${chars} (${charsNoSpaces} no spaces)`;
+        const enhancedStats = `Lines: ${lines} | Paragraphs: ${paragraphs} | Sentences: ${sentences} | Reading time: ${readingTime} min`;
+
+        document.getElementById('word-count').textContent = basicStats;
+
+        // Add enhanced stats to a separate element
+        let enhancedEl = document.getElementById('enhanced-stats');
+        if (!enhancedEl) {
+            enhancedEl = document.createElement('div');
+            enhancedEl.id = 'enhanced-stats';
+            enhancedEl.className = 'enhanced-stats';
+            document.querySelector('.status-bar').appendChild(enhancedEl);
+        }
+        enhancedEl.textContent = enhancedStats;
     }
     
     setupEditorEvents() {
@@ -408,7 +451,84 @@ class TabManager {
             this.updateWordCount();
         }
     }
-    
+
+    // Auto-save functionality
+    startAutoSave() {
+        if (this.autoSaveInterval) {
+            clearInterval(this.autoSaveInterval);
+        }
+
+        this.autoSaveInterval = setInterval(() => {
+            this.performAutoSave();
+        }, this.autoSaveDelay);
+    }
+
+    stopAutoSave() {
+        if (this.autoSaveInterval) {
+            clearInterval(this.autoSaveInterval);
+            this.autoSaveInterval = null;
+        }
+    }
+
+    performAutoSave() {
+        const tab = this.tabs.get(this.activeTabId);
+        if (!tab || !tab.filePath || !tab.content) return;
+
+        // Only auto-save if content has changed since last save
+        if (tab.lastSavedContent !== tab.content) {
+            ipcRenderer.send('save-file', { path: tab.filePath, content: tab.content });
+            tab.lastSavedContent = tab.content;
+
+            // Show brief auto-save indicator
+            this.showAutoSaveIndicator();
+        }
+    }
+
+    showAutoSaveIndicator() {
+        const indicator = document.createElement('div');
+        indicator.textContent = 'Auto-saved';
+        indicator.className = 'auto-save-indicator';
+        document.body.appendChild(indicator);
+
+        setTimeout(() => {
+            indicator.classList.add('fade-out');
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            }, 300);
+        }, 1500);
+    }
+
+    // Recent files functionality
+    addToRecentFiles(filePath) {
+        if (!filePath) return;
+
+        // Remove if already exists
+        this.recentFiles = this.recentFiles.filter(f => f !== filePath);
+
+        // Add to beginning
+        this.recentFiles.unshift(filePath);
+
+        // Keep only last 10 files
+        this.recentFiles = this.recentFiles.slice(0, 10);
+
+        // Save to localStorage and sync with main process
+        localStorage.setItem('recentFiles', JSON.stringify(this.recentFiles));
+        window.electronAPI.send('save-recent-files', this.recentFiles);
+    }
+
+    getRecentFiles() {
+        return this.recentFiles.filter(file => {
+            // Check if file still exists (basic check by trying to access it)
+            try {
+                return file && file.length > 0;
+            } catch (e) {
+                return false;
+            }
+        });
+    }
+
     setupToolbarEvents() {
         // Existing toolbar setup...
         document.getElementById('btn-preview-toggle').addEventListener('click', () => {
@@ -459,6 +579,8 @@ class TabManager {
         }
         
         this.restoreTabState(this.activeTabId);
+        this.startAutoSave();
+        this.addToRecentFiles(filePath);
         this.updateTabBar();
     }
     
@@ -601,6 +723,13 @@ function hideExportDialog() {
 }
 
 function initializeExportForm(format) {
+    // Reset advanced export toggle to unchecked
+    const advancedToggle = document.getElementById('advanced-export-toggle');
+    const advancedOptions = document.getElementById('advanced-export-options');
+
+    advancedToggle.checked = false;
+    advancedOptions.classList.add('hidden');
+
     // Reset form to defaults
     document.getElementById('export-template').value = 'default';
     document.getElementById('custom-template-path').style.display = 'none';
@@ -635,47 +764,68 @@ function initializeExportForm(format) {
 }
 
 function collectExportOptions() {
-    const options = {
-        template: document.getElementById('export-template').value,
-        metadata: {},
-        variables: {},
-        toc: document.getElementById('export-toc').checked,
-        tocDepth: document.getElementById('export-toc-depth').value,
-        numberSections: document.getElementById('export-number-sections').checked,
-        citeproc: document.getElementById('export-citeproc').checked
-    };
+    const advancedMode = document.getElementById('advanced-export-toggle').checked;
+    const options = {};
 
-    // Collect custom template path
-    if (options.template === 'custom') {
-        options.template = document.getElementById('custom-template-path').value.trim();
+    if (advancedMode) {
+        // Collect advanced options
+        options.template = document.getElementById('export-template').value;
+        options.metadata = {};
+        options.variables = {};
+        options.toc = document.getElementById('export-toc').checked;
+        options.tocDepth = document.getElementById('export-toc-depth').value;
+        options.numberSections = document.getElementById('export-number-sections').checked;
+        options.citeproc = document.getElementById('export-citeproc').checked;
+    } else {
+        // Collect basic options only
+        options.template = 'default';
+        options.metadata = {};
+        options.variables = {};
+        options.toc = document.getElementById('basic-toc').checked;
+        options.tocDepth = 3;
+        options.numberSections = document.getElementById('basic-number-sections').checked;
+        options.citeproc = false;
     }
 
-    // Collect metadata
-    const metadataFields = document.querySelectorAll('.metadata-field');
-    metadataFields.forEach(field => {
-        const key = field.querySelector('.metadata-key').value.trim();
-        const value = field.querySelector('.metadata-value').value.trim();
-        if (key && value) {
-            options.metadata[key] = value;
+    if (advancedMode) {
+        // Collect custom template path
+        if (options.template === 'custom') {
+            options.template = document.getElementById('custom-template-path').value.trim();
         }
-    });
 
-    // PDF-specific options
-    if (currentExportFormat === 'pdf') {
-        options.pdfEngine = document.getElementById('pdf-engine').value;
-        const geometrySelect = document.getElementById('pdf-geometry');
-        if (geometrySelect.value === 'custom') {
-            options.geometry = document.getElementById('custom-geometry').value.trim() || 'margin=1in';
-        } else {
-            options.geometry = geometrySelect.value;
+        // Collect metadata
+        const metadataFields = document.querySelectorAll('.metadata-field');
+        metadataFields.forEach(field => {
+            const key = field.querySelector('.metadata-key').value.trim();
+            const value = field.querySelector('.metadata-value').value.trim();
+            if (key && value) {
+                options.metadata[key] = value;
+            }
+        });
+
+        // PDF-specific options
+        if (currentExportFormat === 'pdf') {
+            options.pdfEngine = document.getElementById('pdf-engine').value;
+            const geometrySelect = document.getElementById('pdf-geometry');
+            if (geometrySelect.value === 'custom') {
+                options.geometry = document.getElementById('custom-geometry').value.trim() || 'margin=1in';
+            } else {
+                options.geometry = geometrySelect.value;
+            }
+        }
+
+        // Bibliography
+        const bibFile = document.getElementById('bibliography-file').value.trim();
+        const cslFile = document.getElementById('csl-file').value.trim();
+        if (bibFile) options.bibliography = bibFile;
+        if (cslFile) options.csl = cslFile;
+    } else {
+        // Basic mode - set default PDF options if needed
+        if (currentExportFormat === 'pdf') {
+            options.pdfEngine = 'xelatex';
+            options.geometry = 'margin=1in';
         }
     }
-
-    // Bibliography
-    const bibFile = document.getElementById('bibliography-file').value.trim();
-    const cslFile = document.getElementById('csl-file').value.trim();
-    if (bibFile) options.bibliography = bibFile;
-    if (cslFile) options.csl = cslFile;
 
     return options;
 }
@@ -694,6 +844,16 @@ document.addEventListener('DOMContentLoaded', () => {
             customPath.style.display = 'none';
             fileInput.style.display = 'none';
             customPath.value = '';
+        }
+    });
+
+    // Advanced export toggle
+    document.getElementById('advanced-export-toggle').addEventListener('change', (e) => {
+        const advancedOptions = document.getElementById('advanced-export-options');
+        if (e.target.checked) {
+            advancedOptions.classList.remove('hidden');
+        } else {
+            advancedOptions.classList.add('hidden');
         }
     });
 
@@ -942,3 +1102,45 @@ if (originalExportConfirm) {
         }
     });
 }
+
+// IPC event listeners for recent files functionality
+if (window.electronAPI) {
+    window.electronAPI.on('recent-files-cleared', () => {
+        tabManager.recentFiles = [];
+        localStorage.setItem('recentFiles', JSON.stringify([]));
+        console.log('Recent files cleared');
+    });
+}
+
+// Add math rendering support using KaTeX for enhanced preview
+function initMathSupport() {
+    // Add KaTeX CSS
+    const katexCSS = document.createElement('link');
+    katexCSS.rel = 'stylesheet';
+    katexCSS.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css';
+    katexCSS.crossOrigin = 'anonymous';
+    document.head.appendChild(katexCSS);
+
+    // Add KaTeX JS
+    const katexJS = document.createElement('script');
+    katexJS.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js';
+    katexJS.crossOrigin = 'anonymous';
+    katexJS.onload = () => {
+        // Add auto-render extension
+        const autoRenderJS = document.createElement('script');
+        autoRenderJS.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js';
+        autoRenderJS.crossOrigin = 'anonymous';
+        autoRenderJS.onload = () => {
+            console.log('Math support (KaTeX) initialized');
+            // Re-render current preview to include math
+            if (tabManager) {
+                tabManager.updatePreview();
+            }
+        };
+        document.head.appendChild(autoRenderJS);
+    };
+    document.head.appendChild(katexJS);
+}
+
+// Initialize math support on load
+initMathSupport();

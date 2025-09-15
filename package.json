@@ -1,13 +1,14 @@
 {
   "name": "pan-converter",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Cross-platform Markdown editor and converter using Pandoc",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "electron-builder",
-    "build:win": "electron-builder --win",
+    "build:win": "cross-env CSC_LINK=code-signing-cert.pfx CSC_KEY_PASSWORD=PanConverter2024! electron-builder --win",
+    "build:win-unsigned": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux",
     "dist": "electron-builder --publish=never",
@@ -23,6 +24,7 @@
   "author": "Amit Haridas <amit.wh@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "cross-env": "^10.0.0",
     "electron": "^37.4.0",
     "electron-builder": "^26.0.12",
     "sharp": "^0.34.3"
@@ -32,8 +34,7 @@
     "dompurify": "^3.2.6",
     "electron-store": "^10.1.0",
     "highlight.js": "^11.11.1",
-    "marked": "^16.2.1",
-    "xlsx": "^0.18.5"
+    "marked": "^16.2.1"
   },
   "build": {
     "appId": "com.panconverter.app",
@@ -58,7 +59,7 @@
       {
         "ext": "markdown",
         "name": "Markdown Document",
-        "description": "Markdown Document", 
+        "description": "Markdown Document",
         "mimeType": "text/markdown",
         "role": "Editor"
       }
@@ -68,8 +69,43 @@
       "icon": "assets/icon.icns"
     },
     "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "requestedExecutionLevel": "asInvoker",
+      "signAndEditExecutable": true
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "displayLanguageSelector": true,
+      "installerIcon": "assets/icon-proper.ico",
+      "uninstallerIcon": "assets/icon-proper.ico",
+      "installerHeaderIcon": "assets/icon-proper.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PanConverter",
+      "runAfterFinish": true,
+      "menuCategory": "Productivity",
+      "license": "LICENSE",
+      "warningsAsErrors": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false,
+      "differentialPackage": true
     },
     "linux": {
       "target": [

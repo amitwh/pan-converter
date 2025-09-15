@@ -1407,3 +1407,180 @@ body.theme-github .line-numbers {
     border-right-color: #e1e4e8;
     color: #586069;
 }
+
+/* Advanced Export Toggle Styles */
+.export-mode-toggle {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.export-help {
+    color: #666;
+    font-size: 12px;
+    font-style: italic;
+    margin-left: 25px;
+}
+
+.advanced-options {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.advanced-options.hidden {
+    display: none;
+}
+
+.basic-options {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.basic-options label {
+    font-weight: normal;
+    margin-bottom: 8px;
+}
+
+/* Theme support for advanced export toggle */
+body.theme-dark .export-mode-toggle {
+    border-color: #444;
+}
+
+body.theme-dark .export-help {
+    color: #999;
+}
+
+body.theme-dark .basic-options {
+    background: #1a1a1a;
+    border-color: #444;
+}
+
+body.theme-dark .checkbox-label {
+    color: #f0f0f0;
+}
+
+body.theme-solarized .export-mode-toggle {
+    border-color: #eee8d5;
+}
+
+body.theme-solarized .export-help {
+    color: #586e75;
+}
+
+body.theme-solarized .basic-options {
+    background: #fdf6e3;
+    border-color: #eee8d5;
+}
+
+body.theme-monokai .export-mode-toggle {
+    border-color: #49483e;
+}
+
+body.theme-monokai .export-help {
+    color: #75715e;
+}
+
+body.theme-monokai .basic-options {
+    background: #2f2f2f;
+    border-color: #49483e;
+}
+
+body.theme-github .export-mode-toggle {
+    border-color: #e1e4e8;
+}
+
+body.theme-github .export-help {
+    color: #586069;
+}
+
+body.theme-github .basic-options {
+    background: #f6f8fa;
+    border-color: #e1e4e8;
+}
+
+/* Enhanced Statistics Styles */
+.enhanced-stats {
+    font-size: 11px;
+    color: #666;
+    padding: 2px 0;
+    border-top: 1px solid #ddd;
+    margin-top: 2px;
+    font-family: monospace;
+}
+
+/* Theme support for enhanced stats */
+body.theme-dark .enhanced-stats {
+    color: #999;
+    border-color: #444;
+}
+
+body.theme-solarized .enhanced-stats {
+    color: #586e75;
+    border-color: #eee8d5;
+}
+
+body.theme-monokai .enhanced-stats {
+    color: #75715e;
+    border-color: #49483e;
+}
+
+body.theme-github .enhanced-stats {
+    color: #586069;
+    border-color: #e1e4e8;
+}
+
+/* Auto-save indicator */
+.auto-save-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.auto-save-indicator.fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
