@@ -69,6 +69,9 @@ class TabManager {
         // Find dialog events
         this.setupFindEvents();
         
+        // Drag and drop events
+        this.setupDragDropEvents();
+        
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -438,14 +441,77 @@ class TabManager {
         });
     }
     
+    setupDragDropEvents() {
+        const container = document.querySelector('.container');
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            container.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+        
+        // Add visual feedback for drag
+        container.addEventListener('dragenter', (e) => {
+            container.classList.add('drag-over');
+        });
+        
+        container.addEventListener('dragleave', (e) => {
+            // Only remove class if leaving the container entirely
+            if (!container.contains(e.relatedTarget)) {
+                container.classList.remove('drag-over');
+            }
+        });
+        
+        container.addEventListener('drop', (e) => {
+            container.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Check if it's a markdown file
+                if (file.name.endsWith('.md') || file.name.endsWith('.markdown')) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const content = event.target.result;
+                        this.openFile(file.name, content);
+                    };
+                    reader.onerror = (error) => {
+                        this.showStatus('Error reading file', 3000);
+                    };
+                    reader.readAsText(file);
+                } else {
+                    this.showStatus('Only Markdown files (.md, .markdown) are supported', 3000);
+                }
+            }
+        });
+    }
+    
+    showStatus(message, duration = 3000) {
+        const statusText = document.getElementById('status-text');
+        if (statusText) {
+            const originalText = statusText.textContent;
+            statusText.textContent = message;
+            setTimeout(() => {
+                statusText.textContent = originalText;
+            }, duration);
+        }
+    }
+    
     // File operations
     openFile(filePath, content) {
         let tab = this.tabs.get(this.activeTabId);
         
+        // Extract filename from path for title
+        const fileName = filePath.includes('/') || filePath.includes('\\') ? 
+            filePath.split(/[/\\]/).pop() : filePath;
+        
         // If current tab is empty and untitled, reuse it
         if (!tab.filePath && !tab.isDirty && tab.content === '') {
             tab.filePath = filePath;
-            tab.title = filePath.split('/').pop();
+            tab.title = fileName;
             tab.content = content;
             tab.originalContent = content;
             tab.isDirty = false;
@@ -454,14 +520,16 @@ class TabManager {
             this.createNewTab();
             tab = this.tabs.get(this.activeTabId);
             tab.filePath = filePath;
-            tab.title = filePath.split('/').pop();
+            tab.title = fileName;
             tab.content = content;
             tab.originalContent = content;
             tab.isDirty = false;
         }
         
+        // Ensure the tab state is properly restored and UI is updated
         this.restoreTabState(this.activeTabId);
         this.updateTabBar();
+        this.showStatus(`Opened: ${fileName}`, 2000);
     }
     
     getCurrentContent() {
@@ -477,9 +545,26 @@ class TabManager {
 
 // Initialize tab manager
 let tabManager;
+let pendingFileData = null;
+
+// Set up IPC listeners immediately to handle early events
+ipcRenderer.on('file-opened', (event, data) => {
+    if (tabManager) {
+        tabManager.openFile(data.path, data.content);
+    } else {
+        // TabManager not ready, store pending file data
+        pendingFileData = data;
+    }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     tabManager = new TabManager();
+    
+    // Handle any pending file data
+    if (pendingFileData) {
+        tabManager.openFile(pendingFileData.path, pendingFileData.content);
+        pendingFileData = null;
+    }
     
     // Request current theme
     ipcRenderer.send('get-theme');
@@ -493,50 +578,47 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }, 30000);
+    
+    // IPC event listeners that depend on tabManager
+    ipcRenderer.on('file-new', () => {
+        tabManager.createNewTab();
+    });
+
+    ipcRenderer.on('file-save', () => {
+        const currentContent = tabManager.getCurrentContent();
+        const currentFilePath = tabManager.getCurrentFilePath();
+        if (currentFilePath) {
+            ipcRenderer.send('save-current-file', currentContent);
+        }
+    });
+
+    ipcRenderer.on('get-content-for-save', (event, filePath) => {
+        const currentContent = tabManager.getCurrentContent();
+        ipcRenderer.send('save-file', { path: filePath, content: currentContent });
+    });
+
+    ipcRenderer.on('get-content-for-spreadsheet', (event, format) => {
+        const currentContent = tabManager.getCurrentContent();
+        ipcRenderer.send('export-spreadsheet', { content: currentContent, format });
+    });
+
+    ipcRenderer.on('toggle-preview', () => {
+        tabManager.isPreviewVisible = !tabManager.isPreviewVisible;
+        tabManager.updatePreviewVisibility();
+    });
+
+    ipcRenderer.on('toggle-find', () => {
+        const findDialog = document.getElementById('find-dialog');
+        if (findDialog.classList.contains('hidden')) {
+            findDialog.classList.remove('hidden');
+            document.getElementById('find-input').focus();
+        } else {
+            findDialog.classList.add('hidden');
+        }
+    });
 });
 
-// IPC event listeners
-ipcRenderer.on('file-new', () => {
-    tabManager.createNewTab();
-});
-
-ipcRenderer.on('file-opened', (event, data) => {
-    tabManager.openFile(data.path, data.content);
-});
-
-ipcRenderer.on('file-save', () => {
-    const currentContent = tabManager.getCurrentContent();
-    const currentFilePath = tabManager.getCurrentFilePath();
-    if (currentFilePath) {
-        ipcRenderer.send('save-current-file', currentContent);
-    }
-});
-
-ipcRenderer.on('get-content-for-save', (event, filePath) => {
-    const currentContent = tabManager.getCurrentContent();
-    ipcRenderer.send('save-file', { path: filePath, content: currentContent });
-});
-
-ipcRenderer.on('get-content-for-spreadsheet', (event, format) => {
-    const currentContent = tabManager.getCurrentContent();
-    ipcRenderer.send('export-spreadsheet', { content: currentContent, format });
-});
-
-ipcRenderer.on('toggle-preview', () => {
-    tabManager.isPreviewVisible = !tabManager.isPreviewVisible;
-    tabManager.updatePreviewVisibility();
-});
-
-ipcRenderer.on('toggle-find', () => {
-    const findDialog = document.getElementById('find-dialog');
-    if (findDialog.classList.contains('hidden')) {
-        findDialog.classList.remove('hidden');
-        document.getElementById('find-input').focus();
-    } else {
-        findDialog.classList.add('hidden');
-    }
-});
-
+// IPC event listeners that don't depend on tabManager
 ipcRenderer.on('theme-changed', (event, theme) => {
     document.body.className = `theme-${theme}`;
 });

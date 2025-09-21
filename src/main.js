@@ -884,6 +884,10 @@ app.whenReady().then(() => {
   // Process all command line arguments except the first two (node and script path)
   const fileArgs = process.argv.slice(2);
   for (const arg of fileArgs) {
+    // Skip flags and options
+    if (arg.startsWith('-')) {
+      continue;
+    }
     if ((arg.endsWith('.md') || arg.endsWith('.markdown')) && fs.existsSync(arg)) {
       // Store the file to open after window is ready
       app.pendingFile = arg;
