@@ -44,6 +44,7 @@
     "directories": {
       "output": "dist"
     },
+    "icon": "assets/icon",
     "files": [
       "src/**/*",
       "assets/**/*",
@@ -87,7 +88,7 @@
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "requestedExecutionLevel": "asInvoker",
-      "signAndEditExecutable": true
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
