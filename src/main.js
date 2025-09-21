@@ -2,6 +2,7 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const XLSX = require('xlsx');
 
 // Get the system Pandoc path
 function getPandocPath() {
@@ -179,7 +180,8 @@ function createMenu() {
             { label: 'PowerPoint (PPTX)', click: () => exportFile('pptx') },
             { label: 'OpenDocument Presentation (ODP)', click: () => exportFile('odp') },
             { type: 'separator' },
-            { label: 'CSV (Tables)', click: () => exportSpreadsheet('csv') }
+            { label: 'CSV (Tables)', click: () => exportSpreadsheet('csv') },
+            { label: 'XLSX (Tables)', click: () => exportSpreadsheet('xlsx') }
           ]
         },
         { type: 'separator' },
@@ -858,30 +860,44 @@ ipcMain.on('export-spreadsheet', (event, { content, format }) => {
         return;
       }
 
-      // Convert tables to CSV format
-      let csvContent = '';
-      tables.forEach((table, index) => {
-        if (index > 0) csvContent += '\n\n'; // Separate multiple tables
-        if (tables.length > 1) csvContent += `"Table ${index + 1}"\n`;
+      if (format === 'csv') {
+        // Convert tables to CSV format
+        let csvContent = '';
+        tables.forEach((table, index) => {
+          if (index > 0) csvContent += '\n\n'; // Separate multiple tables
+          if (tables.length > 1) csvContent += `"Table ${index + 1}"\n`;
 
-        table.forEach(row => {
-          const csvRow = row.map(cell => {
-            // Escape quotes and wrap in quotes if necessary
-            const cleanCell = cell.replace(/"/g, '""');
-            return cleanCell.includes(',') || cleanCell.includes('"') || cleanCell.includes('\n')
-              ? `"${cleanCell}"` : cleanCell;
-          }).join(',');
-          csvContent += csvRow + '\n';
+          table.forEach(row => {
+            const csvRow = row.map(cell => {
+              // Escape quotes and wrap in quotes if necessary
+              const cleanCell = cell.replace(/"/g, '""');
+              return cleanCell.includes(',') || cleanCell.includes('"') || cleanCell.includes('\n')
+                ? `"${cleanCell}"` : cleanCell;
+            }).join(',');
+            csvContent += csvRow + '\n';
+          });
         });
-      });
 
-      // Write CSV file
-      fs.writeFileSync(outputFile, csvContent, 'utf-8');
+        // Write CSV file
+        fs.writeFileSync(outputFile, csvContent, 'utf-8');
+      } else if (format === 'xlsx') {
+        // Convert tables to XLSX format
+        const workbook = XLSX.utils.book_new();
+        
+        tables.forEach((table, index) => {
+          const sheetName = tables.length > 1 ? `Table${index + 1}` : 'Table';
+          const worksheet = XLSX.utils.aoa_to_sheet(table);
+          XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+        });
+
+        // Write XLSX file
+        XLSX.writeFile(workbook, outputFile);
+      }
 
       dialog.showMessageBox(mainWindow, {
         type: 'info',
         title: 'Export Complete',
-        message: `CSV exported successfully to ${outputFile}`,
+        message: `${format.toUpperCase()} exported successfully to ${outputFile}`,
         buttons: ['OK']
       });
     } catch (error) {

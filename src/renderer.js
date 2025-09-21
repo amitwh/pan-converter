@@ -854,6 +854,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const advancedOptions = document.getElementById('advanced-export-options');
         if (e.target.checked) {
             advancedOptions.classList.remove('hidden');
+            // Scroll the advanced options into view after they become visible
+            setTimeout(() => {
+                advancedOptions.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
         } else {
             advancedOptions.classList.add('hidden');
         }

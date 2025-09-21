@@ -859,8 +859,9 @@ body.theme-github .status-bar {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     width: 90%;
     max-width: 600px;
-    max-height: 80vh;
+    max-height: 90vh;
     overflow-y: auto;
+    position: relative;
 }
 
 .export-dialog-header {
@@ -1437,7 +1438,9 @@ body.theme-github .line-numbers {
 
 .advanced-options {
     transition: all 0.3s ease;
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
+    z-index: 10;
 }
 
 .advanced-options.hidden {
