@@ -29,6 +29,22 @@ const store = {
 
 let mainWindow;
 let currentFile = null; // This will now represent the active tab's file
+let pandocAvailable = null; // Cache pandoc availability check
+
+// Check if pandoc is available
+function checkPandocAvailability() {
+  return new Promise((resolve) => {
+    if (pandocAvailable !== null) {
+      resolve(pandocAvailable);
+      return;
+    }
+    
+    exec('pandoc --version', (error, stdout, stderr) => {
+      pandocAvailable = !error;
+      resolve(pandocAvailable);
+    });
+  });
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -253,163 +269,59 @@ function exportFile(format) {
     ]
   });
 
-  if (outputFile) {
+  if (!outputFile) return; // User cancelled
+
+  console.log(`Attempting to export ${format} to:`, outputFile);
+
+  // Check pandoc availability first
+  checkPandocAvailability().then((hasPandoc) => {
+    console.log('Pandoc available:', hasPandoc);
+    
+    if (!hasPandoc) {
+      // Handle formats that don't require pandoc
+      if (format === 'html') {
+        console.log('Using built-in HTML export');
+        exportToHTML(outputFile);
+        return;
+      } else if (format === 'pdf') {
+        console.log('Using built-in PDF export');
+        exportToPDFElectron(outputFile);
+        return;
+      } else {
+        dialog.showErrorBox('Export Error', 
+          `Pandoc is required for ${format.toUpperCase()} export but is not installed or not found in PATH.\n\n` +
+          `Please install Pandoc from: https://pandoc.org/installing.html\n\n` +
+          `Alternatively, you can export to HTML or PDF using the built-in converters.`
+        );
+        return;
+      }
+    }
+
+    // Use pandoc for export
+    console.log('Using Pandoc for export');
     let pandocCmd = `pandoc "${currentFile}" -o "${outputFile}"`;
     
-    // Add specific options for PDF export to ensure proper generation
+    // Add specific options for different formats
     if (format === 'pdf') {
       pandocCmd = `pandoc "${currentFile}" --pdf-engine=xelatex -V geometry:margin=1in -o "${outputFile}"`;
-      // Try with different PDF engines if xelatex fails
-      exec(pandocCmd, (error, stdout, stderr) => {
-        if (error) {
-          // Fallback to pdflatex
-          const fallbackCmd = `pandoc "${currentFile}" --pdf-engine=pdflatex -V geometry:margin=1in -o "${outputFile}"`;
-          exec(fallbackCmd, (fallbackError, fallbackStdout, fallbackStderr) => {
-            if (fallbackError) {
-              // Final fallback to wkhtmltopdf
-              const htmlToPdfCmd = `pandoc "${currentFile}" -t html5 | wkhtmltopdf - "${outputFile}"`;
-              exec(htmlToPdfCmd, async (finalError) => {
-                if (finalError) {
-                  // Ultimate fallback: Use Electron's built-in PDF export
-                  try {
-                    const marked = require('marked');
-                    const fs = require('fs');
-                    
-                    // Read markdown file
-                    const markdownContent = fs.readFileSync(currentFile, 'utf8');
-                    
-                    // Convert markdown to HTML
-                    const htmlContent = marked.parse(markdownContent);
-                    
-                    // Create full HTML document with styling
-                    const fullHtml = `
-                      <!DOCTYPE html>
-                      <html>
-                      <head>
-                        <meta charset="UTF-8">
-                        <style>
-                          body {
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-                            line-height: 1.6;
-                            color: #333;
-                            max-width: 800px;
-                            margin: 0 auto;
-                            padding: 40px;
-                          }
-                          h1, h2, h3, h4, h5, h6 {
-                            margin-top: 1.5em;
-                            margin-bottom: 0.5em;
-                          }
-                          code {
-                            background: #f4f4f4;
-                            padding: 2px 4px;
-                            border-radius: 3px;
-                            font-family: Consolas, Monaco, 'Courier New', monospace;
-                          }
-                          pre {
-                            background: #f4f4f4;
-                            padding: 1em;
-                            border-radius: 5px;
-                            overflow-x: auto;
-                          }
-                          pre code {
-                            background: transparent;
-                            padding: 0;
-                          }
-                          blockquote {
-                            border-left: 4px solid #ddd;
-                            margin-left: 0;
-                            padding-left: 1em;
-                            color: #666;
-                          }
-                          table {
-                            border-collapse: collapse;
-                            width: 100%;
-                            margin: 1em 0;
-                          }
-                          th, td {
-                            border: 1px solid #ddd;
-                            padding: 8px;
-                            text-align: left;
-                          }
-                          th {
-                            background-color: #f4f4f4;
-                          }
-                          a {
-                            color: #0066cc;
-                            text-decoration: none;
-                          }
-                          a:hover {
-                            text-decoration: underline;
-                          }
-                          img {
-                            max-width: 100%;
-                            height: auto;
-                          }
-                        </style>
-                      </head>
-                      <body>
-                        ${htmlContent}
-                      </body>
-                      </html>
-                    `;
-                    
-                    // Create a hidden window to render and export PDF
-                    const { BrowserWindow } = require('electron');
-                    const pdfWindow = new BrowserWindow({
-                      show: false,
-                      webPreferences: {
-                        nodeIntegration: true,
-                        contextIsolation: false
-                      }
-                    });
-                    
-                    await pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(fullHtml)}`);
-                    
-                    const pdfData = await pdfWindow.webContents.printToPDF({
-                      marginsType: 1, // Use default margins
-                      pageSize: 'A4',
-                      printBackground: true,
-                      printSelectionOnly: false,
-                      landscape: false
-                    });
-                    
-                    fs.writeFileSync(outputFile, pdfData);
-                    pdfWindow.close();
-                    
-                    showExportSuccess(outputFile);
-                  } catch (electronPdfError) {
-                    dialog.showErrorBox('PDF Export Error', 
-                      `Failed to export PDF. The built-in PDF export encountered an error.\n\n` +
-                      `For better PDF export, please install one of the following:\n` +
-                      `• XeLaTeX (recommended)\n` +
-                      `• PDFLaTeX\n` +
-                      `• wkhtmltopdf\n\n` +
-                      `Error: ${electronPdfError.message}`
-                    );
-                  }
-                } else {
-                  showExportSuccess(outputFile);
-                }
-              });
-            } else {
-              showExportSuccess(outputFile);
-            }
-          });
-        } else {
-          showExportSuccess(outputFile);
-        }
-      });
+      exportWithPandocPDF(pandocCmd, outputFile);
+    } else if (format === 'docx') {
+      pandocCmd = `pandoc "${currentFile}" -t docx -o "${outputFile}"`;
+      exportWithPandoc(pandocCmd, outputFile, format);
+    } else if (format === 'html') {
+      pandocCmd = `pandoc "${currentFile}" -t html5 --standalone -o "${outputFile}"`;
+      exportWithPandoc(pandocCmd, outputFile, format);
+    } else if (format === 'latex') {
+      pandocCmd = `pandoc "${currentFile}" -t latex -o "${outputFile}"`;
+      exportWithPandoc(pandocCmd, outputFile, format);
     } else {
-      exec(pandocCmd, (error, stdout, stderr) => {
-        if (error) {
-          dialog.showErrorBox('Export Error', `Failed to export: ${error.message}\n\nMake sure Pandoc is installed.`);
-        } else {
-          showExportSuccess(outputFile);
-        }
-      });
+      // Generic export for other formats
+      exportWithPandoc(pandocCmd, outputFile, format);
     }
-  }
+  }).catch((error) => {
+    console.error('Error checking pandoc availability:', error);
+    dialog.showErrorBox('Export Error', `Error checking system requirements: ${error.message}`);
+  });
 }
 
 function showExportSuccess(outputFile) {
@@ -419,6 +331,246 @@ function showExportSuccess(outputFile) {
     message: `File exported successfully to ${outputFile}`,
     buttons: ['OK']
   });
+}
+
+// Helper function to export with pandoc (general)
+function exportWithPandoc(pandocCmd, outputFile, format) {
+  exec(pandocCmd, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Pandoc error for ${format}:`, error);
+      dialog.showErrorBox('Export Error', 
+        `Failed to export to ${format.toUpperCase()}:\n${error.message}\n\n` +
+        `Command used: ${pandocCmd}\n\n` +
+        `Please ensure Pandoc is properly installed and accessible.`
+      );
+    } else {
+      console.log(`Successfully exported to ${format}:`, outputFile);
+      showExportSuccess(outputFile);
+    }
+  });
+}
+
+// Helper function to export PDF with pandoc (with fallbacks)
+function exportWithPandocPDF(pandocCmd, outputFile) {
+  exec(pandocCmd, (error, stdout, stderr) => {
+    if (error) {
+      console.log('XeLaTeX failed, trying PDFLaTeX...');
+      // Fallback to pdflatex
+      const fallbackCmd = pandocCmd.replace('--pdf-engine=xelatex', '--pdf-engine=pdflatex');
+      exec(fallbackCmd, (fallbackError, fallbackStdout, fallbackStderr) => {
+        if (fallbackError) {
+          console.log('PDFLaTeX failed, trying Electron PDF...');
+          // Final fallback to Electron PDF
+          exportToPDFElectron(outputFile);
+        } else {
+          console.log('Successfully exported PDF with PDFLaTeX');
+          showExportSuccess(outputFile);
+        }
+      });
+    } else {
+      console.log('Successfully exported PDF with XeLaTeX');
+      showExportSuccess(outputFile);
+    }
+  });
+}
+
+// Export to HTML using marked (no pandoc required)
+function exportToHTML(outputFile) {
+  try {
+    const marked = require('marked');
+    const markdownContent = fs.readFileSync(currentFile, 'utf8');
+    const htmlContent = marked.parse(markdownContent);
+    
+    const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exported Document</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 1em;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: transparent;
+            padding: 0;
+        }
+        blockquote {
+            border-left: 4px solid #ddd;
+            margin-left: 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    ${htmlContent}
+</body>
+</html>`;
+
+    fs.writeFileSync(outputFile, fullHtml, 'utf8');
+    console.log('Successfully exported HTML');
+    showExportSuccess(outputFile);
+  } catch (error) {
+    console.error('HTML export error:', error);
+    dialog.showErrorBox('HTML Export Error', `Failed to export HTML: ${error.message}`);
+  }
+}
+
+// Export to PDF using Electron (no pandoc required)
+function exportToPDFElectron(outputFile) {
+  try {
+    const marked = require('marked');
+    const markdownContent = fs.readFileSync(currentFile, 'utf8');
+    const htmlContent = marked.parse(markdownContent);
+    
+    const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Export</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 1em;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: transparent;
+            padding: 0;
+        }
+        blockquote {
+            border-left: 4px solid #ddd;
+            margin-left: 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        @media print {
+            body { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    ${htmlContent}
+</body>
+</html>`;
+
+    // Create a hidden window to render and export PDF
+    const pdfWindow = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false
+      }
+    });
+    
+    pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(fullHtml)}`).then(() => {
+      return pdfWindow.webContents.printToPDF({
+        marginsType: 1, // Use default margins
+        pageSize: 'A4',
+        printBackground: true,
+        printSelectionOnly: false,
+        landscape: false
+      });
+    }).then((pdfData) => {
+      fs.writeFileSync(outputFile, pdfData);
+      pdfWindow.close();
+      console.log('Successfully exported PDF with Electron');
+      showExportSuccess(outputFile);
+    }).catch((error) => {
+      pdfWindow.close();
+      console.error('Electron PDF export error:', error);
+      dialog.showErrorBox('PDF Export Error', 
+        `Failed to export PDF using built-in engine: ${error.message}\n\n` +
+        `For better PDF export, please install Pandoc with LaTeX support.`
+      );
+    });
+  } catch (error) {
+    console.error('PDF export setup error:', error);
+    dialog.showErrorBox('PDF Export Error', `Failed to setup PDF export: ${error.message}`);
+  }
 }
 
 function exportSpreadsheet(format) {

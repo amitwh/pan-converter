@@ -2,6 +2,7 @@
 ; Handles context menu installation and uninstallation
 
 !include "LogicLib.nsh"
+!include "MUI2.nsh"
 
 ; Custom installation page for context menu option
 Var ContextMenuCheckbox

@@ -78,8 +78,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "PanConverter",
-      "include": "scripts/nsis-installer.nsh"
+      "shortcutName": "PanConverter"
     },
     "linux": {
       "target": [
