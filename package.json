@@ -1,6 +1,6 @@
 {
   "name": "pan-converter",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "description": "Cross-platform Markdown editor and converter using Pandoc",
   "main": "src/main.js",
   "scripts": {
@@ -68,8 +68,7 @@
       }
     ],
     "mac": {
-      "category": "public.app-category.productivity",
-      "icon": "assets/icon.icns"
+      "category": "public.app-category.productivity"
     },
     "win": {
       "target": [
@@ -86,7 +85,6 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "assets/icon.png",
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "requestedExecutionLevel": "asInvoker",
       "signAndEditExecutable": true
@@ -96,9 +94,6 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "displayLanguageSelector": true,
-      "installerIcon": "assets/icon-proper.ico",
-      "uninstallerIcon": "assets/icon-proper.ico",
-      "installerHeaderIcon": "assets/icon-proper.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "PanConverter",
@@ -116,8 +111,7 @@
         "AppImage",
         "snap"
       ],
-      "category": "Utility",
-      "icon": "assets/icon.png"
+      "category": "Utility"
     },
     "deb": {
       "depends": [
