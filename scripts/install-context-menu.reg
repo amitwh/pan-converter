@@ -1,0 +1,134 @@
+Windows Registry Editor Version 5.00
+
+; PanConverter Context Menu Integration
+; This registry file adds context menu options for converting files using PanConverter
+
+; Add context menu for Markdown files (.md, .markdown)
+[HKEY_CLASSES_ROOT\.md\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+[HKEY_CLASSES_ROOT\.markdown\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.markdown\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+; Add context menu for HTML files
+[HKEY_CLASSES_ROOT\.html\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.html\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+[HKEY_CLASSES_ROOT\.htm\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.htm\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+; Add context menu for DOCX files
+[HKEY_CLASSES_ROOT\.docx\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.docx\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+; Add context menu for ODT files
+[HKEY_CLASSES_ROOT\.odt\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.odt\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+; Add context menu for RTF files
+[HKEY_CLASSES_ROOT\.rtf\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.rtf\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+; Add context menu for LaTeX files
+[HKEY_CLASSES_ROOT\.tex\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.tex\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+; Add context menu for PDF files
+[HKEY_CLASSES_ROOT\.pdf\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.pdf\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+; Add context menu for PowerPoint files
+[HKEY_CLASSES_ROOT\.pptx\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.pptx\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+[HKEY_CLASSES_ROOT\.ppt\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.ppt\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+; Add context menu for OpenDocument Presentation files
+[HKEY_CLASSES_ROOT\.odp\shell\PanConverter]
+@="Convert with PanConverter"
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+
+[HKEY_CLASSES_ROOT\.odp\shell\PanConverter\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert \"%1\""
+
+; Add submenu with specific conversion options for Markdown files
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu]
+@="PanConverter"
+"MUIVerb"="Convert to..."
+"Icon"="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\""
+"SubCommands"=""
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\PDF]
+@="PDF"
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\PDF\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert-to pdf \"%1\""
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\HTML]
+@="HTML"
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\HTML\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert-to html \"%1\""
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\DOCX]
+@="DOCX"
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\DOCX\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert-to docx \"%1\""
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\LaTeX]
+@="LaTeX"
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\LaTeX\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert-to latex \"%1\""
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\PPTX]
+@="PowerPoint"
+
+[HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu\shell\PPTX\command]
+@="\"%LOCALAPPDATA%\\Programs\\PanConverter\\PanConverter.exe\" --convert-to pptx \"%1\""

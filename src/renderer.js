@@ -9,7 +9,10 @@ marked.setOptions({
         if (lang && hljs.getLanguage(lang)) {
             try {
                 return hljs.highlight(code, { language: lang }).value;
-            } catch (err) {}
+            } catch (err) {
+                // Fallback to auto highlighting if language-specific highlighting fails
+                console.warn('Syntax highlighting failed for language:', lang, err.message);
+            }
         }
         return hljs.highlightAuto(code).value;
     },
@@ -74,6 +77,7 @@ class TabManager {
             if (e.ctrlKey || e.metaKey) {
                 switch (e.key) {
                     case 'n':
+                    case 't':
                         e.preventDefault();
                         this.createNewTab();
                         break;
@@ -82,10 +86,6 @@ class TabManager {
                             e.preventDefault();
                             this.closeTab(this.activeTabId);
                         }
-                        break;
-                    case 't':
-                        e.preventDefault();
-                        this.createNewTab();
                         break;
                     case 'Tab':
                         if (this.tabs.size > 1) {
@@ -156,7 +156,7 @@ class TabManager {
         
         // Notify main process about current file for exports
         const tab = this.tabs.get(tabId);
-        if (tab && tab.filePath) {
+        if (tab?.filePath) {
             ipcRenderer.send('set-current-file', tab.filePath);
         }
     }
@@ -173,14 +173,16 @@ class TabManager {
         
         const tab = this.tabs.get(tabId);
         if (tab.isDirty) {
-            // TODO: Show confirmation dialog
+            // Show confirmation dialog for unsaved changes
+            const result = confirm('You have unsaved changes. Do you want to close this tab without saving?');
+            if (!result) return;
         }
         
         // Remove tab elements
         const tabElement = document.querySelector(`[data-tab-id="${tabId}"]`);
         const tabContent = document.getElementById(`tab-content-${tabId}`);
         
-        if (tabElement && tabElement.classList.contains('tab')) {
+        if (tabElement?.classList.contains('tab')) {
             tabElement.remove();
         }
         if (tabContent) {
@@ -262,7 +264,6 @@ class TabManager {
         if (!tab) return;
         
         const editor = document.getElementById(`editor-${tabId}`);
-        const preview = document.getElementById(`preview-${tabId}`);
         
         if (editor) {
             editor.value = tab.content;
@@ -305,7 +306,8 @@ class TabManager {
                 }
             }
         } catch (error) {
-            preview.innerHTML = '<p>Error rendering preview</p>';
+            console.error('Error rendering preview:', error);
+            preview.innerHTML = '<p class="error">Error rendering preview. Please check your markdown syntax.</p>';
         }
     }
     

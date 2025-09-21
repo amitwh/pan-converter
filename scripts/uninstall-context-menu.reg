@@ -1,0 +1,36 @@
+Windows Registry Editor Version 5.00
+
+; PanConverter Context Menu Uninstall Script
+; This registry file removes PanConverter context menu entries
+
+; Remove context menu for Markdown files (.md, .markdown)
+[-HKEY_CLASSES_ROOT\.md\shell\PanConverter]
+[-HKEY_CLASSES_ROOT\.md\shell\PanConverterMenu]
+
+[-HKEY_CLASSES_ROOT\.markdown\shell\PanConverter]
+
+; Remove context menu for HTML files
+[-HKEY_CLASSES_ROOT\.html\shell\PanConverter]
+[-HKEY_CLASSES_ROOT\.htm\shell\PanConverter]
+
+; Remove context menu for DOCX files
+[-HKEY_CLASSES_ROOT\.docx\shell\PanConverter]
+
+; Remove context menu for ODT files
+[-HKEY_CLASSES_ROOT\.odt\shell\PanConverter]
+
+; Remove context menu for RTF files
+[-HKEY_CLASSES_ROOT\.rtf\shell\PanConverter]
+
+; Remove context menu for LaTeX files
+[-HKEY_CLASSES_ROOT\.tex\shell\PanConverter]
+
+; Remove context menu for PDF files
+[-HKEY_CLASSES_ROOT\.pdf\shell\PanConverter]
+
+; Remove context menu for PowerPoint files
+[-HKEY_CLASSES_ROOT\.pptx\shell\PanConverter]
+[-HKEY_CLASSES_ROOT\.ppt\shell\PanConverter]
+
+; Remove context menu for OpenDocument Presentation files
+[-HKEY_CLASSES_ROOT\.odp\shell\PanConverter]

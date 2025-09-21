@@ -34,7 +34,9 @@
     "dompurify": "^3.2.6",
     "electron-store": "^10.1.0",
     "highlight.js": "^11.11.1",
-    "marked": "^16.2.1"
+    "marked": "^16.2.1",
+    "tslib": "^2.8.1",
+    "xlsx": "^0.18.5"
   },
   "build": {
     "appId": "com.panconverter.app",
@@ -45,6 +47,7 @@
     "files": [
       "src/**/*",
       "assets/**/*",
+      "scripts/**/*",
       "node_modules/**/*",
       "package.json"
     ],
