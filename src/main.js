@@ -6,14 +6,33 @@ const XLSX = require('xlsx');
 
 // Get the system Pandoc path
 function getPandocPath() {
-  // Always use system pandoc - no bundled binaries
+  // Check common Pandoc installation locations on Windows
+  const commonPaths = [
+    'pandoc', // System PATH
+    path.join(process.env.USERPROFILE || '', 'AppData', 'Local', 'Pandoc', 'pandoc.exe'),
+    path.join('C:', 'Program Files', 'Pandoc', 'pandoc.exe'),
+    path.join('C:', 'Program Files (x86)', 'Pandoc', 'pandoc.exe'),
+  ];
+
+  // Try each path and return the first one that exists
+  for (const pandocPath of commonPaths) {
+    if (pandocPath === 'pandoc') {
+      // For system PATH, we'll check in checkPandocAvailable()
+      return pandocPath;
+    } else if (fs.existsSync(pandocPath)) {
+      return `"${pandocPath}"`;
+    }
+  }
+  
+  // Fallback to system pandoc
   return 'pandoc';
 }
 
 // Check if Pandoc is available
 function checkPandocAvailable() {
   return new Promise((resolve) => {
-    exec('pandoc --version', (error) => {
+    const pandocPath = getPandocPath();
+    exec(`${pandocPath} --version`, (error) => {
       resolve(!error);
     });
   });
@@ -498,16 +517,35 @@ function showExportSuccess(outputFile) {
 
 // Helper function to export with pandoc (general)
 function exportWithPandoc(pandocCmd, outputFile, format) {
+  console.log(`Executing Pandoc command: ${pandocCmd}`);
+  
   exec(pandocCmd, (error, stdout, stderr) => {
     if (error) {
       console.error(`Pandoc error for ${format}:`, error);
-      dialog.showErrorBox('Export Error', 
-        `Failed to export to ${format.toUpperCase()}:\n${error.message}\n\n` +
-        `Command used: ${pandocCmd}\n\n` +
-        `Please ensure Pandoc is properly installed and accessible.`
-      );
+      console.error(`Pandoc stderr:`, stderr);
+      console.error(`Pandoc stdout:`, stdout);
+      
+      // Provide more specific error messages
+      let errorMessage = `Failed to export to ${format.toUpperCase()}`;
+      
+      if (error.message.includes('not found') || error.message.includes('not recognized')) {
+        errorMessage += '\n\nPandoc is not installed or not found in PATH.';
+        errorMessage += '\nPlease install Pandoc from: https://pandoc.org/installing.html';
+      } else if (stderr) {
+        errorMessage += `\n\nError details: ${stderr}`;
+      } else {
+        errorMessage += `\n\nError details: ${error.message}`;
+      }
+      
+      errorMessage += `\n\nCommand used: ${pandocCmd}`;
+      
+      dialog.showErrorBox('Export Error', errorMessage);
     } else {
       console.log(`Successfully exported to ${format}:`, outputFile);
+      console.log(`Pandoc stdout:`, stdout);
+      if (stderr) {
+        console.warn(`Pandoc stderr (non-fatal):`, stderr);
+      }
       showExportSuccess(outputFile);
     }
   });
