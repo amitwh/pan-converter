@@ -146,6 +146,16 @@ class TabManager {
             editor.addEventListener('input', () => {
                 this.handleEditorInput(tab.id);
             });
+
+            // Add scroll listener for line number sync
+            editor.addEventListener('scroll', () => {
+                if (this.showLineNumbers && this.activeTabId === tab.id) {
+                    const lineNumbers = document.getElementById(`line-numbers-${tab.id}`);
+                    if (lineNumbers) {
+                        lineNumbers.scrollTop = editor.scrollTop;
+                    }
+                }
+            });
         }
     }
     
@@ -337,15 +347,18 @@ class TabManager {
     updateLineNumbers() {
         const editor = document.getElementById(`editor-${this.activeTabId}`);
         const lineNumbers = document.getElementById(`line-numbers-${this.activeTabId}`);
-        
+
         if (!editor || !lineNumbers) return;
-        
+
         if (this.showLineNumbers) {
-            const lines = editor.value.split('\\n');
-            lineNumbers.innerHTML = lines.map((_, i) => 
+            const lines = editor.value.split('\n');
+            lineNumbers.innerHTML = lines.map((_, i) =>
                 `<div class="line-number">${i + 1}</div>`
             ).join('');
             lineNumbers.classList.remove('hidden');
+
+            // Sync scroll position
+            lineNumbers.scrollTop = editor.scrollTop;
         } else {
             lineNumbers.classList.add('hidden');
         }
@@ -580,6 +593,21 @@ class TabManager {
             this.insertTable();
         });
 
+        // Strikethrough
+        document.getElementById('btn-strikethrough').addEventListener('click', () => {
+            this.wrapSelection('~~', '~~');
+        });
+
+        // Code Block
+        document.getElementById('btn-code-block').addEventListener('click', () => {
+            this.insertCodeBlock();
+        });
+
+        // Horizontal Rule
+        document.getElementById('btn-horizontal-rule').addEventListener('click', () => {
+            this.insertHorizontalRule();
+        });
+
         // Preview toggle
         document.getElementById('btn-preview-toggle').addEventListener('click', () => {
             this.isPreviewVisible = !this.isPreviewVisible;
@@ -656,17 +684,267 @@ class TabManager {
         // Trigger update
         this.handleEditorInput(this.activeTabId);
     }
+
+    // Insert a code block
+    insertCodeBlock() {
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        if (!editor) return;
+
+        const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+        const codeBlock = '\n```\n' + (selectedText || 'code here') + '\n```\n';
+
+        const start = editor.selectionStart;
+        editor.value = editor.value.substring(0, start) + codeBlock + editor.value.substring(editor.selectionEnd);
+
+        // Update cursor position
+        editor.selectionStart = editor.selectionEnd = start + codeBlock.length;
+        editor.focus();
+
+        // Trigger update
+        this.handleEditorInput(this.activeTabId);
+    }
+
+    // Insert a horizontal rule
+    insertHorizontalRule() {
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        if (!editor) return;
+
+        const hr = '\n\n---\n\n';
+        const start = editor.selectionStart;
+
+        editor.value = editor.value.substring(0, start) + hr + editor.value.substring(start);
+
+        // Update cursor position
+        editor.selectionStart = editor.selectionEnd = start + hr.length;
+        editor.focus();
+
+        // Trigger update
+        this.handleEditorInput(this.activeTabId);
+    }
     
     setupFindEvents() {
-        // Find dialog implementation...
-        document.getElementById('btn-find').addEventListener('click', () => {
+        const btnFind = document.getElementById('btn-find');
+        const btnFindClose = document.getElementById('btn-find-close');
+        const findInput = document.getElementById('find-input');
+        const btnFindNext = document.getElementById('btn-find-next');
+        const btnFindPrev = document.getElementById('btn-find-prev');
+        const btnReplace = document.getElementById('btn-replace');
+        const btnReplaceAll = document.getElementById('btn-replace-all');
+
+        if (!btnFind || !btnFindClose || !findInput || !btnFindNext || !btnFindPrev || !btnReplace || !btnReplaceAll) {
+            console.error('Find dialog elements not found');
+            return;
+        }
+
+        // Show find dialog
+        btnFind.addEventListener('click', () => {
             document.getElementById('find-dialog').classList.remove('hidden');
-            document.getElementById('find-input').focus();
+            findInput.focus();
         });
-        
-        document.getElementById('btn-find-close').addEventListener('click', () => {
+
+        // Close find dialog
+        btnFindClose.addEventListener('click', () => {
             document.getElementById('find-dialog').classList.add('hidden');
+            this.clearFindHighlights();
         });
+
+        // Find input change - update matches
+        findInput.addEventListener('input', () => {
+            this.performFind();
+        });
+
+        // Find next
+        btnFindNext.addEventListener('click', () => {
+            this.findNext();
+        });
+
+        // Find previous
+        btnFindPrev.addEventListener('click', () => {
+            this.findPrevious();
+        });
+
+        // Replace
+        btnReplace.addEventListener('click', () => {
+            this.replaceOne();
+        });
+
+        // Replace all
+        btnReplaceAll.addEventListener('click', () => {
+            this.replaceAll();
+        });
+
+        // Enter key in find input - find next
+        findInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    this.findPrevious();
+                } else {
+                    this.findNext();
+                }
+            }
+        });
+
+    }
+
+    performFind() {
+        const findText = document.getElementById('find-input').value;
+        const tab = this.tabs.get(this.activeTabId);
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+
+        if (!findText || !tab || !editor) {
+            this.clearFindHighlights();
+            const findCount = document.getElementById('find-count');
+            if (findCount) {
+                findCount.textContent = '0 matches';
+            }
+            return;
+        }
+
+        const content = editor.value;
+        const matches = [];
+        let index = 0;
+
+        // Find all matches
+        while ((index = content.indexOf(findText, index)) !== -1) {
+            matches.push(index);
+            index += findText.length;
+        }
+
+        tab.findMatches = matches;
+        tab.currentMatchIndex = matches.length > 0 ? 0 : -1;
+
+        // Update match count
+        const findCount = document.getElementById('find-count');
+        if (findCount) {
+            findCount.textContent = `${matches.length} match${matches.length !== 1 ? 'es' : ''}`;
+        }
+
+        // Highlight first match
+        if (matches.length > 0) {
+            this.highlightMatch(0);
+        }
+    }
+
+    findNext() {
+        const tab = this.tabs.get(this.activeTabId);
+        if (!tab || tab.findMatches.length === 0) return;
+
+        tab.currentMatchIndex = (tab.currentMatchIndex + 1) % tab.findMatches.length;
+        this.highlightMatch(tab.currentMatchIndex);
+    }
+
+    findPrevious() {
+        const tab = this.tabs.get(this.activeTabId);
+        if (!tab || tab.findMatches.length === 0) return;
+
+        tab.currentMatchIndex = tab.currentMatchIndex - 1;
+        if (tab.currentMatchIndex < 0) {
+            tab.currentMatchIndex = tab.findMatches.length - 1;
+        }
+        this.highlightMatch(tab.currentMatchIndex);
+    }
+
+    highlightMatch(matchIndex) {
+        const tab = this.tabs.get(this.activeTabId);
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        const findText = document.getElementById('find-input').value;
+
+        if (!tab || !editor || matchIndex < 0 || matchIndex >= tab.findMatches.length) return;
+
+        const position = tab.findMatches[matchIndex];
+
+        // Select the match WITHOUT focusing (to keep focus on find input)
+        editor.setSelectionRange(position, position + findText.length);
+
+        // Make the selection visible by briefly focusing and then restoring focus
+        const findInput = document.getElementById('find-input');
+        const hadFocus = document.activeElement === findInput;
+
+        // Temporarily focus editor to make selection visible
+        editor.focus();
+
+        // Restore focus to find input if it had focus
+        if (hadFocus) {
+            setTimeout(() => {
+                findInput.focus();
+                // Restore cursor position in find input
+                findInput.setSelectionRange(findInput.value.length, findInput.value.length);
+            }, 10);
+        }
+
+        // Scroll into view
+        const lineHeight = 20; // Approximate line height
+        const charPosition = position;
+        const numLines = editor.value.substring(0, charPosition).split('\n').length;
+        const scrollPosition = (numLines - 5) * lineHeight; // Show match 5 lines from top
+
+        editor.scrollTop = Math.max(0, scrollPosition);
+
+        // Update match counter
+        const findCount = document.getElementById('find-count');
+        if (findCount) {
+            findCount.textContent = `Match ${matchIndex + 1} of ${tab.findMatches.length}`;
+        }
+    }
+
+    replaceOne() {
+        const tab = this.tabs.get(this.activeTabId);
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        const findText = document.getElementById('find-input').value;
+        const replaceText = document.getElementById('replace-input').value;
+
+        if (!tab || !editor || tab.findMatches.length === 0 || tab.currentMatchIndex < 0) return;
+
+        const position = tab.findMatches[tab.currentMatchIndex];
+        const before = editor.value.substring(0, position);
+        const after = editor.value.substring(position + findText.length);
+
+        editor.value = before + replaceText + after;
+        tab.content = editor.value;
+        tab.isDirty = true;
+
+        this.updatePreview(this.activeTabId);
+        this.updateWordCount();
+        this.updateTabBar();
+
+        // Re-perform find to update matches
+        this.performFind();
+    }
+
+    replaceAll() {
+        const tab = this.tabs.get(this.activeTabId);
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        const findText = document.getElementById('find-input').value;
+        const replaceText = document.getElementById('replace-input').value;
+
+        if (!tab || !editor || !findText) return;
+
+        // Simple replace all
+        const newContent = editor.value.split(findText).join(replaceText);
+        const replacedCount = tab.findMatches.length;
+
+        editor.value = newContent;
+        tab.content = newContent;
+        tab.isDirty = true;
+
+        this.updatePreview(this.activeTabId);
+        this.updateWordCount();
+        this.updateTabBar();
+
+        // Update match count
+        document.getElementById('find-count').textContent = `Replaced ${replacedCount} match${replacedCount !== 1 ? 'es' : ''}`;
+
+        // Re-perform find
+        this.performFind();
+    }
+
+    clearFindHighlights() {
+        const tab = this.tabs.get(this.activeTabId);
+        if (tab) {
+            tab.findMatches = [];
+            tab.currentMatchIndex = -1;
+        }
     }
     
     // File operations
@@ -722,6 +1000,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (initialEditor) {
         initialEditor.addEventListener('input', () => {
             tabManager.handleEditorInput(1);
+        });
+
+        // Add scroll listener for line number sync
+        initialEditor.addEventListener('scroll', () => {
+            if (tabManager.showLineNumbers && tabManager.activeTabId === 1) {
+                const lineNumbers = document.getElementById('line-numbers-1');
+                if (lineNumbers) {
+                    lineNumbers.scrollTop = initialEditor.scrollTop;
+                }
+            }
         });
     }
 
@@ -1081,6 +1369,22 @@ ipcRenderer.on('show-batch-dialog', () => {
     showBatchDialog();
 });
 
+// ConvertAPI dialog handlers
+ipcRenderer.on('show-convertapi-dialog', () => {
+    showConvertAPIDialog();
+});
+
+ipcRenderer.on('convertapi-status', (event, status) => {
+    document.getElementById('convertapi-status').textContent = status;
+});
+
+ipcRenderer.on('convertapi-complete', (event, result) => {
+    document.getElementById('convertapi-progress').classList.add('hidden');
+    if (result.success) {
+        document.getElementById('convertapi-dialog').classList.add('hidden');
+    }
+});
+
 ipcRenderer.on('batch-progress', (event, progress) => {
     updateBatchProgress(progress);
 });
@@ -1232,6 +1536,71 @@ if (originalExportConfirm) {
         }
     });
 }
+
+// ConvertAPI Dialog Functions
+function showConvertAPIDialog() {
+    const dialog = document.getElementById('convertapi-dialog');
+    dialog.classList.remove('hidden');
+
+    // Load saved API key if exists
+    const savedKey = localStorage.getItem('convertapi-key');
+    if (savedKey) {
+        document.getElementById('convertapi-key').value = savedKey;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // ConvertAPI dialog close
+    const convertAPIDialogClose = document.getElementById('convertapi-dialog-close');
+    if (convertAPIDialogClose) {
+        convertAPIDialogClose.addEventListener('click', () => {
+            document.getElementById('convertapi-dialog').classList.add('hidden');
+        });
+    }
+
+    // ConvertAPI cancel
+    const convertAPICancel = document.getElementById('convertapi-cancel');
+    if (convertAPICancel) {
+        convertAPICancel.addEventListener('click', () => {
+            document.getElementById('convertapi-dialog').classList.add('hidden');
+        });
+    }
+
+    // ConvertAPI convert
+    const convertAPIConvert = document.getElementById('convertapi-convert');
+    if (convertAPIConvert) {
+        convertAPIConvert.addEventListener('click', () => {
+            const apiKey = document.getElementById('convertapi-key').value;
+            const fromFormat = document.getElementById('convertapi-from').value;
+            const toFormat = document.getElementById('convertapi-to').value;
+            const filePath = tabManager.getCurrentFilePath();
+
+            if (!apiKey) {
+                alert('Please enter your ConvertAPI key');
+                return;
+            }
+
+            if (!filePath) {
+                alert('Please save the file first');
+                return;
+            }
+
+            // Save API key for future use
+            localStorage.setItem('convertapi-key', apiKey);
+
+            // Show progress
+            document.getElementById('convertapi-progress').classList.remove('hidden');
+
+            // Send conversion request
+            ipcRenderer.send('convertapi-convert', {
+                apiKey,
+                fromFormat,
+                toFormat,
+                filePath
+            });
+        });
+    }
+});
 
 // IPC event listeners for recent files functionality
 ipcRenderer.on('recent-files-cleared', () => {

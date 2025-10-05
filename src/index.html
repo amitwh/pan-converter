@@ -75,6 +75,27 @@
                     <line x1="15" y1="3" x2="15" y2="21"></line>
                 </svg>
             </button>
+            <button id="btn-strikethrough" title="Strikethrough">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 4H9a3 3 0 0 0-2.83 4"></path>
+                    <path d="M14 12a4 4 0 0 1 0 8H6"></path>
+                    <line x1="4" y1="12" x2="20" y2="12"></line>
+                </svg>
+            </button>
+            <button id="btn-code-block" title="Code Block">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                    <path d="m10 10-2 2 2 2"></path>
+                    <path d="m14 10 2 2-2 2"></path>
+                </svg>
+            </button>
+            <button id="btn-horizontal-rule" title="Horizontal Rule">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
             <div class="toolbar-separator"></div>
             <button id="btn-find" title="Find & Replace (Ctrl+F)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -229,6 +250,58 @@
                 <div class="export-dialog-footer">
                     <button id="export-cancel">Cancel</button>
                     <button id="export-confirm" class="primary">Export</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ConvertAPI Dialog -->
+        <div id="convertapi-dialog" class="export-dialog hidden">
+            <div class="export-dialog-content">
+                <div class="export-dialog-header">
+                    <h3>ConvertAPI Conversion</h3>
+                    <button id="convertapi-dialog-close" title="Close">×</button>
+                </div>
+                <div class="export-dialog-body">
+                    <div class="export-section">
+                        <label for="convertapi-key">API Key:</label>
+                        <input type="text" id="convertapi-key" placeholder="Enter your ConvertAPI key">
+                        <small>Get your free API key at <a href="https://www.convertapi.com" target="_blank">convertapi.com</a></small>
+                    </div>
+
+                    <div class="export-section">
+                        <label for="convertapi-from">Convert From:</label>
+                        <select id="convertapi-from">
+                            <option value="md">Markdown (MD)</option>
+                            <option value="docx">Word (DOCX)</option>
+                            <option value="pdf">PDF</option>
+                            <option value="html">HTML</option>
+                            <option value="txt">Text</option>
+                        </select>
+                    </div>
+
+                    <div class="export-section">
+                        <label for="convertapi-to">Convert To:</label>
+                        <select id="convertapi-to">
+                            <option value="pdf">PDF</option>
+                            <option value="docx">Word (DOCX)</option>
+                            <option value="html">HTML</option>
+                            <option value="txt">Text</option>
+                            <option value="jpg">JPG Image</option>
+                            <option value="png">PNG Image</option>
+                            <option value="epub">EPUB</option>
+                            <option value="odt">ODT</option>
+                        </select>
+                    </div>
+
+                    <div id="convertapi-progress" class="batch-progress hidden">
+                        <div class="progress-text">
+                            <span id="convertapi-status">Converting...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="export-dialog-footer">
+                    <button id="convertapi-cancel">Cancel</button>
+                    <button id="convertapi-convert" class="primary">Convert</button>
                 </div>
             </div>
         </div>

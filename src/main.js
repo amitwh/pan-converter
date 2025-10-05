@@ -268,6 +268,30 @@ function createMenu() {
       ]
     },
     {
+      label: 'ConvertAPI',
+      submenu: [
+        {
+          label: 'Cloud Conversion...',
+          click: () => showConvertAPIDialog()
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'About ConvertAPI',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'About ConvertAPI',
+              message: 'ConvertAPI Integration',
+              detail: 'ConvertAPI provides cloud-based file conversion with support for 200+ formats.\n\nFeatures:\n• Convert between 200+ file formats\n• High-quality conversions\n• Fast processing\n• Secure cloud storage\n\nGet your free API key at:\nhttps://www.convertapi.com\n\nFree tier includes 250 conversions/month.',
+              buttons: ['OK']
+            });
+          }
+        }
+      ]
+    },
+    {
       label: 'Help',
       submenu: [
         {
@@ -277,7 +301,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.5.7\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality\n• Live word count and statistics',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.6.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }
@@ -342,6 +366,54 @@ function showExportOptionsDialog(format) {
 function showBatchConversionDialog() {
   mainWindow.webContents.send('show-batch-dialog');
 }
+
+// ConvertAPI integration
+function showConvertAPIDialog() {
+  mainWindow.webContents.send('show-convertapi-dialog');
+}
+
+// Handle ConvertAPI conversion
+ipcMain.on('convertapi-convert', async (event, { apiKey, fromFormat, toFormat, filePath }) => {
+  try {
+    const ConvertAPI = require('convertapi')(apiKey);
+
+    mainWindow.webContents.send('convertapi-status', 'Converting file...');
+
+    const result = await ConvertAPI.convert(toFormat, {
+      File: filePath
+    }, fromFormat);
+
+    // Save the converted file
+    const outputPath = filePath.replace(/\.[^/.]+$/, `.${toFormat}`);
+    await result.saveFiles(path.dirname(outputPath));
+
+    mainWindow.webContents.send('convertapi-complete', {
+      success: true,
+      outputPath: result.files[0].path
+    });
+
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Conversion Complete',
+      message: 'File converted successfully!',
+      detail: `Saved to: ${result.files[0].path}`,
+      buttons: ['OK']
+    });
+  } catch (error) {
+    mainWindow.webContents.send('convertapi-complete', {
+      success: false,
+      error: error.message
+    });
+
+    dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: 'Conversion Failed',
+      message: 'ConvertAPI conversion failed',
+      detail: error.message,
+      buttons: ['OK']
+    });
+  }
+});
 
 function performExportWithOptions(format, options) {
   const outputFile = dialog.showSaveDialogSync(mainWindow, {

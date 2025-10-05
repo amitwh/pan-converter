@@ -1,6 +1,6 @@
 {
   "name": "pan-converter",
-  "version": "1.5.7",
+  "version": "1.6.0",
   "description": "Cross-platform Markdown editor and converter using Pandoc",
   "main": "src/main.js",
   "scripts": {
@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "codemirror": "^6.0.2",
+    "convertapi": "^1.15.0",
     "dompurify": "^3.2.6",
     "electron-store": "^10.1.0",
     "highlight.js": "^11.11.1",
@@ -75,15 +76,21 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}",
