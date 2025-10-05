@@ -125,7 +125,7 @@ class TabManager {
         tabContent.className = 'tab-content';
         tabContent.id = `tab-content-${tab.id}`;
         tabContent.dataset.tabId = tab.id;
-        
+
         tabContent.innerHTML = `
             <div id="editor-pane-${tab.id}" class="pane">
                 <div class="editor-wrapper">
@@ -137,8 +137,16 @@ class TabManager {
                 <div id="preview-${tab.id}" class="preview-content"></div>
             </div>
         `;
-        
+
         document.querySelector('.editor-container').appendChild(tabContent);
+
+        // Directly attach input listener to the new editor
+        const editor = document.getElementById(`editor-${tab.id}`);
+        if (editor) {
+            editor.addEventListener('input', () => {
+                this.handleEditorInput(tab.id);
+            });
+        }
     }
     
     switchToTab(tabId) {
@@ -262,9 +270,9 @@ class TabManager {
     restoreTabState(tabId) {
         const tab = this.tabs.get(tabId);
         if (!tab) return;
-        
+
         const editor = document.getElementById(`editor-${tabId}`);
-        
+
         if (editor) {
             editor.value = tab.content;
             this.updatePreview(tabId);
@@ -282,9 +290,9 @@ class TabManager {
     updatePreview(tabId = this.activeTabId) {
         const tab = this.tabs.get(tabId);
         const preview = document.getElementById(`preview-${tabId}`);
-        
+
         if (!tab || !preview) return;
-        
+
         try {
             const html = marked.parse(tab.content);
             const sanitizedHtml = DOMPurify.sanitize(html);
@@ -376,39 +384,39 @@ class TabManager {
     }
     
     setupEditorEvents() {
-        // Set up editor events using event delegation
-        document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('editor-textarea')) {
-                const tabId = parseInt(e.target.id.split('-')[1]);
-                if (tabId === this.activeTabId) {
+        // Set up editor events using event delegation on the container
+        const editorContainer = document.querySelector('.editor-container');
+        if (editorContainer) {
+            editorContainer.addEventListener('input', (e) => {
+                if (e.target.classList.contains('editor-textarea')) {
+                    const tabId = parseInt(e.target.id.split('-')[1]);
                     this.handleEditorInput(tabId);
                 }
-            }
-        });
-        
-        document.addEventListener('scroll', (e) => {
-            if (e.target.classList.contains('editor-textarea')) {
-                const tabId = parseInt(e.target.id.split('-')[1]);
-                if (tabId === this.activeTabId) {
+            });
+
+            editorContainer.addEventListener('scroll', (e) => {
+                if (e.target.classList.contains('editor-textarea')) {
                     this.updateLineNumbers();
                 }
-            }
-        });
+            }, true);
+        }
     }
     
     handleEditorInput(tabId) {
         const tab = this.tabs.get(tabId);
         if (!tab) return;
-        
+
         const editor = document.getElementById(`editor-${tabId}`);
+        if (!editor) return;
+
         tab.content = editor.value;
         tab.isDirty = true;
-        
+
         this.updatePreview(tabId);
         this.updateWordCount();
         this.updateLineNumbers();
         this.updateTabBar();
-        
+
         // Add to undo stack
         this.pushUndoState(tabId);
     }
@@ -517,7 +525,7 @@ class TabManager {
 
         // Save to localStorage and sync with main process
         localStorage.setItem('recentFiles', JSON.stringify(this.recentFiles));
-        window.electronAPI.send('save-recent-files', this.recentFiles);
+        ipcRenderer.send('save-recent-files', this.recentFiles);
     }
 
     getRecentFiles() {
@@ -532,18 +540,121 @@ class TabManager {
     }
 
     setupToolbarEvents() {
-        // Existing toolbar setup...
+        // Bold
+        document.getElementById('btn-bold').addEventListener('click', () => {
+            this.wrapSelection('**', '**');
+        });
+
+        // Italic
+        document.getElementById('btn-italic').addEventListener('click', () => {
+            this.wrapSelection('*', '*');
+        });
+
+        // Heading
+        document.getElementById('btn-heading').addEventListener('click', () => {
+            this.insertAtLineStart('## ');
+        });
+
+        // Link
+        document.getElementById('btn-link').addEventListener('click', () => {
+            this.wrapSelection('[', '](url)');
+        });
+
+        // Code
+        document.getElementById('btn-code').addEventListener('click', () => {
+            this.wrapSelection('`', '`');
+        });
+
+        // List
+        document.getElementById('btn-list').addEventListener('click', () => {
+            this.insertAtLineStart('- ');
+        });
+
+        // Quote
+        document.getElementById('btn-quote').addEventListener('click', () => {
+            this.insertAtLineStart('> ');
+        });
+
+        // Table
+        document.getElementById('btn-table').addEventListener('click', () => {
+            this.insertTable();
+        });
+
+        // Preview toggle
         document.getElementById('btn-preview-toggle').addEventListener('click', () => {
             this.isPreviewVisible = !this.isPreviewVisible;
             this.updatePreviewVisibility();
         });
-        
+
+        // Line numbers
         document.getElementById('btn-line-numbers').addEventListener('click', () => {
             this.showLineNumbers = !this.showLineNumbers;
             this.updateLineNumbers();
         });
-        
-        // Add other toolbar events...
+    }
+
+    // Helper function to wrap selected text
+    wrapSelection(before, after) {
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        if (!editor) return;
+
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const selectedText = editor.value.substring(start, end);
+        const replacement = before + (selectedText || 'text') + after;
+
+        editor.value = editor.value.substring(0, start) + replacement + editor.value.substring(end);
+
+        // Update cursor position
+        const newCursorPos = selectedText ? start + replacement.length : start + before.length;
+        editor.selectionStart = editor.selectionEnd = newCursorPos;
+        editor.focus();
+
+        // Trigger update
+        this.handleEditorInput(this.activeTabId);
+    }
+
+    // Helper function to insert text at the start of current line
+    insertAtLineStart(prefix) {
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        if (!editor) return;
+
+        const start = editor.selectionStart;
+        const text = editor.value;
+
+        // Find the start of the current line
+        let lineStart = text.lastIndexOf('\n', start - 1) + 1;
+
+        // Insert the prefix
+        editor.value = text.substring(0, lineStart) + prefix + text.substring(lineStart);
+
+        // Update cursor position
+        editor.selectionStart = editor.selectionEnd = start + prefix.length;
+        editor.focus();
+
+        // Trigger update
+        this.handleEditorInput(this.activeTabId);
+    }
+
+    // Insert a markdown table
+    insertTable() {
+        const editor = document.getElementById(`editor-${this.activeTabId}`);
+        if (!editor) return;
+
+        const table = '\n| Column 1 | Column 2 | Column 3 |\n' +
+                     '|----------|----------|----------|\n' +
+                     '| Cell 1   | Cell 2   | Cell 3   |\n' +
+                     '| Cell 4   | Cell 5   | Cell 6   |\n';
+
+        const start = editor.selectionStart;
+        editor.value = editor.value.substring(0, start) + table + editor.value.substring(start);
+
+        // Update cursor position
+        editor.selectionStart = editor.selectionEnd = start + table.length;
+        editor.focus();
+
+        // Trigger update
+        this.handleEditorInput(this.activeTabId);
     }
     
     setupFindEvents() {
@@ -561,11 +672,14 @@ class TabManager {
     // File operations
     openFile(filePath, content) {
         let tab = this.tabs.get(this.activeTabId);
-        
+
+        // Handle both forward and back slashes for cross-platform compatibility
+        const fileName = filePath.split(/[\\/]/).pop();
+
         // If current tab is empty and untitled, reuse it
         if (!tab.filePath && !tab.isDirty && tab.content === '') {
             tab.filePath = filePath;
-            tab.title = filePath.split('/').pop();
+            tab.title = fileName;
             tab.content = content;
             tab.originalContent = content;
             tab.isDirty = false;
@@ -574,12 +688,12 @@ class TabManager {
             this.createNewTab();
             tab = this.tabs.get(this.activeTabId);
             tab.filePath = filePath;
-            tab.title = filePath.split('/').pop();
+            tab.title = fileName;
             tab.content = content;
             tab.originalContent = content;
             tab.isDirty = false;
         }
-        
+
         this.restoreTabState(this.activeTabId);
         this.startAutoSave();
         this.addToRecentFiles(filePath);
@@ -603,12 +717,20 @@ let tabManager;
 document.addEventListener('DOMContentLoaded', () => {
     tabManager = new TabManager();
 
+    // Attach input listener to the initial editor (tab 1)
+    const initialEditor = document.getElementById('editor-1');
+    if (initialEditor) {
+        initialEditor.addEventListener('input', () => {
+            tabManager.handleEditorInput(1);
+        });
+    }
+
     // Request current theme
     ipcRenderer.send('get-theme');
 
     // Signal that renderer is ready for file operations
     ipcRenderer.send('renderer-ready');
-    
+
     // Set up auto-save interval
     setInterval(() => {
         // Auto-save logic for all tabs
@@ -626,7 +748,9 @@ ipcRenderer.on('file-new', () => {
 });
 
 ipcRenderer.on('file-opened', (event, data) => {
-    tabManager.openFile(data.path, data.content);
+    if (tabManager) {
+        tabManager.openFile(data.path, data.content);
+    }
 });
 
 ipcRenderer.on('file-save', () => {
@@ -1110,13 +1234,13 @@ if (originalExportConfirm) {
 }
 
 // IPC event listeners for recent files functionality
-if (window.electronAPI) {
-    window.electronAPI.on('recent-files-cleared', () => {
+ipcRenderer.on('recent-files-cleared', () => {
+    if (tabManager) {
         tabManager.recentFiles = [];
         localStorage.setItem('recentFiles', JSON.stringify([]));
         console.log('Recent files cleared');
-    });
-}
+    }
+});
 
 // Add math rendering support using KaTeX for enhanced preview
 function initMathSupport() {

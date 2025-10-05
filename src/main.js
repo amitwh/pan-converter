@@ -2,29 +2,11 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
-const XLSX = require('xlsx');
 
 // Get the system Pandoc path
 function getPandocPath() {
-  // Check common Pandoc installation locations on Windows
-  const commonPaths = [
-    'pandoc', // System PATH
-    path.join(process.env.USERPROFILE || '', 'AppData', 'Local', 'Pandoc', 'pandoc.exe'),
-    path.join('C:', 'Program Files', 'Pandoc', 'pandoc.exe'),
-    path.join('C:', 'Program Files (x86)', 'Pandoc', 'pandoc.exe'),
-  ];
-
-  // Try each path and return the first one that exists
-  for (const pandocPath of commonPaths) {
-    if (pandocPath === 'pandoc') {
-      // For system PATH, we'll check in checkPandocAvailable()
-      return pandocPath;
-    } else if (fs.existsSync(pandocPath)) {
-      return `"${pandocPath}"`;
-    }
-  }
-  
-  // Fallback to system pandoc
+  // Pandoc is expected to be in the system's PATH.
+  // The command will be executed directly. Quoting is handled by exec.
   return 'pandoc';
 }
 
@@ -200,7 +182,6 @@ function createMenu() {
             { label: 'OpenDocument Presentation (ODP)', click: () => exportFile('odp') },
             { type: 'separator' },
             { label: 'CSV (Tables)', click: () => exportSpreadsheet('csv') },
-            { label: 'XLSX (Tables)', click: () => exportSpreadsheet('xlsx') }
           ]
         },
         { type: 'separator' },
@@ -296,7 +277,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.5.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality\n• Live word count and statistics',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.5.7\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }
@@ -435,12 +416,12 @@ function performExportWithOptions(format, options) {
 
     // Add specific options for PDF export to ensure proper generation
     if (format === 'pdf') {
-      const pdfEngine = options.pdfEngine || 'xelatex';
-      const geometry = options.geometry || 'margin=1in';
-      pandocCmd += ` --pdf-engine=${pdfEngine} -V geometry:${geometry}`;
+      const pdfEngine = options.pdfEngine || 'xelatex'; // Default to xelatex
+      pandocCmd += ` --pdf-engine="${pdfEngine}"`;
+      if (options.geometry) pandocCmd += ` -V geometry:"${options.geometry}"`;
 
       // Try with specified PDF engine
-      exec(pandocCmd, (error, stdout, stderr) => {
+      exec(pandocCmd, (error) => {
         if (error) {
           // Try fallback engines if the specified one fails
           const fallbackEngines = ['pdflatex', 'lualatex'];
@@ -450,13 +431,7 @@ function performExportWithOptions(format, options) {
         }
       });
     } else if (format === 'docx') {
-      pandocCmd = `${getPandocPath()} "${currentFile}" -t docx -o "${outputFile}"`;
-      exportWithPandoc(pandocCmd, outputFile, format);
-    } else if (format === 'html') {
-      pandocCmd = `${getPandocPath()} "${currentFile}" -t html5 --standalone -o "${outputFile}"`;
-      exportWithPandoc(pandocCmd, outputFile, format);
-    } else if (format === 'latex') {
-      pandocCmd = `${getPandocPath()} "${currentFile}" -t latex -o "${outputFile}"`;
+      pandocCmd += ' -t docx';
       exportWithPandoc(pandocCmd, outputFile, format);
     } else {
       // Generic export for other formats
@@ -481,8 +456,9 @@ function tryPdfFallback(inputFile, outputFile, engines, index, options, lastErro
   }
 
   const engine = engines[index];
-  const geometry = options.geometry || 'margin=1in';
   let pandocCmd = `${getPandocPath()} "${inputFile}" --pdf-engine=${engine} -V geometry:${geometry} -o "${outputFile}"`;
+
+  if (options.geometry) pandocCmd += ` -V geometry:"${options.geometry}"`;
 
   // Add all other options
   if (options.template && options.template !== 'default') {
@@ -497,7 +473,7 @@ function tryPdfFallback(inputFile, outputFile, engines, index, options, lastErro
     }
   }
 
-  exec(pandocCmd, (error, stdout, stderr) => {
+  exec(pandocCmd, (error) => {
     if (error) {
       tryPdfFallback(inputFile, outputFile, engines, index + 1, options, error);
     } else {
@@ -916,20 +892,7 @@ ipcMain.on('export-spreadsheet', (event, { content, format }) => {
           });
         });
 
-        // Write CSV file
         fs.writeFileSync(outputFile, csvContent, 'utf-8');
-      } else if (format === 'xlsx') {
-        // Convert tables to XLSX format
-        const workbook = XLSX.utils.book_new();
-        
-        tables.forEach((table, index) => {
-          const sheetName = tables.length > 1 ? `Table${index + 1}` : 'Table';
-          const worksheet = XLSX.utils.aoa_to_sheet(table);
-          XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-        });
-
-        // Write XLSX file
-        XLSX.writeFile(workbook, outputFile);
       }
 
       dialog.showMessageBox(mainWindow, {
@@ -1092,8 +1055,8 @@ function performBatchConversion(inputFolder, outputFolder, format, options) {
     // Add PDF-specific options
     if (format === 'pdf') {
       const pdfEngine = options.pdfEngine || 'xelatex';
-      const geometry = options.geometry || 'margin=1in';
-      pandocCmd += ` --pdf-engine=${pdfEngine} -V geometry:${geometry}`;
+      pandocCmd += ` --pdf-engine="${pdfEngine}"`;
+      if (options.geometry) pandocCmd += ` -V geometry:"${options.geometry}"`;
     }
 
     // Execute conversion
