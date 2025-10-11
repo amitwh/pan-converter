@@ -208,18 +208,26 @@ function createMenu() {
     {
       label: 'Edit',
       submenu: [
-        { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
-        { label: 'Redo', accelerator: 'CmdOrCtrl+Shift+Z', role: 'redo' },
+        {
+          label: 'Undo',
+          accelerator: 'CmdOrCtrl+Z',
+          click: () => mainWindow.webContents.send('undo')
+        },
+        {
+          label: 'Redo',
+          accelerator: 'CmdOrCtrl+Shift+Z',
+          click: () => mainWindow.webContents.send('redo')
+        },
         { type: 'separator' },
         { label: 'Cut', accelerator: 'CmdOrCtrl+X', role: 'cut' },
         { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
         { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' },
         { label: 'Select All', accelerator: 'CmdOrCtrl+A', role: 'selectAll' },
         { type: 'separator' },
-        { 
-          label: 'Find & Replace', 
-          accelerator: 'CmdOrCtrl+F', 
-          click: () => mainWindow.webContents.send('toggle-find') 
+        {
+          label: 'Find & Replace',
+          accelerator: 'CmdOrCtrl+F',
+          click: () => mainWindow.webContents.send('toggle-find')
         }
       ]
     },
@@ -238,7 +246,22 @@ function createMenu() {
             { label: 'Dark', click: () => setTheme('dark') },
             { label: 'Solarized', click: () => setTheme('solarized') },
             { label: 'Monokai', click: () => setTheme('monokai') },
-            { label: 'GitHub', click: () => setTheme('github') }
+            { label: 'GitHub', click: () => setTheme('github') },
+            { type: 'separator' },
+            { label: 'Dracula', click: () => setTheme('dracula') },
+            { label: 'Nord', click: () => setTheme('nord') },
+            { label: 'One Dark', click: () => setTheme('onedark') },
+            { label: 'Atom One Light', click: () => setTheme('atomonelight') },
+            { label: 'Material', click: () => setTheme('material') },
+            { label: 'Gruvbox Dark', click: () => setTheme('gruvbox-dark') },
+            { label: 'Gruvbox Light', click: () => setTheme('gruvbox-light') },
+            { label: 'Tokyo Night', click: () => setTheme('tokyonight') },
+            { label: 'Palenight', click: () => setTheme('palenight') },
+            { label: 'Ayu Dark', click: () => setTheme('ayu-dark') },
+            { label: 'Ayu Light', click: () => setTheme('ayu-light') },
+            { label: 'Ayu Mirage', click: () => setTheme('ayu-mirage') },
+            { label: 'Oceanic Next', click: () => setTheme('oceanic-next') },
+            { label: 'Cobalt2', click: () => setTheme('cobalt2') }
           ]
         },
         { type: 'separator' },
@@ -389,7 +412,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.7.1\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• Multiple themes support\n• Undo/redo functionality\n• Live word count and statistics',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.7.2\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 19 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, and more)\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }

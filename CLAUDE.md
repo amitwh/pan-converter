@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.7.1
+**Current Version**: v1.7.2
 **Author**: Amit Haridas (amit.wh@gmail.com)
 **License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
@@ -111,7 +111,41 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ## Feature Implementation Guide
 
-### v1.7.1 Modern UI Design (Latest)
+### v1.7.2 Enhanced Themes & Bug Fixes (Latest)
+
+#### 🎨 14 New Beautiful Themes
+**Expanded Theme Collection** (`src/main.js:242-266`, `src/styles.css:1590-2555`)
+- **Added 14 new professionally-designed themes** bringing the total to 19 themes
+- **New Themes Include**:
+  - **Dracula** - Popular purple and pink dark theme
+  - **Nord** - Arctic-inspired blue theme
+  - **One Dark** - Atom's iconic dark theme
+  - **Atom One Light** - Clean, bright light theme
+  - **Material** - Google Material Design inspired
+  - **Gruvbox Dark** - Warm retro groove colors (dark)
+  - **Gruvbox Light** - Warm retro groove colors (light)
+  - **Tokyo Night** - Modern Japanese-inspired dark theme
+  - **Palenight** - Soft purple Material Design variant
+  - **Ayu Dark** - Simple, elegant dark theme
+  - **Ayu Light** - Minimalist light theme
+  - **Ayu Mirage** - Balanced dark-light hybrid
+  - **Oceanic Next** - Ocean-inspired teal and blue
+  - **Cobalt2** - Deep blue with yellow accents
+
+**Technical Implementation:**
+- Complete CSS styling for all UI elements per theme
+- Consistent theming across tabs, toolbar, editor, preview, and status bar
+- Theme-aware color schemes for syntax highlighting
+- All themes support glassmorphism effects from v1.7.1
+
+#### 🐛 Undo/Redo Fix
+**Fixed Menu Integration** (`src/renderer.js:1107-1118`)
+- Fixed undo/redo menu items not connecting to custom undo/redo functionality
+- Added IPC event listeners in renderer to receive 'undo' and 'redo' messages
+- Connected Edit menu commands to TabManager's undo() and redo() methods
+- Keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z) now work correctly with custom undo stack
+
+### v1.7.1 Modern UI Design
 
 #### 🎨 Glassmorphism & Gradient UI
 **Modern Design System** (`src/styles-modern.css`, `src/index.html:7-11`)
@@ -566,4 +600,4 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 ---
 
 **Last Updated**: October 11, 2025
-**Claude Assistant**: Development completed for v1.7.1 with modern glassmorphism UI design featuring animated gradient backgrounds, translucent glass effects, smooth animations, enhanced typography with Inter and JetBrains Mono fonts, and comprehensive CSS custom properties for consistent theming.
+**Claude Assistant**: Development completed for v1.7.2 with 14 new professionally-designed themes (Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Material, Oceanic Next, Palenight, Cobalt2, and more) bringing total to 19 themes, plus fixed undo/redo menu integration for proper keyboard shortcut support.

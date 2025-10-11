@@ -1587,3 +1587,969 @@ body.theme-github .enhanced-stats {
         opacity: 0;
     }
 }
+
+/* Theme: Dracula */
+body.theme-dracula {
+    background: #282a36;
+    color: #f8f8f2;
+}
+
+body.theme-dracula .tab-bar {
+    background: #343746;
+    border-bottom-color: #44475a;
+}
+
+body.theme-dracula .tab {
+    background: #44475a;
+    border-color: #6272a4;
+    color: #f8f8f2;
+}
+
+body.theme-dracula .tab.active {
+    background: #282a36;
+    border-color: #bd93f9;
+}
+
+body.theme-dracula .toolbar {
+    background: #343746;
+    border-bottom-color: #44475a;
+}
+
+body.theme-dracula .toolbar button {
+    color: #f8f8f2;
+}
+
+body.theme-dracula .toolbar button:hover {
+    background: #44475a;
+    border-color: #6272a4;
+}
+
+body.theme-dracula .editor-textarea {
+    background: #282a36;
+    color: #f8f8f2;
+}
+
+body.theme-dracula .preview-content {
+    color: #f8f8f2;
+}
+
+body.theme-dracula .preview-content h1,
+body.theme-dracula .preview-content h2 {
+    border-bottom-color: #44475a;
+    color: #bd93f9;
+}
+
+body.theme-dracula .preview-content code {
+    background-color: #44475a;
+}
+
+body.theme-dracula .preview-content pre {
+    background-color: #44475a;
+}
+
+body.theme-dracula .preview-content a {
+    color: #8be9fd;
+}
+
+body.theme-dracula .status-bar {
+    background: #343746;
+    border-top-color: #44475a;
+    color: #f8f8f2;
+}
+
+/* Theme: Nord */
+body.theme-nord {
+    background: #2e3440;
+    color: #d8dee9;
+}
+
+body.theme-nord .tab-bar {
+    background: #3b4252;
+    border-bottom-color: #4c566a;
+}
+
+body.theme-nord .tab {
+    background: #434c5e;
+    border-color: #4c566a;
+    color: #d8dee9;
+}
+
+body.theme-nord .tab.active {
+    background: #2e3440;
+    border-color: #88c0d0;
+}
+
+body.theme-nord .toolbar {
+    background: #3b4252;
+    border-bottom-color: #4c566a;
+}
+
+body.theme-nord .toolbar button {
+    color: #d8dee9;
+}
+
+body.theme-nord .toolbar button:hover {
+    background: #434c5e;
+    border-color: #4c566a;
+}
+
+body.theme-nord .editor-textarea {
+    background: #2e3440;
+    color: #d8dee9;
+}
+
+body.theme-nord .preview-content {
+    color: #d8dee9;
+}
+
+body.theme-nord .preview-content h1,
+body.theme-nord .preview-content h2 {
+    border-bottom-color: #4c566a;
+    color: #88c0d0;
+}
+
+body.theme-nord .preview-content code {
+    background-color: #3b4252;
+}
+
+body.theme-nord .preview-content pre {
+    background-color: #3b4252;
+}
+
+body.theme-nord .preview-content a {
+    color: #81a1c1;
+}
+
+body.theme-nord .status-bar {
+    background: #3b4252;
+    border-top-color: #4c566a;
+    color: #d8dee9;
+}
+
+/* Theme: One Dark */
+body.theme-onedark {
+    background: #282c34;
+    color: #abb2bf;
+}
+
+body.theme-onedark .tab-bar {
+    background: #21252b;
+    border-bottom-color: #181a1f;
+}
+
+body.theme-onedark .tab {
+    background: #2c313a;
+    border-color: #3e4451;
+    color: #abb2bf;
+}
+
+body.theme-onedark .tab.active {
+    background: #282c34;
+    border-color: #61afef;
+}
+
+body.theme-onedark .toolbar {
+    background: #21252b;
+    border-bottom-color: #181a1f;
+}
+
+body.theme-onedark .toolbar button {
+    color: #abb2bf;
+}
+
+body.theme-onedark .toolbar button:hover {
+    background: #2c313a;
+    border-color: #3e4451;
+}
+
+body.theme-onedark .editor-textarea {
+    background: #282c34;
+    color: #abb2bf;
+}
+
+body.theme-onedark .preview-content {
+    color: #abb2bf;
+}
+
+body.theme-onedark .preview-content h1,
+body.theme-onedark .preview-content h2 {
+    border-bottom-color: #3e4451;
+    color: #61afef;
+}
+
+body.theme-onedark .preview-content code {
+    background-color: #21252b;
+}
+
+body.theme-onedark .preview-content pre {
+    background-color: #21252b;
+}
+
+body.theme-onedark .preview-content a {
+    color: #56b6c2;
+}
+
+body.theme-onedark .status-bar {
+    background: #21252b;
+    border-top-color: #181a1f;
+    color: #abb2bf;
+}
+
+/* Theme: Atom One Light */
+body.theme-atomonelight {
+    background: #fafafa;
+    color: #383a42;
+}
+
+body.theme-atomonelight .tab-bar {
+    background: #f0f0f0;
+    border-bottom-color: #e0e0e0;
+}
+
+body.theme-atomonelight .tab {
+    background: #e5e5e6;
+    border-color: #d0d0d0;
+    color: #383a42;
+}
+
+body.theme-atomonelight .tab.active {
+    background: #fafafa;
+    border-color: #4078f2;
+}
+
+body.theme-atomonelight .toolbar {
+    background: #f0f0f0;
+    border-bottom-color: #e0e0e0;
+}
+
+body.theme-atomonelight .toolbar button {
+    color: #383a42;
+}
+
+body.theme-atomonelight .toolbar button:hover {
+    background: #e5e5e6;
+    border-color: #d0d0d0;
+}
+
+body.theme-atomonelight .editor-textarea {
+    background: #fafafa;
+    color: #383a42;
+}
+
+body.theme-atomonelight .preview-content {
+    color: #383a42;
+}
+
+body.theme-atomonelight .preview-content h1,
+body.theme-atomonelight .preview-content h2 {
+    border-bottom-color: #e0e0e0;
+    color: #4078f2;
+}
+
+body.theme-atomonelight .preview-content code {
+    background-color: #f0f0f0;
+}
+
+body.theme-atomonelight .preview-content pre {
+    background-color: #f0f0f0;
+}
+
+body.theme-atomonelight .preview-content a {
+    color: #0184bc;
+}
+
+body.theme-atomonelight .status-bar {
+    background: #f0f0f0;
+    border-top-color: #e0e0e0;
+    color: #383a42;
+}
+
+/* Theme: Material */
+body.theme-material {
+    background: #263238;
+    color: #eeffff;
+}
+
+body.theme-material .tab-bar {
+    background: #2e3c43;
+    border-bottom-color: #37474f;
+}
+
+body.theme-material .tab {
+    background: #37474f;
+    border-color: #546e7a;
+    color: #eeffff;
+}
+
+body.theme-material .tab.active {
+    background: #263238;
+    border-color: #82aaff;
+}
+
+body.theme-material .toolbar {
+    background: #2e3c43;
+    border-bottom-color: #37474f;
+}
+
+body.theme-material .toolbar button {
+    color: #eeffff;
+}
+
+body.theme-material .toolbar button:hover {
+    background: #37474f;
+    border-color: #546e7a;
+}
+
+body.theme-material .editor-textarea {
+    background: #263238;
+    color: #eeffff;
+}
+
+body.theme-material .preview-content {
+    color: #eeffff;
+}
+
+body.theme-material .preview-content h1,
+body.theme-material .preview-content h2 {
+    border-bottom-color: #37474f;
+    color: #82aaff;
+}
+
+body.theme-material .preview-content code {
+    background-color: #2e3c43;
+}
+
+body.theme-material .preview-content pre {
+    background-color: #2e3c43;
+}
+
+body.theme-material .preview-content a {
+    color: #80cbc4;
+}
+
+body.theme-material .status-bar {
+    background: #2e3c43;
+    border-top-color: #37474f;
+    color: #eeffff;
+}
+
+/* Theme: Gruvbox Dark */
+body.theme-gruvbox-dark {
+    background: #282828;
+    color: #ebdbb2;
+}
+
+body.theme-gruvbox-dark .tab-bar {
+    background: #3c3836;
+    border-bottom-color: #504945;
+}
+
+body.theme-gruvbox-dark .tab {
+    background: #504945;
+    border-color: #665c54;
+    color: #ebdbb2;
+}
+
+body.theme-gruvbox-dark .tab.active {
+    background: #282828;
+    border-color: #fabd2f;
+}
+
+body.theme-gruvbox-dark .toolbar {
+    background: #3c3836;
+    border-bottom-color: #504945;
+}
+
+body.theme-gruvbox-dark .toolbar button {
+    color: #ebdbb2;
+}
+
+body.theme-gruvbox-dark .toolbar button:hover {
+    background: #504945;
+    border-color: #665c54;
+}
+
+body.theme-gruvbox-dark .editor-textarea {
+    background: #282828;
+    color: #ebdbb2;
+}
+
+body.theme-gruvbox-dark .preview-content {
+    color: #ebdbb2;
+}
+
+body.theme-gruvbox-dark .preview-content h1,
+body.theme-gruvbox-dark .preview-content h2 {
+    border-bottom-color: #504945;
+    color: #fabd2f;
+}
+
+body.theme-gruvbox-dark .preview-content code {
+    background-color: #3c3836;
+}
+
+body.theme-gruvbox-dark .preview-content pre {
+    background-color: #3c3836;
+}
+
+body.theme-gruvbox-dark .preview-content a {
+    color: #83a598;
+}
+
+body.theme-gruvbox-dark .status-bar {
+    background: #3c3836;
+    border-top-color: #504945;
+    color: #ebdbb2;
+}
+
+/* Theme: Gruvbox Light */
+body.theme-gruvbox-light {
+    background: #fbf1c7;
+    color: #3c3836;
+}
+
+body.theme-gruvbox-light .tab-bar {
+    background: #ebdbb2;
+    border-bottom-color: #d5c4a1;
+}
+
+body.theme-gruvbox-light .tab {
+    background: #d5c4a1;
+    border-color: #bdae93;
+    color: #3c3836;
+}
+
+body.theme-gruvbox-light .tab.active {
+    background: #fbf1c7;
+    border-color: #b57614;
+}
+
+body.theme-gruvbox-light .toolbar {
+    background: #ebdbb2;
+    border-bottom-color: #d5c4a1;
+}
+
+body.theme-gruvbox-light .toolbar button {
+    color: #3c3836;
+}
+
+body.theme-gruvbox-light .toolbar button:hover {
+    background: #d5c4a1;
+    border-color: #bdae93;
+}
+
+body.theme-gruvbox-light .editor-textarea {
+    background: #fbf1c7;
+    color: #3c3836;
+}
+
+body.theme-gruvbox-light .preview-content {
+    color: #3c3836;
+}
+
+body.theme-gruvbox-light .preview-content h1,
+body.theme-gruvbox-light .preview-content h2 {
+    border-bottom-color: #d5c4a1;
+    color: #b57614;
+}
+
+body.theme-gruvbox-light .preview-content code {
+    background-color: #ebdbb2;
+}
+
+body.theme-gruvbox-light .preview-content pre {
+    background-color: #ebdbb2;
+}
+
+body.theme-gruvbox-light .preview-content a {
+    color: #076678;
+}
+
+body.theme-gruvbox-light .status-bar {
+    background: #ebdbb2;
+    border-top-color: #d5c4a1;
+    color: #3c3836;
+}
+
+/* Theme: Tokyo Night */
+body.theme-tokyonight {
+    background: #1a1b26;
+    color: #c0caf5;
+}
+
+body.theme-tokyonight .tab-bar {
+    background: #16161e;
+    border-bottom-color: #24283b;
+}
+
+body.theme-tokyonight .tab {
+    background: #24283b;
+    border-color: #414868;
+    color: #c0caf5;
+}
+
+body.theme-tokyonight .tab.active {
+    background: #1a1b26;
+    border-color: #7aa2f7;
+}
+
+body.theme-tokyonight .toolbar {
+    background: #16161e;
+    border-bottom-color: #24283b;
+}
+
+body.theme-tokyonight .toolbar button {
+    color: #c0caf5;
+}
+
+body.theme-tokyonight .toolbar button:hover {
+    background: #24283b;
+    border-color: #414868;
+}
+
+body.theme-tokyonight .editor-textarea {
+    background: #1a1b26;
+    color: #c0caf5;
+}
+
+body.theme-tokyonight .preview-content {
+    color: #c0caf5;
+}
+
+body.theme-tokyonight .preview-content h1,
+body.theme-tokyonight .preview-content h2 {
+    border-bottom-color: #24283b;
+    color: #7aa2f7;
+}
+
+body.theme-tokyonight .preview-content code {
+    background-color: #24283b;
+}
+
+body.theme-tokyonight .preview-content pre {
+    background-color: #24283b;
+}
+
+body.theme-tokyonight .preview-content a {
+    color: #7dcfff;
+}
+
+body.theme-tokyonight .status-bar {
+    background: #16161e;
+    border-top-color: #24283b;
+    color: #c0caf5;
+}
+
+/* Theme: Palenight */
+body.theme-palenight {
+    background: #292d3e;
+    color: #a6accd;
+}
+
+body.theme-palenight .tab-bar {
+    background: #32374d;
+    border-bottom-color: #444267;
+}
+
+body.theme-palenight .tab {
+    background: #444267;
+    border-color: #676e95;
+    color: #a6accd;
+}
+
+body.theme-palenight .tab.active {
+    background: #292d3e;
+    border-color: #82aaff;
+}
+
+body.theme-palenight .toolbar {
+    background: #32374d;
+    border-bottom-color: #444267;
+}
+
+body.theme-palenight .toolbar button {
+    color: #a6accd;
+}
+
+body.theme-palenight .toolbar button:hover {
+    background: #444267;
+    border-color: #676e95;
+}
+
+body.theme-palenight .editor-textarea {
+    background: #292d3e;
+    color: #a6accd;
+}
+
+body.theme-palenight .preview-content {
+    color: #a6accd;
+}
+
+body.theme-palenight .preview-content h1,
+body.theme-palenight .preview-content h2 {
+    border-bottom-color: #444267;
+    color: #82aaff;
+}
+
+body.theme-palenight .preview-content code {
+    background-color: #32374d;
+}
+
+body.theme-palenight .preview-content pre {
+    background-color: #32374d;
+}
+
+body.theme-palenight .preview-content a {
+    color: #89ddff;
+}
+
+body.theme-palenight .status-bar {
+    background: #32374d;
+    border-top-color: #444267;
+    color: #a6accd;
+}
+
+/* Theme: Ayu Dark */
+body.theme-ayu-dark {
+    background: #0a0e14;
+    color: #b3b1ad;
+}
+
+body.theme-ayu-dark .tab-bar {
+    background: #0d1016;
+    border-bottom-color: #1f2430;
+}
+
+body.theme-ayu-dark .tab {
+    background: #1f2430;
+    border-color: #3d424d;
+    color: #b3b1ad;
+}
+
+body.theme-ayu-dark .tab.active {
+    background: #0a0e14;
+    border-color: #ffaa33;
+}
+
+body.theme-ayu-dark .toolbar {
+    background: #0d1016;
+    border-bottom-color: #1f2430;
+}
+
+body.theme-ayu-dark .toolbar button {
+    color: #b3b1ad;
+}
+
+body.theme-ayu-dark .toolbar button:hover {
+    background: #1f2430;
+    border-color: #3d424d;
+}
+
+body.theme-ayu-dark .editor-textarea {
+    background: #0a0e14;
+    color: #b3b1ad;
+}
+
+body.theme-ayu-dark .preview-content {
+    color: #b3b1ad;
+}
+
+body.theme-ayu-dark .preview-content h1,
+body.theme-ayu-dark .preview-content h2 {
+    border-bottom-color: #1f2430;
+    color: #ffaa33;
+}
+
+body.theme-ayu-dark .preview-content code {
+    background-color: #0d1016;
+}
+
+body.theme-ayu-dark .preview-content pre {
+    background-color: #0d1016;
+}
+
+body.theme-ayu-dark .preview-content a {
+    color: #39bae6;
+}
+
+body.theme-ayu-dark .status-bar {
+    background: #0d1016;
+    border-top-color: #1f2430;
+    color: #b3b1ad;
+}
+
+/* Theme: Ayu Light */
+body.theme-ayu-light {
+    background: #fafafa;
+    color: #5c6166;
+}
+
+body.theme-ayu-light .tab-bar {
+    background: #f3f4f5;
+    border-bottom-color: #e7e8e9;
+}
+
+body.theme-ayu-light .tab {
+    background: #e7e8e9;
+    border-color: #d9dadb;
+    color: #5c6166;
+}
+
+body.theme-ayu-light .tab.active {
+    background: #fafafa;
+    border-color: #ff6a00;
+}
+
+body.theme-ayu-light .toolbar {
+    background: #f3f4f5;
+    border-bottom-color: #e7e8e9;
+}
+
+body.theme-ayu-light .toolbar button {
+    color: #5c6166;
+}
+
+body.theme-ayu-light .toolbar button:hover {
+    background: #e7e8e9;
+    border-color: #d9dadb;
+}
+
+body.theme-ayu-light .editor-textarea {
+    background: #fafafa;
+    color: #5c6166;
+}
+
+body.theme-ayu-light .preview-content {
+    color: #5c6166;
+}
+
+body.theme-ayu-light .preview-content h1,
+body.theme-ayu-light .preview-content h2 {
+    border-bottom-color: #e7e8e9;
+    color: #ff6a00;
+}
+
+body.theme-ayu-light .preview-content code {
+    background-color: #f3f4f5;
+}
+
+body.theme-ayu-light .preview-content pre {
+    background-color: #f3f4f5;
+}
+
+body.theme-ayu-light .preview-content a {
+    color: #399ee6;
+}
+
+body.theme-ayu-light .status-bar {
+    background: #f3f4f5;
+    border-top-color: #e7e8e9;
+    color: #5c6166;
+}
+
+/* Theme: Ayu Mirage */
+body.theme-ayu-mirage {
+    background: #1f2430;
+    color: #cbccc6;
+}
+
+body.theme-ayu-mirage .tab-bar {
+    background: #232834;
+    border-bottom-color: #343d4b;
+}
+
+body.theme-ayu-mirage .tab {
+    background: #343d4b;
+    border-color: #465268;
+    color: #cbccc6;
+}
+
+body.theme-ayu-mirage .tab.active {
+    background: #1f2430;
+    border-color: #ffa759;
+}
+
+body.theme-ayu-mirage .toolbar {
+    background: #232834;
+    border-bottom-color: #343d4b;
+}
+
+body.theme-ayu-mirage .toolbar button {
+    color: #cbccc6;
+}
+
+body.theme-ayu-mirage .toolbar button:hover {
+    background: #343d4b;
+    border-color: #465268;
+}
+
+body.theme-ayu-mirage .editor-textarea {
+    background: #1f2430;
+    color: #cbccc6;
+}
+
+body.theme-ayu-mirage .preview-content {
+    color: #cbccc6;
+}
+
+body.theme-ayu-mirage .preview-content h1,
+body.theme-ayu-mirage .preview-content h2 {
+    border-bottom-color: #343d4b;
+    color: #ffa759;
+}
+
+body.theme-ayu-mirage .preview-content code {
+    background-color: #232834;
+}
+
+body.theme-ayu-mirage .preview-content pre {
+    background-color: #232834;
+}
+
+body.theme-ayu-mirage .preview-content a {
+    color: #5ccfe6;
+}
+
+body.theme-ayu-mirage .status-bar {
+    background: #232834;
+    border-top-color: #343d4b;
+    color: #cbccc6;
+}
+
+/* Theme: Oceanic Next */
+body.theme-oceanic-next {
+    background: #1b2b34;
+    color: #cdd3de;
+}
+
+body.theme-oceanic-next .tab-bar {
+    background: #20353f;
+    border-bottom-color: #343d46;
+}
+
+body.theme-oceanic-next .tab {
+    background: #343d46;
+    border-color: #4f5b66;
+    color: #cdd3de;
+}
+
+body.theme-oceanic-next .tab.active {
+    background: #1b2b34;
+    border-color: #6699cc;
+}
+
+body.theme-oceanic-next .toolbar {
+    background: #20353f;
+    border-bottom-color: #343d46;
+}
+
+body.theme-oceanic-next .toolbar button {
+    color: #cdd3de;
+}
+
+body.theme-oceanic-next .toolbar button:hover {
+    background: #343d46;
+    border-color: #4f5b66;
+}
+
+body.theme-oceanic-next .editor-textarea {
+    background: #1b2b34;
+    color: #cdd3de;
+}
+
+body.theme-oceanic-next .preview-content {
+    color: #cdd3de;
+}
+
+body.theme-oceanic-next .preview-content h1,
+body.theme-oceanic-next .preview-content h2 {
+    border-bottom-color: #343d46;
+    color: #6699cc;
+}
+
+body.theme-oceanic-next .preview-content code {
+    background-color: #20353f;
+}
+
+body.theme-oceanic-next .preview-content pre {
+    background-color: #20353f;
+}
+
+body.theme-oceanic-next .preview-content a {
+    color: #5fb3b3;
+}
+
+body.theme-oceanic-next .status-bar {
+    background: #20353f;
+    border-top-color: #343d46;
+    color: #cdd3de;
+}
+
+/* Theme: Cobalt2 */
+body.theme-cobalt2 {
+    background: #193549;
+    color: #ffffff;
+}
+
+body.theme-cobalt2 .tab-bar {
+    background: #15232d;
+    border-bottom-color: #2a4a5d;
+}
+
+body.theme-cobalt2 .tab {
+    background: #0d3a58;
+    border-color: #2a4a5d;
+    color: #ffffff;
+}
+
+body.theme-cobalt2 .tab.active {
+    background: #193549;
+    border-color: #ffc600;
+}
+
+body.theme-cobalt2 .toolbar {
+    background: #15232d;
+    border-bottom-color: #2a4a5d;
+}
+
+body.theme-cobalt2 .toolbar button {
+    color: #ffffff;
+}
+
+body.theme-cobalt2 .toolbar button:hover {
+    background: #0d3a58;
+    border-color: #2a4a5d;
+}
+
+body.theme-cobalt2 .editor-textarea {
+    background: #193549;
+    color: #ffffff;
+}
+
+body.theme-cobalt2 .preview-content {
+    color: #ffffff;
+}
+
+body.theme-cobalt2 .preview-content h1,
+body.theme-cobalt2 .preview-content h2 {
+    border-bottom-color: #2a4a5d;
+    color: #ffc600;
+}
+
+body.theme-cobalt2 .preview-content code {
+    background-color: #0d3a58;
+}
+
+body.theme-cobalt2 .preview-content pre {
+    background-color: #0d3a58;
+}
+
+body.theme-cobalt2 .preview-content a {
+    color: #3ad900;
+}
+
+body.theme-cobalt2 .status-bar {
+    background: #15232d;
+    border-top-color: #2a4a5d;
+    color: #ffffff;
+}

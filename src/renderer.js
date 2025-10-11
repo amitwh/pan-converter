@@ -949,6 +949,7 @@ class TabManager {
     
     // File operations
     openFile(filePath, content) {
+        console.log('openFile called with:', filePath, 'content length:', content.length);
         let tab = this.tabs.get(this.activeTabId);
 
         // Handle both forward and back slashes for cross-platform compatibility
@@ -956,13 +957,21 @@ class TabManager {
 
         // If current tab is empty and untitled, reuse it
         if (!tab.filePath && !tab.isDirty && tab.content === '') {
+            console.log('Reusing current tab');
             tab.filePath = filePath;
             tab.title = fileName;
             tab.content = content;
             tab.originalContent = content;
             tab.isDirty = false;
+
+            // Update the editor immediately
+            const editor = document.getElementById(`editor-${this.activeTabId}`);
+            if (editor) {
+                editor.value = content;
+            }
         } else {
             // Create new tab for the file
+            console.log('Creating new tab for file');
             this.createNewTab();
             tab = this.tabs.get(this.activeTabId);
             tab.filePath = filePath;
@@ -970,12 +979,29 @@ class TabManager {
             tab.content = content;
             tab.originalContent = content;
             tab.isDirty = false;
+
+            // Wait a moment for the DOM to update, then set content
+            setTimeout(() => {
+                const editor = document.getElementById(`editor-${this.activeTabId}`);
+                if (editor) {
+                    editor.value = content;
+                    this.updatePreview(this.activeTabId);
+                    this.updateWordCount();
+                }
+            }, 50);
         }
 
-        this.restoreTabState(this.activeTabId);
+        this.updatePreview(this.activeTabId);
+        this.updateWordCount();
         this.startAutoSave();
         this.addToRecentFiles(filePath);
         this.updateTabBar();
+
+        // Notify main process about current file for exports
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.send('set-current-file', filePath);
+
+        console.log('File opened successfully');
     }
     
     getCurrentContent() {
@@ -1076,6 +1102,19 @@ ipcRenderer.on('toggle-find', () => {
 
 ipcRenderer.on('theme-changed', (event, theme) => {
     document.body.className = `theme-${theme}`;
+});
+
+// Undo/Redo handlers
+ipcRenderer.on('undo', () => {
+    if (tabManager) {
+        tabManager.undo();
+    }
+});
+
+ipcRenderer.on('redo', () => {
+    if (tabManager) {
+        tabManager.redo();
+    }
 });
 
 // Font size adjustment
