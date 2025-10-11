@@ -326,7 +326,6 @@ body {
 
 #preview table th, .preview-content table th {
     font-weight: 600;
-    background-color: #f6f8fa;
 }
 
 #preview table tr:nth-child(2n), .preview-content table tr:nth-child(2n) {
@@ -449,9 +448,6 @@ body.theme-dark .preview-content table th, body.theme-dark .preview-content tabl
     border-color: #3e3e42;
 }
 
-body.theme-dark #preview table th, body.theme-dark .preview-content table th {
-    background-color: #2d2d30;
-}
 
 body.theme-dark #preview table tr:nth-child(2n), body.theme-dark .preview-content table tr:nth-child(2n) {
     background-color: #2d2d30;
