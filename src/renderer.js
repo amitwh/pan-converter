@@ -1369,19 +1369,19 @@ ipcRenderer.on('show-batch-dialog', () => {
     showBatchDialog();
 });
 
-// ConvertAPI dialog handlers
-ipcRenderer.on('show-convertapi-dialog', () => {
-    showConvertAPIDialog();
+// Universal Converter dialog handlers
+ipcRenderer.on('show-universal-converter-dialog', () => {
+    showUniversalConverterDialog();
 });
 
-ipcRenderer.on('convertapi-status', (event, status) => {
-    document.getElementById('convertapi-status').textContent = status;
+ipcRenderer.on('conversion-status', (event, status) => {
+    document.getElementById('converter-status').textContent = status;
 });
 
-ipcRenderer.on('convertapi-complete', (event, result) => {
-    document.getElementById('convertapi-progress').classList.add('hidden');
+ipcRenderer.on('conversion-complete', (event, result) => {
+    document.getElementById('converter-progress').classList.add('hidden');
     if (result.success) {
-        document.getElementById('convertapi-dialog').classList.add('hidden');
+        document.getElementById('universal-converter-dialog').classList.add('hidden');
     }
 });
 
@@ -1392,10 +1392,15 @@ ipcRenderer.on('batch-progress', (event, progress) => {
 ipcRenderer.on('folder-selected', (event, { type, path }) => {
     if (type === 'input') {
         document.getElementById('batch-input-folder').value = path;
+        validateBatchForm();
     } else if (type === 'output') {
         document.getElementById('batch-output-folder').value = path;
+        validateBatchForm();
+    } else if (type === 'converter-batch-input') {
+        document.getElementById('converter-batch-input-folder').value = path;
+    } else if (type === 'converter-batch-output') {
+        document.getElementById('converter-batch-output-folder').value = path;
     }
-    validateBatchForm();
 });
 
 function showBatchDialog() {
@@ -1537,67 +1542,399 @@ if (originalExportConfirm) {
     });
 }
 
-// ConvertAPI Dialog Functions
-function showConvertAPIDialog() {
-    const dialog = document.getElementById('convertapi-dialog');
-    dialog.classList.remove('hidden');
+// Universal File Converter Dialog Functions
+let converterFilePath = '';
 
-    // Load saved API key if exists
-    const savedKey = localStorage.getItem('convertapi-key');
-    if (savedKey) {
-        document.getElementById('convertapi-key').value = savedKey;
+// Format definitions for each converter
+const converterFormats = {
+    libreoffice: {
+        input: [
+            { value: 'docx', label: 'Word Document (DOCX)' },
+            { value: 'doc', label: 'Word 97-2003 (DOC)' },
+            { value: 'odt', label: 'OpenDocument Text (ODT)' },
+            { value: 'rtf', label: 'Rich Text Format (RTF)' },
+            { value: 'txt', label: 'Plain Text (TXT)' },
+            { value: 'html', label: 'HTML Document' },
+            { value: 'htm', label: 'HTM Document' },
+            { value: 'xlsx', label: 'Excel Spreadsheet (XLSX)' },
+            { value: 'xls', label: 'Excel 97-2003 (XLS)' },
+            { value: 'ods', label: 'OpenDocument Spreadsheet (ODS)' },
+            { value: 'csv', label: 'Comma Separated Values (CSV)' },
+            { value: 'pptx', label: 'PowerPoint (PPTX)' },
+            { value: 'ppt', label: 'PowerPoint 97-2003 (PPT)' },
+            { value: 'odp', label: 'OpenDocument Presentation (ODP)' }
+        ],
+        output: [
+            { value: 'pdf', label: 'PDF Document' },
+            { value: 'docx', label: 'Word Document (DOCX)' },
+            { value: 'doc', label: 'Word 97-2003 (DOC)' },
+            { value: 'odt', label: 'OpenDocument Text (ODT)' },
+            { value: 'rtf', label: 'Rich Text Format (RTF)' },
+            { value: 'txt', label: 'Plain Text (TXT)' },
+            { value: 'html', label: 'HTML Document' },
+            { value: 'xlsx', label: 'Excel Spreadsheet (XLSX)' },
+            { value: 'xls', label: 'Excel 97-2003 (XLS)' },
+            { value: 'ods', label: 'OpenDocument Spreadsheet (ODS)' },
+            { value: 'csv', label: 'CSV' },
+            { value: 'pptx', label: 'PowerPoint (PPTX)' },
+            { value: 'ppt', label: 'PowerPoint 97-2003 (PPT)' },
+            { value: 'odp', label: 'OpenDocument Presentation (ODP)' }
+        ]
+    },
+    imagemagick: {
+        input: [
+            { value: 'jpg', label: 'JPEG Image (JPG)' },
+            { value: 'jpeg', label: 'JPEG Image (JPEG)' },
+            { value: 'png', label: 'PNG Image' },
+            { value: 'gif', label: 'GIF Image' },
+            { value: 'bmp', label: 'Bitmap Image (BMP)' },
+            { value: 'tiff', label: 'TIFF Image' },
+            { value: 'tif', label: 'TIF Image' },
+            { value: 'webp', label: 'WebP Image' },
+            { value: 'svg', label: 'SVG Vector Image' },
+            { value: 'ico', label: 'Icon File (ICO)' },
+            { value: 'psd', label: 'Photoshop (PSD)' },
+            { value: 'raw', label: 'RAW Image' },
+            { value: 'cr2', label: 'Canon RAW (CR2)' },
+            { value: 'nef', label: 'Nikon RAW (NEF)' },
+            { value: 'heic', label: 'HEIC Image' },
+            { value: 'avif', label: 'AVIF Image' }
+        ],
+        output: [
+            { value: 'jpg', label: 'JPEG Image (JPG)' },
+            { value: 'png', label: 'PNG Image' },
+            { value: 'gif', label: 'GIF Image' },
+            { value: 'bmp', label: 'Bitmap Image (BMP)' },
+            { value: 'tiff', label: 'TIFF Image' },
+            { value: 'webp', label: 'WebP Image' },
+            { value: 'svg', label: 'SVG Vector Image' },
+            { value: 'ico', label: 'Icon File (ICO)' },
+            { value: 'pdf', label: 'PDF Document' },
+            { value: 'eps', label: 'EPS Vector' },
+            { value: 'ps', label: 'PostScript' },
+            { value: 'avif', label: 'AVIF Image' }
+        ]
+    },
+    ffmpeg: {
+        input: [
+            { value: 'mp4', label: 'MP4 Video' },
+            { value: 'avi', label: 'AVI Video' },
+            { value: 'mov', label: 'MOV Video (QuickTime)' },
+            { value: 'mkv', label: 'MKV Video (Matroska)' },
+            { value: 'wmv', label: 'WMV Video (Windows Media)' },
+            { value: 'flv', label: 'FLV Video (Flash)' },
+            { value: 'webm', label: 'WebM Video' },
+            { value: 'mpeg', label: 'MPEG Video' },
+            { value: 'mpg', label: 'MPG Video' },
+            { value: 'm4v', label: 'M4V Video' },
+            { value: 'mp3', label: 'MP3 Audio' },
+            { value: 'wav', label: 'WAV Audio' },
+            { value: 'ogg', label: 'OGG Audio' },
+            { value: 'flac', label: 'FLAC Audio' },
+            { value: 'aac', label: 'AAC Audio' },
+            { value: 'm4a', label: 'M4A Audio' },
+            { value: 'wma', label: 'WMA Audio' }
+        ],
+        output: [
+            { value: 'mp4', label: 'MP4 Video' },
+            { value: 'avi', label: 'AVI Video' },
+            { value: 'mov', label: 'MOV Video (QuickTime)' },
+            { value: 'mkv', label: 'MKV Video (Matroska)' },
+            { value: 'webm', label: 'WebM Video' },
+            { value: 'mpeg', label: 'MPEG Video' },
+            { value: 'gif', label: 'Animated GIF' },
+            { value: 'mp3', label: 'MP3 Audio' },
+            { value: 'wav', label: 'WAV Audio' },
+            { value: 'ogg', label: 'OGG Audio' },
+            { value: 'flac', label: 'FLAC Audio' },
+            { value: 'aac', label: 'AAC Audio' },
+            { value: 'm4a', label: 'M4A Audio' }
+        ]
+    },
+    pandoc: {
+        input: [
+            { value: 'md', label: 'Markdown (MD)' },
+            { value: 'markdown', label: 'Markdown' },
+            { value: 'html', label: 'HTML Document' },
+            { value: 'docx', label: 'Word Document (DOCX)' },
+            { value: 'odt', label: 'OpenDocument Text (ODT)' },
+            { value: 'rtf', label: 'Rich Text Format (RTF)' },
+            { value: 'tex', label: 'LaTeX Document' },
+            { value: 'latex', label: 'LaTeX' },
+            { value: 'epub', label: 'EPUB eBook' },
+            { value: 'rst', label: 'reStructuredText (RST)' },
+            { value: 'textile', label: 'Textile' },
+            { value: 'org', label: 'Org Mode' },
+            { value: 'mediawiki', label: 'MediaWiki' },
+            { value: 'docbook', label: 'DocBook XML' }
+        ],
+        output: [
+            { value: 'html', label: 'HTML Document' },
+            { value: 'pdf', label: 'PDF Document' },
+            { value: 'docx', label: 'Word Document (DOCX)' },
+            { value: 'odt', label: 'OpenDocument Text (ODT)' },
+            { value: 'rtf', label: 'Rich Text Format (RTF)' },
+            { value: 'epub', label: 'EPUB eBook' },
+            { value: 'latex', label: 'LaTeX Document' },
+            { value: 'md', label: 'Markdown (MD)' },
+            { value: 'rst', label: 'reStructuredText (RST)' },
+            { value: 'textile', label: 'Textile' },
+            { value: 'org', label: 'Org Mode' },
+            { value: 'mediawiki', label: 'MediaWiki' },
+            { value: 'docbook', label: 'DocBook XML' },
+            { value: 'pptx', label: 'PowerPoint (PPTX)' }
+        ]
+    }
+};
+
+function showUniversalConverterDialog() {
+    const dialog = document.getElementById('universal-converter-dialog');
+    dialog.classList.remove('hidden');
+    converterFilePath = '';
+    document.getElementById('converter-file-path').value = '';
+    document.getElementById('converter-tool').value = 'libreoffice';
+    document.getElementById('converter-progress').classList.add('hidden');
+    updateConverterFormats('libreoffice');
+}
+
+function updateConverterFormats(tool) {
+    const fromSelect = document.getElementById('converter-from');
+    const toSelect = document.getElementById('converter-to');
+    const helpText = document.getElementById('converter-tool-help');
+
+    // Clear existing options
+    fromSelect.innerHTML = '';
+    toSelect.innerHTML = '';
+
+    // Get formats for selected tool
+    const formats = converterFormats[tool];
+
+    if (formats) {
+        // Populate input formats
+        formats.input.forEach(format => {
+            const option = document.createElement('option');
+            option.value = format.value;
+            option.textContent = format.label;
+            fromSelect.appendChild(option);
+        });
+
+        // Populate output formats
+        formats.output.forEach(format => {
+            const option = document.createElement('option');
+            option.value = format.value;
+            option.textContent = format.label;
+            toSelect.appendChild(option);
+        });
+
+        // Update help text
+        if (tool === 'libreoffice') {
+            helpText.textContent = 'Documents, Spreadsheets, Presentations - Office file conversions';
+        } else if (tool === 'imagemagick') {
+            helpText.textContent = 'Image format conversions - JPG, PNG, GIF, TIFF, WebP, SVG, and more';
+        } else if (tool === 'ffmpeg') {
+            helpText.textContent = 'Video and audio conversions - MP4, AVI, MOV, MP3, WAV, and more';
+        } else if (tool === 'pandoc') {
+            helpText.textContent = 'Document markup conversions - Markdown, HTML, LaTeX, EPUB, and more';
+        }
     }
 }
 
+function updateConverterAdvancedOptions(tool) {
+    // Hide all tool-specific options
+    const allOptions = document.querySelectorAll('.converter-options');
+    allOptions.forEach(opt => opt.classList.add('hidden'));
+
+    // Show options for selected tool
+    const toolOptions = document.querySelector(`.${tool}-options`);
+    if (toolOptions) {
+        toolOptions.classList.remove('hidden');
+    }
+}
+
+function collectConverterAdvancedOptions(tool) {
+    const options = {};
+    const advancedMode = document.getElementById('converter-advanced-toggle').checked;
+
+    if (!advancedMode) {
+        return options;
+    }
+
+    // Tool-specific options
+    if (tool === 'imagemagick') {
+        options.quality = document.getElementById('imagemagick-quality').value;
+        options.dpi = document.getElementById('imagemagick-dpi').value || null;
+        options.resize = document.getElementById('imagemagick-resize').value || null;
+        options.compression = document.getElementById('imagemagick-compression').value || null;
+    } else if (tool === 'ffmpeg') {
+        options.videoCodec = document.getElementById('ffmpeg-video-codec').value || null;
+        options.audioCodec = document.getElementById('ffmpeg-audio-codec').value || null;
+        options.bitrate = document.getElementById('ffmpeg-bitrate').value || null;
+        options.preset = document.getElementById('ffmpeg-preset').value || null;
+        options.framerate = document.getElementById('ffmpeg-framerate').value || null;
+    } else if (tool === 'libreoffice') {
+        options.quality = document.getElementById('libreoffice-quality').value || null;
+        options.pageRange = document.getElementById('libreoffice-page-range').value || null;
+        options.exportBookmarks = document.getElementById('libreoffice-export-bookmarks').checked;
+    }
+
+    return options;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    // ConvertAPI dialog close
-    const convertAPIDialogClose = document.getElementById('convertapi-dialog-close');
-    if (convertAPIDialogClose) {
-        convertAPIDialogClose.addEventListener('click', () => {
-            document.getElementById('convertapi-dialog').classList.add('hidden');
+    // Universal Converter tool change
+    const converterTool = document.getElementById('converter-tool');
+    if (converterTool) {
+        converterTool.addEventListener('change', (e) => {
+            updateConverterFormats(e.target.value);
+            updateConverterAdvancedOptions(e.target.value);
         });
     }
 
-    // ConvertAPI cancel
-    const convertAPICancel = document.getElementById('convertapi-cancel');
-    if (convertAPICancel) {
-        convertAPICancel.addEventListener('click', () => {
-            document.getElementById('convertapi-dialog').classList.add('hidden');
+    // Batch mode toggle
+    const converterBatchMode = document.getElementById('converter-batch-mode');
+    if (converterBatchMode) {
+        converterBatchMode.addEventListener('change', (e) => {
+            const batchOptions = document.getElementById('converter-batch-options');
+            const singleFileSection = document.getElementById('converter-file-path').closest('.export-section');
+
+            if (e.target.checked) {
+                batchOptions.classList.remove('hidden');
+                singleFileSection.style.display = 'none';
+            } else {
+                batchOptions.classList.add('hidden');
+                singleFileSection.style.display = 'block';
+            }
         });
     }
 
-    // ConvertAPI convert
-    const convertAPIConvert = document.getElementById('convertapi-convert');
-    if (convertAPIConvert) {
-        convertAPIConvert.addEventListener('click', () => {
-            const apiKey = document.getElementById('convertapi-key').value;
-            const fromFormat = document.getElementById('convertapi-from').value;
-            const toFormat = document.getElementById('convertapi-to').value;
-            const filePath = tabManager.getCurrentFilePath();
-
-            if (!apiKey) {
-                alert('Please enter your ConvertAPI key');
-                return;
+    // Advanced options toggle
+    const converterAdvancedToggle = document.getElementById('converter-advanced-toggle');
+    if (converterAdvancedToggle) {
+        converterAdvancedToggle.addEventListener('change', (e) => {
+            const advancedOptions = document.getElementById('converter-advanced-options');
+            if (e.target.checked) {
+                advancedOptions.classList.remove('hidden');
+                // Update which tool-specific options to show
+                updateConverterAdvancedOptions(document.getElementById('converter-tool').value);
+            } else {
+                advancedOptions.classList.add('hidden');
             }
+        });
+    }
 
-            if (!filePath) {
-                alert('Please save the file first');
-                return;
+    // ImageMagick quality slider
+    const imagemagickQuality = document.getElementById('imagemagick-quality');
+    if (imagemagickQuality) {
+        imagemagickQuality.addEventListener('input', (e) => {
+            document.getElementById('imagemagick-quality-value').textContent = e.target.value;
+        });
+    }
+
+    // Browse batch input folder
+    const browseBatchInput = document.getElementById('browse-converter-batch-input');
+    if (browseBatchInput) {
+        browseBatchInput.addEventListener('click', () => {
+            ipcRenderer.send('select-folder', 'converter-batch-input');
+        });
+    }
+
+    // Browse batch output folder
+    const browseBatchOutput = document.getElementById('browse-converter-batch-output');
+    if (browseBatchOutput) {
+        browseBatchOutput.addEventListener('click', () => {
+            ipcRenderer.send('select-folder', 'converter-batch-output');
+        });
+    }
+
+    // Browse for file to convert
+    const browseConverterFile = document.getElementById('browse-converter-file');
+    if (browseConverterFile) {
+        browseConverterFile.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '*';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    converterFilePath = file.path;
+                    document.getElementById('converter-file-path').value = file.path;
+                }
+            };
+            input.click();
+        });
+    }
+
+    // Universal Converter dialog close
+    const converterDialogClose = document.getElementById('converter-dialog-close');
+    if (converterDialogClose) {
+        converterDialogClose.addEventListener('click', () => {
+            document.getElementById('universal-converter-dialog').classList.add('hidden');
+        });
+    }
+
+    // Universal Converter cancel
+    const converterCancel = document.getElementById('converter-cancel');
+    if (converterCancel) {
+        converterCancel.addEventListener('click', () => {
+            document.getElementById('universal-converter-dialog').classList.add('hidden');
+        });
+    }
+
+    // Universal Converter convert
+    const converterConvert = document.getElementById('converter-convert');
+    if (converterConvert) {
+        converterConvert.addEventListener('click', () => {
+            const tool = document.getElementById('converter-tool').value;
+            const fromFormat = document.getElementById('converter-from').value;
+            const toFormat = document.getElementById('converter-to').value;
+            const batchMode = document.getElementById('converter-batch-mode').checked;
+            const advancedOptions = collectConverterAdvancedOptions(tool);
+
+            if (batchMode) {
+                // Batch conversion
+                const inputFolder = document.getElementById('converter-batch-input-folder').value.trim();
+                const outputFolder = document.getElementById('converter-batch-output-folder').value.trim();
+                const includeSubfolders = document.getElementById('converter-batch-subfolders').checked;
+
+                if (!inputFolder || !outputFolder) {
+                    alert('Please select both input and output folders for batch conversion');
+                    return;
+                }
+
+                // Show progress
+                document.getElementById('converter-progress').classList.remove('hidden');
+
+                // Send batch conversion request
+                ipcRenderer.send('universal-convert-batch', {
+                    tool,
+                    fromFormat,
+                    toFormat,
+                    inputFolder,
+                    outputFolder,
+                    includeSubfolders,
+                    advancedOptions
+                });
+            } else {
+                // Single file conversion
+                const filePath = converterFilePath;
+
+                if (!filePath) {
+                    alert('Please select a file to convert');
+                    return;
+                }
+
+                // Show progress
+                document.getElementById('converter-progress').classList.remove('hidden');
+
+                // Send single file conversion request
+                ipcRenderer.send('universal-convert', {
+                    tool,
+                    fromFormat,
+                    toFormat,
+                    filePath,
+                    advancedOptions
+                });
             }
-
-            // Save API key for future use
-            localStorage.setItem('convertapi-key', apiKey);
-
-            // Show progress
-            document.getElementById('convertapi-progress').classList.remove('hidden');
-
-            // Send conversion request
-            ipcRenderer.send('convertapi-convert', {
-                apiKey,
-                fromFormat,
-                toFormat,
-                filePath
-            });
         });
     }
 });
@@ -1608,6 +1945,486 @@ ipcRenderer.on('recent-files-cleared', () => {
         tabManager.recentFiles = [];
         localStorage.setItem('recentFiles', JSON.stringify([]));
         console.log('Recent files cleared');
+    }
+});
+
+// ========================================
+// PDF Editor Dialog Functionality
+// ========================================
+
+let currentPDFOperation = null;
+let mergeFilePaths = [];
+
+// Show PDF Editor Dialog
+ipcRenderer.on('show-pdf-editor-dialog', (event, operation) => {
+    currentPDFOperation = operation;
+    showPDFEditorDialog(operation);
+});
+
+function showPDFEditorDialog(operation) {
+    const dialog = document.getElementById('pdf-editor-dialog');
+    const title = document.getElementById('pdf-editor-title');
+
+    // Hide all operation sections
+    document.querySelectorAll('.pdf-operation-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+
+    // Show the appropriate section and set title
+    let sectionId, titleText;
+    switch (operation) {
+        case 'merge':
+            sectionId = 'pdf-merge-section';
+            titleText = 'Merge PDFs';
+            mergeFilePaths = [];
+            updateMergeFilesList();
+            break;
+        case 'split':
+            sectionId = 'pdf-split-section';
+            titleText = 'Split PDF';
+            break;
+        case 'compress':
+            sectionId = 'pdf-compress-section';
+            titleText = 'Compress PDF';
+            break;
+        case 'rotate':
+            sectionId = 'pdf-rotate-section';
+            titleText = 'Rotate Pages';
+            break;
+        case 'delete':
+            sectionId = 'pdf-delete-section';
+            titleText = 'Delete Pages';
+            break;
+        case 'reorder':
+            sectionId = 'pdf-reorder-section';
+            titleText = 'Reorder Pages';
+            break;
+        case 'watermark':
+            sectionId = 'pdf-watermark-section';
+            titleText = 'Add Watermark';
+            break;
+        case 'encrypt':
+            sectionId = 'pdf-encrypt-section';
+            titleText = 'Password Protection';
+            break;
+        case 'decrypt':
+            sectionId = 'pdf-decrypt-section';
+            titleText = 'Remove Password';
+            break;
+        case 'permissions':
+            sectionId = 'pdf-permissions-section';
+            titleText = 'Set Permissions';
+            break;
+    }
+
+    title.textContent = titleText;
+    document.getElementById(sectionId).classList.remove('hidden');
+    dialog.classList.remove('hidden');
+}
+
+function hidePDFEditorDialog() {
+    document.getElementById('pdf-editor-dialog').classList.add('hidden');
+    document.getElementById('pdf-progress').classList.add('hidden');
+    currentPDFOperation = null;
+}
+
+function updateMergeFilesList() {
+    const listContainer = document.getElementById('merge-files-list');
+    listContainer.innerHTML = '';
+
+    mergeFilePaths.forEach((filePath, index) => {
+        const fileEntry = document.createElement('div');
+        fileEntry.className = 'file-entry';
+        fileEntry.innerHTML = `
+            <span class="file-name">${filePath.split(/[\\/]/).pop()}</span>
+            <button class="remove-file" data-index="${index}">Remove</button>
+        `;
+        listContainer.appendChild(fileEntry);
+    });
+}
+
+// PDF Editor Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Close PDF Editor Dialog
+    const pdfEditorClose = document.getElementById('pdf-editor-dialog-close');
+    if (pdfEditorClose) {
+        pdfEditorClose.addEventListener('click', hidePDFEditorDialog);
+    }
+
+    const pdfEditorCancel = document.getElementById('pdf-editor-cancel');
+    if (pdfEditorCancel) {
+        pdfEditorCancel.addEventListener('click', hidePDFEditorDialog);
+    }
+
+    // Process button
+    const pdfEditorProcess = document.getElementById('pdf-editor-process');
+    if (pdfEditorProcess) {
+        pdfEditorProcess.addEventListener('click', processPDFOperation);
+    }
+
+    // Merge PDFs - Add file button
+    const addMergeFile = document.getElementById('add-merge-file');
+    if (addMergeFile) {
+        addMergeFile.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pdf';
+            input.multiple = true;
+            input.onchange = (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    if (!mergeFilePaths.includes(file.path)) {
+                        mergeFilePaths.push(file.path);
+                    }
+                });
+                updateMergeFilesList();
+            };
+            input.click();
+        });
+    }
+
+    // Remove file from merge list (using event delegation)
+    const mergeFilesList = document.getElementById('merge-files-list');
+    if (mergeFilesList) {
+        mergeFilesList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-file')) {
+                const index = parseInt(e.target.dataset.index);
+                mergeFilePaths.splice(index, 1);
+                updateMergeFilesList();
+            }
+        });
+    }
+
+    // Browse buttons for all operations
+    const browseButtons = [
+        { id: 'browse-merge-output', inputId: 'merge-output-path', saveDialog: true },
+        { id: 'browse-split-input', inputId: 'split-input-path', saveDialog: false },
+        { id: 'browse-split-output', inputId: 'split-output-folder', folder: true },
+        { id: 'browse-compress-input', inputId: 'compress-input-path', saveDialog: false },
+        { id: 'browse-compress-output', inputId: 'compress-output-path', saveDialog: true },
+        { id: 'browse-rotate-input', inputId: 'rotate-input-path', saveDialog: false },
+        { id: 'browse-rotate-output', inputId: 'rotate-output-path', saveDialog: true },
+        { id: 'browse-delete-input', inputId: 'delete-input-path', saveDialog: false },
+        { id: 'browse-delete-output', inputId: 'delete-output-path', saveDialog: true },
+        { id: 'browse-reorder-input', inputId: 'reorder-input-path', saveDialog: false },
+        { id: 'browse-reorder-output', inputId: 'reorder-output-path', saveDialog: true },
+        { id: 'browse-watermark-input', inputId: 'watermark-input-path', saveDialog: false },
+        { id: 'browse-watermark-output', inputId: 'watermark-output-path', saveDialog: true },
+        { id: 'browse-encrypt-input', inputId: 'encrypt-input-path', saveDialog: false },
+        { id: 'browse-encrypt-output', inputId: 'encrypt-output-path', saveDialog: true },
+        { id: 'browse-decrypt-input', inputId: 'decrypt-input-path', saveDialog: false },
+        { id: 'browse-decrypt-output', inputId: 'decrypt-output-path', saveDialog: true },
+        { id: 'browse-permissions-input', inputId: 'permissions-input-path', saveDialog: false },
+        { id: 'browse-permissions-output', inputId: 'permissions-output-path', saveDialog: true }
+    ];
+
+    browseButtons.forEach(button => {
+        const btn = document.getElementById(button.id);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+
+                if (button.folder) {
+                    // Request folder selection via IPC
+                    ipcRenderer.send('select-pdf-folder', button.inputId);
+                } else if (button.saveDialog) {
+                    input.nwsaveas = true;
+                    input.accept = '.pdf';
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            document.getElementById(button.inputId).value = file.path;
+                        }
+                    };
+                    input.click();
+                } else {
+                    input.accept = '.pdf';
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            document.getElementById(button.inputId).value = file.path;
+                        }
+                    };
+                    input.click();
+                }
+            });
+        }
+    });
+
+    // Split mode change handler
+    const splitMode = document.getElementById('split-mode');
+    if (splitMode) {
+        splitMode.addEventListener('change', (e) => {
+            // Hide all split options
+            document.getElementById('split-pages-options').classList.add('hidden');
+            document.getElementById('split-interval-options').classList.add('hidden');
+            document.getElementById('split-size-options').classList.add('hidden');
+
+            // Show selected split option
+            if (e.target.value === 'pages') {
+                document.getElementById('split-pages-options').classList.remove('hidden');
+            } else if (e.target.value === 'interval') {
+                document.getElementById('split-interval-options').classList.remove('hidden');
+            } else if (e.target.value === 'size') {
+                document.getElementById('split-size-options').classList.remove('hidden');
+            }
+        });
+    }
+
+    // Watermark opacity slider
+    const watermarkOpacity = document.getElementById('watermark-opacity');
+    if (watermarkOpacity) {
+        watermarkOpacity.addEventListener('input', (e) => {
+            document.getElementById('watermark-opacity-value').textContent = e.target.value;
+        });
+    }
+
+    // Watermark pages selection
+    const watermarkPages = document.getElementById('watermark-pages');
+    if (watermarkPages) {
+        watermarkPages.addEventListener('change', (e) => {
+            const customPages = document.getElementById('watermark-custom-pages');
+            if (e.target.value === 'custom') {
+                customPages.classList.remove('hidden');
+            } else {
+                customPages.classList.add('hidden');
+            }
+        });
+    }
+
+    // Load current page order button
+    const loadCurrentOrder = document.getElementById('load-current-order');
+    if (loadCurrentOrder) {
+        loadCurrentOrder.addEventListener('click', () => {
+            const inputPath = document.getElementById('reorder-input-path').value;
+            if (!inputPath) {
+                alert('Please select a PDF file first');
+                return;
+            }
+            // Request page count from main process
+            ipcRenderer.send('get-pdf-page-count', inputPath);
+        });
+    }
+});
+
+// Handle folder selection response
+ipcRenderer.on('pdf-folder-selected', (event, { inputId, path }) => {
+    document.getElementById(inputId).value = path;
+});
+
+// Handle PDF page count response
+ipcRenderer.on('pdf-page-count', (event, { count, error }) => {
+    if (error) {
+        alert('Error reading PDF: ' + error);
+        return;
+    }
+
+    const currentOrder = Array.from({ length: count }, (_, i) => i + 1).join(', ');
+    document.getElementById('current-order-display').textContent = currentOrder;
+    document.getElementById('current-page-order').classList.remove('hidden');
+    document.getElementById('reorder-pages').value = currentOrder;
+});
+
+// Process PDF Operation
+function processPDFOperation() {
+    const operation = currentPDFOperation;
+    let operationData = { operation };
+
+    try {
+        switch (operation) {
+            case 'merge':
+                if (mergeFilePaths.length < 2) {
+                    alert('Please add at least 2 PDF files to merge');
+                    return;
+                }
+                operationData.inputFiles = mergeFilePaths;
+                operationData.outputPath = document.getElementById('merge-output-path').value.trim();
+                if (!operationData.outputPath) {
+                    alert('Please select an output file path');
+                    return;
+                }
+                break;
+
+            case 'split':
+                operationData.inputPath = document.getElementById('split-input-path').value.trim();
+                operationData.outputFolder = document.getElementById('split-output-folder').value.trim();
+                operationData.splitMode = document.getElementById('split-mode').value;
+
+                if (!operationData.inputPath || !operationData.outputFolder) {
+                    alert('Please select input file and output folder');
+                    return;
+                }
+
+                if (operationData.splitMode === 'pages') {
+                    operationData.pageRanges = document.getElementById('split-page-ranges').value.trim();
+                } else if (operationData.splitMode === 'interval') {
+                    operationData.interval = parseInt(document.getElementById('split-interval').value);
+                } else if (operationData.splitMode === 'size') {
+                    operationData.maxSize = parseInt(document.getElementById('split-size').value);
+                }
+                break;
+
+            case 'compress':
+                operationData.inputPath = document.getElementById('compress-input-path').value.trim();
+                operationData.outputPath = document.getElementById('compress-output-path').value.trim();
+                operationData.compressionLevel = document.getElementById('compress-level').value;
+                operationData.compressImages = document.getElementById('compress-images').checked;
+                operationData.removeDuplicates = document.getElementById('compress-remove-duplicates').checked;
+                operationData.optimizeFonts = document.getElementById('compress-optimize-fonts').checked;
+
+                if (!operationData.inputPath || !operationData.outputPath) {
+                    alert('Please select input and output file paths');
+                    return;
+                }
+                break;
+
+            case 'rotate':
+                operationData.inputPath = document.getElementById('rotate-input-path').value.trim();
+                operationData.outputPath = document.getElementById('rotate-output-path').value.trim();
+                operationData.pages = document.getElementById('rotate-pages').value.trim();
+                operationData.angle = parseInt(document.getElementById('rotate-angle').value);
+
+                if (!operationData.inputPath || !operationData.outputPath) {
+                    alert('Please select input and output file paths');
+                    return;
+                }
+                break;
+
+            case 'delete':
+                operationData.inputPath = document.getElementById('delete-input-path').value.trim();
+                operationData.outputPath = document.getElementById('delete-output-path').value.trim();
+                operationData.pages = document.getElementById('delete-pages').value.trim();
+
+                if (!operationData.inputPath || !operationData.outputPath || !operationData.pages) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                break;
+
+            case 'reorder':
+                operationData.inputPath = document.getElementById('reorder-input-path').value.trim();
+                operationData.outputPath = document.getElementById('reorder-output-path').value.trim();
+                operationData.newOrder = document.getElementById('reorder-pages').value.trim();
+
+                if (!operationData.inputPath || !operationData.outputPath || !operationData.newOrder) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                break;
+
+            case 'watermark':
+                operationData.inputPath = document.getElementById('watermark-input-path').value.trim();
+                operationData.outputPath = document.getElementById('watermark-output-path').value.trim();
+                operationData.text = document.getElementById('watermark-text').value.trim();
+                operationData.fontSize = parseInt(document.getElementById('watermark-font-size').value);
+                operationData.opacity = parseInt(document.getElementById('watermark-opacity').value) / 100;
+                operationData.position = document.getElementById('watermark-position').value;
+                operationData.color = document.getElementById('watermark-color').value;
+                operationData.pages = document.getElementById('watermark-pages').value;
+
+                if (operationData.pages === 'custom') {
+                    operationData.customPages = document.getElementById('watermark-custom-pages').value.trim();
+                }
+
+                if (!operationData.inputPath || !operationData.outputPath || !operationData.text) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                break;
+
+            case 'encrypt':
+                operationData.inputPath = document.getElementById('encrypt-input-path').value.trim();
+                operationData.outputPath = document.getElementById('encrypt-output-path').value.trim();
+                operationData.userPassword = document.getElementById('encrypt-user-password').value;
+                operationData.ownerPassword = document.getElementById('encrypt-owner-password').value;
+                operationData.encryptionLevel = parseInt(document.getElementById('encrypt-level').value);
+
+                operationData.permissions = {
+                    printing: document.getElementById('encrypt-allow-printing').checked,
+                    modifying: document.getElementById('encrypt-allow-modify').checked,
+                    copying: document.getElementById('encrypt-allow-copy').checked,
+                    annotating: document.getElementById('encrypt-allow-annotate').checked,
+                    fillingForms: document.getElementById('encrypt-allow-forms').checked,
+                    contentAccessibility: document.getElementById('encrypt-allow-extract').checked,
+                    documentAssembly: document.getElementById('encrypt-allow-assemble').checked,
+                    printingQuality: document.getElementById('encrypt-allow-print-high').checked
+                };
+
+                if (!operationData.inputPath || !operationData.outputPath || !operationData.userPassword) {
+                    alert('Please select files and enter a user password');
+                    return;
+                }
+                break;
+
+            case 'decrypt':
+                operationData.inputPath = document.getElementById('decrypt-input-path').value.trim();
+                operationData.outputPath = document.getElementById('decrypt-output-path').value.trim();
+                operationData.password = document.getElementById('decrypt-password').value;
+
+                if (!operationData.inputPath || !operationData.outputPath || !operationData.password) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                break;
+
+            case 'permissions':
+                operationData.inputPath = document.getElementById('permissions-input-path').value.trim();
+                operationData.outputPath = document.getElementById('permissions-output-path').value.trim();
+                operationData.currentPassword = document.getElementById('permissions-current-password').value;
+                operationData.ownerPassword = document.getElementById('permissions-owner-password').value;
+
+                operationData.permissions = {
+                    printing: document.getElementById('permissions-allow-printing').checked,
+                    modifying: document.getElementById('permissions-allow-modify').checked,
+                    copying: document.getElementById('permissions-allow-copy').checked,
+                    annotating: document.getElementById('permissions-allow-annotate').checked,
+                    fillingForms: document.getElementById('permissions-allow-forms').checked,
+                    contentAccessibility: document.getElementById('permissions-allow-extract').checked,
+                    documentAssembly: document.getElementById('permissions-allow-assemble').checked,
+                    printingQuality: document.getElementById('permissions-allow-print-high').checked
+                };
+
+                if (!operationData.inputPath || !operationData.outputPath || !operationData.ownerPassword) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                break;
+        }
+
+        // Show progress
+        document.getElementById('pdf-progress').classList.remove('hidden');
+        document.getElementById('pdf-progress-text').textContent = 'Processing PDF...';
+
+        // Send to main process
+        ipcRenderer.send('process-pdf-operation', operationData);
+
+    } catch (error) {
+        alert('Error: ' + error.message);
+        console.error('PDF operation error:', error);
+    }
+}
+
+// Handle PDF operation completion
+ipcRenderer.on('pdf-operation-complete', (event, { success, error, message }) => {
+    document.getElementById('pdf-progress').classList.add('hidden');
+
+    if (success) {
+        alert(message || 'PDF operation completed successfully!');
+        hidePDFEditorDialog();
+    } else {
+        alert('Error: ' + (error || 'PDF operation failed'));
+    }
+});
+
+// Handle PDF operation progress
+ipcRenderer.on('pdf-operation-progress', (event, { message, progress }) => {
+    document.getElementById('pdf-progress-text').textContent = message;
+    if (progress !== undefined) {
+        const progressFill = document.getElementById('pdf-progress-fill');
+        if (progressFill) {
+            progressFill.style.width = `${progress}%`;
+        }
     }
 });
 

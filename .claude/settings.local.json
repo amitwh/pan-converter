@@ -18,7 +18,15 @@
       "Bash(npm install:*)",
       "Bash(npm uninstall:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm start)",
+      "Read(//h/**)",
+      "Bash(cd:*)",
+      "Bash(npm run build:win-unsigned:*)",
+      "Bash(dir:*)",
+      "Bash(git merge:*)",
+      "Bash(timeout:*)",
+      "Bash(findstr:*)"
     ],
     "deny": []
   }

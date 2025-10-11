@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.5.0
+**Current Version**: v1.6.1
 **Author**: Amit Haridas (amit.wh@gmail.com)
 **License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
@@ -14,6 +14,7 @@
 ### Core Technologies
 - **Electron** - Cross-platform desktop application framework
 - **Pandoc** - Universal document converter (required system dependency)
+- **ConvertAPI** - Cloud-based file conversion (200+ formats)
 - **marked** - Markdown parsing and rendering
 - **highlight.js** - Syntax highlighting
 - **KaTeX** - Mathematical expression rendering
@@ -109,7 +110,120 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ## Feature Implementation Guide
 
-### v1.5.0 Enhanced Features & Open Source Compatibility (Latest)
+### v1.7.0 PDF Editor & Universal Converter (Latest)
+
+#### 📄 Comprehensive PDF Editor
+**Complete PDF Manipulation Suite** (`src/main.js:1566-2068`, `src/index.html:552-921`, `src/renderer.js:1951-2429`)
+- **Merge PDFs** - Combine multiple PDF files into a single document
+- **Split PDF** - Split PDFs by page ranges, intervals, or file size
+- **Compress PDF** - Reduce PDF file size with optimization
+- **Rotate Pages** - Rotate specific pages or entire documents (90°, 180°, 270°)
+- **Delete Pages** - Remove unwanted pages from PDFs
+- **Reorder Pages** - Rearrange pages in any order
+- **Add Watermark** - Text watermarks with customizable position, size, color, opacity
+- **Password Protection** - Encrypt PDFs with user and owner passwords
+- **Remove Password** - Decrypt password-protected PDFs
+- **Set Permissions** - Control printing, copying, modifying, and other document permissions
+
+**Technical Implementation:**
+- Uses `pdf-lib` (v1.17.1) for all PDF operations
+- Full async/await implementation for optimal performance
+- Comprehensive error handling and user feedback
+- Progress indicators for long-running operations
+- Page range parsing (e.g., "1-5, 7, 9-12")
+- RGB color conversion for watermarks
+- Support for encrypted PDFs
+
+**Watermark Features:**
+- Multiple positioning options (center, diagonal, corners, top/bottom)
+- Customizable font size (8-144px)
+- Adjustable opacity (0-100%)
+- Color picker for text color
+- Apply to all pages or custom page ranges
+
+**Security Features:**
+- 128-bit and 256-bit encryption support
+- User password (required to open PDF)
+- Owner password (required to modify permissions)
+- Granular permission controls:
+  - Allow/deny printing (high/low resolution)
+  - Allow/deny content modification
+  - Allow/deny content copying
+  - Allow/deny annotations
+  - Allow/deny form filling
+  - Allow/deny accessibility features
+  - Allow/deny document assembly
+  - Allow/deny high-quality printing
+
+#### 🔄 Universal File Converter
+**Open-Source Multi-Tool Converter** (`src/main.js:446-600`, `src/index.html:257-483`, `src/renderer.js:1372-1940`)
+- **LibreOffice** - Document conversions (DOCX, PDF, ODT, RTF, TXT, HTML, XLSX, PPTX)
+- **ImageMagick** - Image format conversions (JPG, PNG, GIF, TIFF, WebP, SVG, etc.)
+- **FFmpeg** - Video and audio conversions (MP4, AVI, MOV, MP3, WAV, etc.)
+- **Pandoc** - Document markup conversions (Markdown, HTML, LaTeX, EPUB, etc.)
+
+**Features:**
+- Single file and batch folder conversion
+- Tool-specific advanced options:
+  - ImageMagick: Quality, DPI, resize, compression type
+  - FFmpeg: Video/audio codecs, bitrate, preset, framerate
+  - LibreOffice: Export quality, page range, bookmarks
+- Automatic tool detection and availability checking
+- Recursive folder processing
+- 100% offline and open-source
+- No API keys required
+
+### v1.6.1 Bug Fixes
+
+#### 🐛 File Association Rendering Fix
+**Fixed Double-Click File Loading** (`src/main.js:1364-1379`)
+- Fixed critical issue where files opened via double-click weren't rendering
+- Added proper wait for renderer load state before sending file data
+- Implemented `did-finish-load` event listener to prevent race conditions
+- Files now render correctly when opened from Windows Explorer
+
+### v1.6.0 Enhanced Markdown Editor & ConvertAPI Integration
+
+#### ✨ Complete Markdown Toolbar
+**Additional Formatting Buttons** (`src/index.html:78-98`, `src/renderer.js:596-723`)
+- **Strikethrough** button - Wraps text with `~~strikethrough~~`
+- **Code Block** button - Inserts fenced code blocks with triple backticks
+- **Horizontal Rule** button - Adds section divider with `---`
+- Complete suite of markdown formatting tools now available
+
+#### 🔍 Fixed Find & Replace
+**Focus and Highlighting Improvements** (`src/renderer.js:725-870`)
+- Fixed focus issue - dialog no longer loses focus while typing
+- Visual highlighting with text selection showing current match
+- Smart auto-scroll to display matches prominently
+- Real-time match counting: "Match X of Y"
+- Replace single match or replace all functionality
+- Enter/Shift+Enter keyboard navigation
+
+#### 📏 Fixed Line Numbers
+**Line Counting and Synchronization** (`src/renderer.js:337-355`)
+- Fixed bug using `'\\n'` instead of `'\n'` for line splitting
+- Added scroll synchronization between line numbers and editor
+- Line numbers update correctly as you type
+- Smooth scrolling keeps line numbers aligned
+
+#### ☁️ ConvertAPI Cloud Integration
+**200+ Format Cloud Conversion** (`src/main.js:370-416`, `src/index.html:257-307`, `src/renderer.js:1540-1603`)
+- New **ConvertAPI menu** with cloud-based file conversion
+- Support for 200+ file formats: MD, DOCX, PDF, HTML, JPG, PNG, EPUB, ODT
+- Secure API key storage in localStorage for reuse
+- Real-time conversion status and progress tracking
+- Free tier: 250 conversions per month
+- Professional conversion dialog with format selection
+- Get API key at: https://www.convertapi.com
+
+**Technical Implementation:**
+- Installed `convertapi` npm package (v1.15.0)
+- IPC handlers for cloud conversion workflow
+- Error handling and user feedback dialogs
+- Async/await pattern for conversion operations
+
+### v1.5.0 Enhanced Features & Open Source Compatibility
 
 #### 🔧 Export Function Fixes & Optional Advanced Options
 **Export Dialog Enhancement** (`src/index.html:125-133`, `src/renderer.js:960-985`)

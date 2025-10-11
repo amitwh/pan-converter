@@ -254,54 +254,230 @@
             </div>
         </div>
 
-        <!-- ConvertAPI Dialog -->
-        <div id="convertapi-dialog" class="export-dialog hidden">
+        <!-- Universal File Converter Dialog -->
+        <div id="universal-converter-dialog" class="export-dialog hidden">
             <div class="export-dialog-content">
                 <div class="export-dialog-header">
-                    <h3>ConvertAPI Conversion</h3>
-                    <button id="convertapi-dialog-close" title="Close">×</button>
+                    <h3>Universal File Converter</h3>
+                    <button id="converter-dialog-close" title="Close">×</button>
                 </div>
                 <div class="export-dialog-body">
                     <div class="export-section">
-                        <label for="convertapi-key">API Key:</label>
-                        <input type="text" id="convertapi-key" placeholder="Enter your ConvertAPI key">
-                        <small>Get your free API key at <a href="https://www.convertapi.com" target="_blank">convertapi.com</a></small>
-                    </div>
-
-                    <div class="export-section">
-                        <label for="convertapi-from">Convert From:</label>
-                        <select id="convertapi-from">
-                            <option value="md">Markdown (MD)</option>
-                            <option value="docx">Word (DOCX)</option>
-                            <option value="pdf">PDF</option>
-                            <option value="html">HTML</option>
-                            <option value="txt">Text</option>
-                        </select>
-                    </div>
-
-                    <div class="export-section">
-                        <label for="convertapi-to">Convert To:</label>
-                        <select id="convertapi-to">
-                            <option value="pdf">PDF</option>
-                            <option value="docx">Word (DOCX)</option>
-                            <option value="html">HTML</option>
-                            <option value="txt">Text</option>
-                            <option value="jpg">JPG Image</option>
-                            <option value="png">PNG Image</option>
-                            <option value="epub">EPUB</option>
-                            <option value="odt">ODT</option>
-                        </select>
-                    </div>
-
-                    <div id="convertapi-progress" class="batch-progress hidden">
-                        <div class="progress-text">
-                            <span id="convertapi-status">Converting...</span>
+                        <label>Select File to Convert:</label>
+                        <div class="folder-input-group">
+                            <input type="text" id="converter-file-path" placeholder="Browse for a file..." readonly>
+                            <button id="browse-converter-file">Browse</button>
                         </div>
+                        <small>Supported formats: Documents, Images, Media files</small>
+                    </div>
+
+                    <div class="export-section">
+                        <label for="converter-tool">Conversion Tool:</label>
+                        <select id="converter-tool">
+                            <option value="libreoffice">LibreOffice (Documents)</option>
+                            <option value="imagemagick">ImageMagick (Images)</option>
+                            <option value="ffmpeg">FFmpeg (Media)</option>
+                            <option value="pandoc">Pandoc (Markup)</option>
+                        </select>
+                        <small id="converter-tool-help">Documents: DOCX, PDF, ODT, RTF, TXT, HTML, XLSX, PPTX</small>
+                    </div>
+
+                    <div class="export-section">
+                        <label for="converter-from">Input Format:</label>
+                        <select id="converter-from">
+                            <!-- Dynamically populated based on selected converter tool -->
+                        </select>
+                    </div>
+
+                    <div class="export-section">
+                        <label for="converter-to">Output Format:</label>
+                        <select id="converter-to">
+                            <!-- Dynamically populated based on selected converter tool -->
+                        </select>
+                    </div>
+
+                    <!-- Batch Mode Toggle -->
+                    <div class="export-section">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="converter-batch-mode">
+                            <span class="checkmark"></span>
+                            Batch Mode (Convert entire folder)
+                        </label>
+                        <small class="export-help">Enable to convert multiple files at once from a folder</small>
+                    </div>
+
+                    <!-- Batch Mode Options (hidden by default) -->
+                    <div id="converter-batch-options" class="advanced-options hidden">
+                        <div class="export-section">
+                            <label>Input Folder:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="converter-batch-input-folder" placeholder="Select folder..." readonly>
+                                <button id="browse-converter-batch-input">Browse</button>
+                            </div>
+                        </div>
+
+                        <div class="export-section">
+                            <label>Output Folder:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="converter-batch-output-folder" placeholder="Select output folder..." readonly>
+                                <button id="browse-converter-batch-output">Browse</button>
+                            </div>
+                        </div>
+
+                        <div class="export-section">
+                            <label>
+                                <input type="checkbox" id="converter-batch-subfolders" checked>
+                                Include subfolders (recursive)
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options Toggle -->
+                    <div class="export-section export-mode-toggle">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="converter-advanced-toggle">
+                            <span class="checkmark"></span>
+                            Show Advanced Options
+                        </label>
+                        <small class="export-help">Tool-specific quality, compression, and conversion settings</small>
+                    </div>
+
+                    <!-- Advanced Converter Options (hidden by default) -->
+                    <div id="converter-advanced-options" class="advanced-options hidden">
+                        <!-- ImageMagick Advanced Options -->
+                        <div class="converter-options imagemagick-options hidden">
+                            <div class="export-section">
+                                <label for="imagemagick-quality">Quality (1-100):</label>
+                                <input type="range" id="imagemagick-quality" min="1" max="100" value="85">
+                                <span id="imagemagick-quality-value">85</span>
+                            </div>
+
+                            <div class="export-section">
+                                <label for="imagemagick-dpi">Resolution (DPI):</label>
+                                <input type="number" id="imagemagick-dpi" min="72" max="600" value="300" placeholder="300">
+                                <small>Higher DPI = better quality, larger file size</small>
+                            </div>
+
+                            <div class="export-section">
+                                <label for="imagemagick-resize">Resize (WxH):</label>
+                                <input type="text" id="imagemagick-resize" placeholder="e.g., 1920x1080 or 50%">
+                                <small>Examples: 1920x1080, 800x600, 50% (leave empty for no resize)</small>
+                            </div>
+
+                            <div class="export-section">
+                                <label for="imagemagick-compression">Compression Type:</label>
+                                <select id="imagemagick-compression">
+                                    <option value="">None (Default)</option>
+                                    <option value="JPEG">JPEG</option>
+                                    <option value="LZW">LZW</option>
+                                    <option value="Zip">Zip</option>
+                                    <option value="RLE">RLE</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- FFmpeg Advanced Options -->
+                        <div class="converter-options ffmpeg-options hidden">
+                            <div class="export-section">
+                                <label for="ffmpeg-video-codec">Video Codec:</label>
+                                <select id="ffmpeg-video-codec">
+                                    <option value="">Default</option>
+                                    <option value="libx264">H.264 (libx264)</option>
+                                    <option value="libx265">H.265/HEVC (libx265)</option>
+                                    <option value="libvpx-vp9">VP9 (libvpx-vp9)</option>
+                                    <option value="copy">Copy (no re-encode)</option>
+                                </select>
+                            </div>
+
+                            <div class="export-section">
+                                <label for="ffmpeg-audio-codec">Audio Codec:</label>
+                                <select id="ffmpeg-audio-codec">
+                                    <option value="">Default</option>
+                                    <option value="aac">AAC</option>
+                                    <option value="libmp3lame">MP3 (libmp3lame)</option>
+                                    <option value="libopus">Opus (libopus)</option>
+                                    <option value="libvorbis">Vorbis (libvorbis)</option>
+                                    <option value="copy">Copy (no re-encode)</option>
+                                </select>
+                            </div>
+
+                            <div class="export-section">
+                                <label for="ffmpeg-bitrate">Video Bitrate (kbps):</label>
+                                <input type="number" id="ffmpeg-bitrate" min="100" max="50000" placeholder="e.g., 2000">
+                                <small>Higher bitrate = better quality, larger file size</small>
+                            </div>
+
+                            <div class="export-section">
+                                <label for="ffmpeg-preset">Encoding Preset:</label>
+                                <select id="ffmpeg-preset">
+                                    <option value="">Default</option>
+                                    <option value="ultrafast">Ultra Fast</option>
+                                    <option value="fast">Fast</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="slow">Slow (Better Quality)</option>
+                                    <option value="veryslow">Very Slow (Best Quality)</option>
+                                </select>
+                            </div>
+
+                            <div class="export-section">
+                                <label for="ffmpeg-framerate">Frame Rate (fps):</label>
+                                <input type="number" id="ffmpeg-framerate" min="1" max="120" placeholder="e.g., 30">
+                                <small>Common: 24, 30, 60</small>
+                            </div>
+                        </div>
+
+                        <!-- LibreOffice Advanced Options -->
+                        <div class="converter-options libreoffice-options hidden">
+                            <div class="export-section">
+                                <label for="libreoffice-quality">Export Quality:</label>
+                                <select id="libreoffice-quality">
+                                    <option value="">Default</option>
+                                    <option value="high">High</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="low">Low (Smaller file size)</option>
+                                </select>
+                            </div>
+
+                            <div class="export-section">
+                                <label for="libreoffice-page-range">Page Range:</label>
+                                <input type="text" id="libreoffice-page-range" placeholder="e.g., 1-5, 7, 9-12">
+                                <small>Leave empty to convert all pages</small>
+                            </div>
+
+                            <div class="export-section">
+                                <label>
+                                    <input type="checkbox" id="libreoffice-export-bookmarks">
+                                    Export Bookmarks (PDF only)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Pandoc Advanced Options -->
+                        <div class="converter-options pandoc-options hidden">
+                            <div class="export-section">
+                                <small>Pandoc conversions can use advanced export options from the Export menu.</small>
+                                <button id="pandoc-show-export-options" type="button">Open Export Options Dialog...</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="converter-progress" class="batch-progress hidden">
+                        <div class="progress-text">
+                            <span id="converter-status">Converting...</span>
+                        </div>
+                    </div>
+
+                    <div class="export-section">
+                        <small><strong>Installation Notes:</strong></small>
+                        <small>• LibreOffice: Download from <a href="https://www.libreoffice.org/download" target="_blank">libreoffice.org</a></small>
+                        <small>• ImageMagick: Download from <a href="https://imagemagick.org/script/download.php" target="_blank">imagemagick.org</a></small>
+                        <small>• FFmpeg: Download from <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a></small>
+                        <small>• Pandoc: Download from <a href="https://pandoc.org/installing.html" target="_blank">pandoc.org</a></small>
                     </div>
                 </div>
                 <div class="export-dialog-footer">
-                    <button id="convertapi-cancel">Cancel</button>
-                    <button id="convertapi-convert" class="primary">Convert</button>
+                    <button id="converter-cancel">Cancel</button>
+                    <button id="converter-convert" class="primary">Convert</button>
                 </div>
             </div>
         </div>
@@ -369,6 +545,377 @@
                 <div class="batch-dialog-footer">
                     <button id="batch-cancel">Cancel</button>
                     <button id="batch-start" class="primary" disabled>Start Conversion</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF Editor Dialog -->
+        <div id="pdf-editor-dialog" class="export-dialog hidden">
+            <div class="export-dialog-content">
+                <div class="export-dialog-header">
+                    <h3 id="pdf-editor-title">PDF Editor</h3>
+                    <button id="pdf-editor-dialog-close" title="Close">×</button>
+                </div>
+                <div class="export-dialog-body">
+                    <!-- Merge PDFs Section -->
+                    <div id="pdf-merge-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>PDF Files to Merge:</label>
+                            <div id="merge-files-list" class="file-list">
+                                <!-- Dynamically added file entries -->
+                            </div>
+                            <button id="add-merge-file" type="button">+ Add PDF File</button>
+                            <small>Files will be merged in the order shown. Drag to reorder.</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Output File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="merge-output-path" placeholder="Choose output location..." readonly>
+                                <button id="browse-merge-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Split PDF Section -->
+                    <div id="pdf-split-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>PDF File to Split:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="split-input-path" placeholder="Select PDF file..." readonly>
+                                <button id="browse-split-input">Browse</button>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Split Mode:</label>
+                            <select id="split-mode">
+                                <option value="pages">By Page Range</option>
+                                <option value="interval">Every N Pages</option>
+                                <option value="size">By File Size</option>
+                            </select>
+                        </div>
+                        <div id="split-pages-options" class="export-section">
+                            <label>Page Ranges:</label>
+                            <input type="text" id="split-page-ranges" placeholder="e.g., 1-5, 6-10, 11-15">
+                            <small>Separate ranges with commas. Each range will create a new PDF.</small>
+                        </div>
+                        <div id="split-interval-options" class="export-section hidden">
+                            <label>Split Every:</label>
+                            <input type="number" id="split-interval" min="1" value="5" placeholder="5">
+                            <small>pages (e.g., 5 = split every 5 pages)</small>
+                        </div>
+                        <div id="split-size-options" class="export-section hidden">
+                            <label>Max File Size (MB):</label>
+                            <input type="number" id="split-size" min="1" value="5" placeholder="5">
+                            <small>Split when file size exceeds this limit</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Output Folder:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="split-output-folder" placeholder="Select output folder..." readonly>
+                                <button id="browse-split-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Compress PDF Section -->
+                    <div id="pdf-compress-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>PDF File to Compress:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="compress-input-path" placeholder="Select PDF file..." readonly>
+                                <button id="browse-compress-input">Browse</button>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Compression Level:</label>
+                            <select id="compress-level">
+                                <option value="low">Low (Best Quality)</option>
+                                <option value="medium" selected>Medium (Balanced)</option>
+                                <option value="high">High (Smallest Size)</option>
+                            </select>
+                            <small>Higher compression = smaller file size, lower quality</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Compression Options:</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" id="compress-images" checked> Compress Images</label>
+                                <label><input type="checkbox" id="compress-remove-duplicates" checked> Remove Duplicates</label>
+                                <label><input type="checkbox" id="compress-optimize-fonts"> Optimize Fonts</label>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Output File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="compress-output-path" placeholder="Choose output location..." readonly>
+                                <button id="browse-compress-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rotate Pages Section -->
+                    <div id="pdf-rotate-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>PDF File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="rotate-input-path" placeholder="Select PDF file..." readonly>
+                                <button id="browse-rotate-input">Browse</button>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Pages to Rotate:</label>
+                            <input type="text" id="rotate-pages" placeholder="e.g., 1-5, 7, 9-12 (leave empty for all pages)">
+                            <small>Separate page numbers/ranges with commas, or leave empty to rotate all pages</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Rotation Angle:</label>
+                            <select id="rotate-angle">
+                                <option value="90">90° Clockwise</option>
+                                <option value="180">180°</option>
+                                <option value="270">270° Clockwise (90° Counter-clockwise)</option>
+                            </select>
+                        </div>
+                        <div class="export-section">
+                            <label>Output File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="rotate-output-path" placeholder="Choose output location..." readonly>
+                                <button id="browse-rotate-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delete Pages Section -->
+                    <div id="pdf-delete-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>PDF File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="delete-input-path" placeholder="Select PDF file..." readonly>
+                                <button id="browse-delete-input">Browse</button>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Pages to Delete:</label>
+                            <input type="text" id="delete-pages" placeholder="e.g., 1-5, 7, 9-12">
+                            <small>Separate page numbers/ranges with commas</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Output File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="delete-output-path" placeholder="Choose output location..." readonly>
+                                <button id="browse-delete-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reorder Pages Section -->
+                    <div id="pdf-reorder-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>PDF File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="reorder-input-path" placeholder="Select PDF file..." readonly>
+                                <button id="browse-reorder-input">Browse</button>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>New Page Order:</label>
+                            <input type="text" id="reorder-pages" placeholder="e.g., 3, 1, 2, 5, 4">
+                            <small>Enter page numbers in desired order, separated by commas</small>
+                        </div>
+                        <div class="export-section">
+                            <button id="load-current-order" type="button">Load Current Page Order</button>
+                            <div id="current-page-order" class="info-display hidden">
+                                Current order: <span id="current-order-display"></span>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Output File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="reorder-output-path" placeholder="Choose output location..." readonly>
+                                <button id="browse-reorder-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Watermark Section -->
+                    <div id="pdf-watermark-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>PDF File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="watermark-input-path" placeholder="Select PDF file..." readonly>
+                                <button id="browse-watermark-input">Browse</button>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Watermark Text:</label>
+                            <input type="text" id="watermark-text" placeholder="Enter watermark text...">
+                        </div>
+                        <div class="export-section">
+                            <label>Font Size:</label>
+                            <input type="number" id="watermark-font-size" min="8" max="144" value="48" placeholder="48">
+                        </div>
+                        <div class="export-section">
+                            <label>Opacity (0-100):</label>
+                            <input type="range" id="watermark-opacity" min="0" max="100" value="30">
+                            <span id="watermark-opacity-value">30</span>
+                        </div>
+                        <div class="export-section">
+                            <label>Position:</label>
+                            <select id="watermark-position">
+                                <option value="center">Center</option>
+                                <option value="diagonal">Diagonal</option>
+                                <option value="top-left">Top Left</option>
+                                <option value="top-center">Top Center</option>
+                                <option value="top-right">Top Right</option>
+                                <option value="bottom-left">Bottom Left</option>
+                                <option value="bottom-center">Bottom Center</option>
+                                <option value="bottom-right">Bottom Right</option>
+                            </select>
+                        </div>
+                        <div class="export-section">
+                            <label>Color:</label>
+                            <input type="color" id="watermark-color" value="#000000">
+                        </div>
+                        <div class="export-section">
+                            <label>Apply to:</label>
+                            <select id="watermark-pages">
+                                <option value="all">All Pages</option>
+                                <option value="custom">Custom Pages</option>
+                            </select>
+                            <input type="text" id="watermark-custom-pages" placeholder="e.g., 1-5, 7, 9-12" class="hidden">
+                        </div>
+                        <div class="export-section">
+                            <label>Output File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="watermark-output-path" placeholder="Choose output location..." readonly>
+                                <button id="browse-watermark-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Encrypt PDF Section (Password Protection) -->
+                    <div id="pdf-encrypt-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>PDF File to Protect:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="encrypt-input-path" placeholder="Select PDF file..." readonly>
+                                <button id="browse-encrypt-input">Browse</button>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>User Password:</label>
+                            <input type="password" id="encrypt-user-password" placeholder="Password to open the PDF">
+                            <small>Required to open and view the PDF</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Owner Password:</label>
+                            <input type="password" id="encrypt-owner-password" placeholder="Password to modify permissions">
+                            <small>Optional: Required to change document permissions</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Encryption Level:</label>
+                            <select id="encrypt-level">
+                                <option value="128">128-bit (Standard)</option>
+                                <option value="256" selected>256-bit (High Security)</option>
+                            </select>
+                        </div>
+                        <div class="export-section">
+                            <label>Document Permissions:</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" id="encrypt-allow-printing" checked> Allow Printing</label>
+                                <label><input type="checkbox" id="encrypt-allow-modify" checked> Allow Content Modification</label>
+                                <label><input type="checkbox" id="encrypt-allow-copy" checked> Allow Content Copying</label>
+                                <label><input type="checkbox" id="encrypt-allow-annotate" checked> Allow Annotations</label>
+                                <label><input type="checkbox" id="encrypt-allow-forms" checked> Allow Form Filling</label>
+                                <label><input type="checkbox" id="encrypt-allow-extract" checked> Allow Accessibility (Screen Readers)</label>
+                                <label><input type="checkbox" id="encrypt-allow-assemble" checked> Allow Document Assembly</label>
+                                <label><input type="checkbox" id="encrypt-allow-print-high" checked> Allow High-Quality Printing</label>
+                            </div>
+                            <small>These permissions apply when owner password is set</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Output File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="encrypt-output-path" placeholder="Choose output location..." readonly>
+                                <button id="browse-encrypt-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Decrypt PDF Section (Remove Password) -->
+                    <div id="pdf-decrypt-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>Protected PDF File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="decrypt-input-path" placeholder="Select protected PDF file..." readonly>
+                                <button id="browse-decrypt-input">Browse</button>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Current Password:</label>
+                            <input type="password" id="decrypt-password" placeholder="Enter PDF password">
+                            <small>Enter the password to unlock and remove protection</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Output File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="decrypt-output-path" placeholder="Choose output location..." readonly>
+                                <button id="browse-decrypt-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Permissions Section -->
+                    <div id="pdf-permissions-section" class="pdf-operation-section hidden">
+                        <div class="export-section">
+                            <label>PDF File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="permissions-input-path" placeholder="Select PDF file..." readonly>
+                                <button id="browse-permissions-input">Browse</button>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Current Password (if protected):</label>
+                            <input type="password" id="permissions-current-password" placeholder="Leave empty if not protected">
+                        </div>
+                        <div class="export-section">
+                            <label>New Owner Password:</label>
+                            <input type="password" id="permissions-owner-password" placeholder="Password to modify permissions">
+                            <small>Set a password required to change document permissions</small>
+                        </div>
+                        <div class="export-section">
+                            <label>Document Permissions:</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" id="permissions-allow-printing" checked> Allow Printing</label>
+                                <label><input type="checkbox" id="permissions-allow-modify" checked> Allow Content Modification</label>
+                                <label><input type="checkbox" id="permissions-allow-copy" checked> Allow Content Copying</label>
+                                <label><input type="checkbox" id="permissions-allow-annotate" checked> Allow Annotations</label>
+                                <label><input type="checkbox" id="permissions-allow-forms" checked> Allow Form Filling</label>
+                                <label><input type="checkbox" id="permissions-allow-extract" checked> Allow Accessibility (Screen Readers)</label>
+                                <label><input type="checkbox" id="permissions-allow-assemble" checked> Allow Document Assembly</label>
+                                <label><input type="checkbox" id="permissions-allow-print-high" checked> Allow High-Quality Printing</label>
+                            </div>
+                        </div>
+                        <div class="export-section">
+                            <label>Output File:</label>
+                            <div class="folder-input-group">
+                                <input type="text" id="permissions-output-path" placeholder="Choose output location..." readonly>
+                                <button id="browse-permissions-output">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress indicator -->
+                    <div id="pdf-progress" class="batch-progress hidden">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="pdf-progress-fill"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="pdf-progress-text">Processing...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="export-dialog-footer">
+                    <button id="pdf-editor-cancel">Cancel</button>
+                    <button id="pdf-editor-process" class="primary">Process</button>
                 </div>
             </div>
         </div>
