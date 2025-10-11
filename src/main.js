@@ -1584,15 +1584,11 @@ function openFileFromPath(filePath) {
     currentFile = filePath;
     const content = fs.readFileSync(filePath, 'utf-8');
     if (mainWindow && mainWindow.webContents && rendererReady) {
-      console.log('Opening file (renderer ready):', filePath);
       mainWindow.webContents.send('file-opened', { path: filePath, content });
     } else {
-      console.log('Renderer not ready, storing file:', filePath);
       // Store file to open after renderer is ready
       app.pendingFile = filePath;
     }
-  } else {
-    console.error('File does not exist:', filePath);
   }
 }
 
