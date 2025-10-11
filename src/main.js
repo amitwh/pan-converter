@@ -86,14 +86,8 @@ function createWindow() {
   // Wait for the page to fully load before sending file data
   mainWindow.webContents.on('did-finish-load', () => {
     console.log('Window finished loading');
-    // Give renderer a moment to initialize
-    setTimeout(() => {
-      if (app.pendingFile && !rendererReady) {
-        console.log('Opening pending file after did-finish-load:', app.pendingFile);
-        openFileFromPath(app.pendingFile);
-        app.pendingFile = null;
-      }
-    }, 500); // Wait 500ms for TabManager to initialize
+    // Don't open file here - wait for renderer-ready signal
+    // The renderer will send renderer-ready when TabManager is initialized
   });
 }
 
@@ -261,7 +255,11 @@ function createMenu() {
             { label: 'Ayu Light', click: () => setTheme('ayu-light') },
             { label: 'Ayu Mirage', click: () => setTheme('ayu-mirage') },
             { label: 'Oceanic Next', click: () => setTheme('oceanic-next') },
-            { label: 'Cobalt2', click: () => setTheme('cobalt2') }
+            { label: 'Cobalt2', click: () => setTheme('cobalt2') },
+            { type: 'separator' },
+            { label: 'Concrete Dark', click: () => setTheme('concrete-dark') },
+            { label: 'Concrete Light', click: () => setTheme('concrete-light') },
+            { label: 'Concrete Warm', click: () => setTheme('concrete-warm') }
           ]
         },
         { type: 'separator' },
@@ -412,7 +410,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.7.2\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 19 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, and more)\n• Undo/redo functionality\n• Live word count and statistics',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.7.3\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }

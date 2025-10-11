@@ -1629,6 +1629,10 @@ body.theme-dracula .editor-textarea {
     color: #f8f8f2;
 }
 
+body.theme-dracula .pane:last-child {
+    background: #282a36;
+}
+
 body.theme-dracula .preview-content {
     color: #f8f8f2;
 }
@@ -1696,6 +1700,10 @@ body.theme-nord .toolbar button:hover {
 body.theme-nord .editor-textarea {
     background: #2e3440;
     color: #d8dee9;
+}
+
+body.theme-nord .pane:last-child {
+    background: #2e3440;
 }
 
 body.theme-nord .preview-content {
@@ -1767,6 +1775,10 @@ body.theme-onedark .editor-textarea {
     color: #abb2bf;
 }
 
+body.theme-onedark .pane:last-child {
+    background: #282c34;
+}
+
 body.theme-onedark .preview-content {
     color: #abb2bf;
 }
@@ -1834,6 +1846,10 @@ body.theme-atomonelight .toolbar button:hover {
 body.theme-atomonelight .editor-textarea {
     background: #fafafa;
     color: #383a42;
+}
+
+body.theme-atomonelight .pane:last-child {
+    background: #fafafa;
 }
 
 body.theme-atomonelight .preview-content {
@@ -1905,6 +1921,10 @@ body.theme-material .editor-textarea {
     color: #eeffff;
 }
 
+body.theme-material .pane:last-child {
+    background: #263238;
+}
+
 body.theme-material .preview-content {
     color: #eeffff;
 }
@@ -1972,6 +1992,10 @@ body.theme-gruvbox-dark .toolbar button:hover {
 body.theme-gruvbox-dark .editor-textarea {
     background: #282828;
     color: #ebdbb2;
+}
+
+body.theme-gruvbox-dark .pane:last-child {
+    background: #282828;
 }
 
 body.theme-gruvbox-dark .preview-content {
@@ -2043,6 +2067,10 @@ body.theme-gruvbox-light .editor-textarea {
     color: #3c3836;
 }
 
+body.theme-gruvbox-light .pane:last-child {
+    background: #fbf1c7;
+}
+
 body.theme-gruvbox-light .preview-content {
     color: #3c3836;
 }
@@ -2110,6 +2138,10 @@ body.theme-tokyonight .toolbar button:hover {
 body.theme-tokyonight .editor-textarea {
     background: #1a1b26;
     color: #c0caf5;
+}
+
+body.theme-tokyonight .pane:last-child {
+    background: #1a1b26;
 }
 
 body.theme-tokyonight .preview-content {
@@ -2181,6 +2213,10 @@ body.theme-palenight .editor-textarea {
     color: #a6accd;
 }
 
+body.theme-palenight .pane:last-child {
+    background: #292d3e;
+}
+
 body.theme-palenight .preview-content {
     color: #a6accd;
 }
@@ -2248,6 +2284,10 @@ body.theme-ayu-dark .toolbar button:hover {
 body.theme-ayu-dark .editor-textarea {
     background: #0a0e14;
     color: #b3b1ad;
+}
+
+body.theme-ayu-dark .pane:last-child {
+    background: #0a0e14;
 }
 
 body.theme-ayu-dark .preview-content {
@@ -2319,6 +2359,10 @@ body.theme-ayu-light .editor-textarea {
     color: #5c6166;
 }
 
+body.theme-ayu-light .pane:last-child {
+    background: #fafafa;
+}
+
 body.theme-ayu-light .preview-content {
     color: #5c6166;
 }
@@ -2386,6 +2430,10 @@ body.theme-ayu-mirage .toolbar button:hover {
 body.theme-ayu-mirage .editor-textarea {
     background: #1f2430;
     color: #cbccc6;
+}
+
+body.theme-ayu-mirage .pane:last-child {
+    background: #1f2430;
 }
 
 body.theme-ayu-mirage .preview-content {
@@ -2457,6 +2505,10 @@ body.theme-oceanic-next .editor-textarea {
     color: #cdd3de;
 }
 
+body.theme-oceanic-next .pane:last-child {
+    background: #1b2b34;
+}
+
 body.theme-oceanic-next .preview-content {
     color: #cdd3de;
 }
@@ -2526,6 +2578,10 @@ body.theme-cobalt2 .editor-textarea {
     color: #ffffff;
 }
 
+body.theme-cobalt2 .pane:last-child {
+    background: #193549;
+}
+
 body.theme-cobalt2 .preview-content {
     color: #ffffff;
 }
@@ -2552,4 +2608,223 @@ body.theme-cobalt2 .status-bar {
     background: #15232d;
     border-top-color: #2a4a5d;
     color: #ffffff;
+}
+
+/* Theme: Concrete Dark - ConcreteInfo branded dark theme */
+body.theme-concrete-dark {
+    background: #0d0b09;
+    color: #e3e3e3;
+}
+
+body.theme-concrete-dark .tab-bar {
+    background: #1a1816;
+    border-bottom-color: #464646;
+}
+
+body.theme-concrete-dark .tab {
+    background: #464646;
+    border-color: #9a9696;
+    color: #e3e3e3;
+}
+
+body.theme-concrete-dark .tab.active {
+    background: #0d0b09;
+    border-color: #e5461f;
+}
+
+body.theme-concrete-dark .toolbar {
+    background: #1a1816;
+    border-bottom-color: #464646;
+}
+
+body.theme-concrete-dark .toolbar button {
+    color: #e3e3e3;
+}
+
+body.theme-concrete-dark .toolbar button:hover {
+    background: #464646;
+    border-color: #e5461f;
+}
+
+body.theme-concrete-dark .editor-textarea {
+    background: #0d0b09;
+    color: #e3e3e3;
+}
+
+body.theme-concrete-dark .pane:last-child {
+    background: #0d0b09;
+}
+
+body.theme-concrete-dark .preview-content {
+    color: #e3e3e3;
+}
+
+body.theme-concrete-dark .preview-content h1,
+body.theme-concrete-dark .preview-content h2 {
+    border-bottom-color: #464646;
+    color: #e5461f;
+}
+
+body.theme-concrete-dark .preview-content code {
+    background-color: #464646;
+}
+
+body.theme-concrete-dark .preview-content pre {
+    background-color: #464646;
+}
+
+body.theme-concrete-dark .preview-content a {
+    color: #e5461f;
+}
+
+body.theme-concrete-dark .status-bar {
+    background: #1a1816;
+    border-top-color: #464646;
+    color: #9a9696;
+}
+
+/* Theme: Concrete Light - ConcreteInfo branded light theme */
+body.theme-concrete-light {
+    background: #fafafa;
+    color: #0d0b09;
+}
+
+body.theme-concrete-light .tab-bar {
+    background: #e3e3e3;
+    border-bottom-color: #9a9696;
+}
+
+body.theme-concrete-light .tab {
+    background: #e3e3e3;
+    border-color: #9a9696;
+    color: #0d0b09;
+}
+
+body.theme-concrete-light .tab.active {
+    background: #fafafa;
+    border-color: #e5461f;
+}
+
+body.theme-concrete-light .toolbar {
+    background: #e3e3e3;
+    border-bottom-color: #9a9696;
+}
+
+body.theme-concrete-light .toolbar button {
+    color: #0d0b09;
+}
+
+body.theme-concrete-light .toolbar button:hover {
+    background: #9a9696;
+    border-color: #e5461f;
+}
+
+body.theme-concrete-light .editor-textarea {
+    background: #fafafa;
+    color: #0d0b09;
+}
+
+body.theme-concrete-light .pane:last-child {
+    background: #fafafa;
+}
+
+body.theme-concrete-light .preview-content {
+    color: #0d0b09;
+}
+
+body.theme-concrete-light .preview-content h1,
+body.theme-concrete-light .preview-content h2 {
+    border-bottom-color: #9a9696;
+    color: #e5461f;
+}
+
+body.theme-concrete-light .preview-content code {
+    background-color: #e3e3e3;
+}
+
+body.theme-concrete-light .preview-content pre {
+    background-color: #e3e3e3;
+}
+
+body.theme-concrete-light .preview-content a {
+    color: #e5461f;
+}
+
+body.theme-concrete-light .status-bar {
+    background: #e3e3e3;
+    border-top-color: #9a9696;
+    color: #464646;
+}
+
+/* Theme: Concrete Warm - ConcreteInfo branded warm theme */
+body.theme-concrete-warm {
+    background: #464646;
+    color: #e3e3e3;
+}
+
+body.theme-concrete-warm .tab-bar {
+    background: #3a3836;
+    border-bottom-color: #9a9696;
+}
+
+body.theme-concrete-warm .tab {
+    background: #9a9696;
+    border-color: #e3e3e3;
+    color: #0d0b09;
+}
+
+body.theme-concrete-warm .tab.active {
+    background: #464646;
+    border-color: #e5461f;
+}
+
+body.theme-concrete-warm .toolbar {
+    background: #3a3836;
+    border-bottom-color: #9a9696;
+}
+
+body.theme-concrete-warm .toolbar button {
+    color: #e3e3e3;
+}
+
+body.theme-concrete-warm .toolbar button:hover {
+    background: #9a9696;
+    border-color: #e5461f;
+}
+
+body.theme-concrete-warm .editor-textarea {
+    background: #464646;
+    color: #e3e3e3;
+}
+
+body.theme-concrete-warm .pane:last-child {
+    background: #464646;
+}
+
+body.theme-concrete-warm .preview-content {
+    color: #e3e3e3;
+}
+
+body.theme-concrete-warm .preview-content h1,
+body.theme-concrete-warm .preview-content h2 {
+    border-bottom-color: #9a9696;
+    color: #e5461f;
+}
+
+body.theme-concrete-warm .preview-content code {
+    background-color: #3a3836;
+}
+
+body.theme-concrete-warm .preview-content pre {
+    background-color: #3a3836;
+}
+
+body.theme-concrete-warm .preview-content a {
+    color: #e5461f;
+}
+
+body.theme-concrete-warm .status-bar {
+    background: #3a3836;
+    border-top-color: #9a9696;
+    color: #e3e3e3;
 }
