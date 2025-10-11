@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.6.1
+**Current Version**: v1.7.1
 **Author**: Amit Haridas (amit.wh@gmail.com)
 **License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
@@ -23,10 +23,11 @@
 ### Application Structure
 ```
 src/
-├── main.js        # Electron main process, menu system, IPC handlers
-├── renderer.js    # TabManager class, multi-file editing, event handling
-├── index.html     # Application layout with tabbed interface
-└── styles.css     # Comprehensive styling with multi-theme support
+├── main.js            # Electron main process, menu system, IPC handlers
+├── renderer.js        # TabManager class, multi-file editing, event handling
+├── index.html         # Application layout with tabbed interface
+├── styles.css         # Base styling with multi-theme support
+└── styles-modern.css  # Modern glassmorphism UI design system (v1.7.1)
 
 assets/
 └── icon.png       # Application icon
@@ -110,7 +111,39 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ## Feature Implementation Guide
 
-### v1.7.0 PDF Editor & Universal Converter (Latest)
+### v1.7.1 Modern UI Design (Latest)
+
+#### 🎨 Glassmorphism & Gradient UI
+**Modern Design System** (`src/styles-modern.css`, `src/index.html:7-11`)
+- **Glassmorphism Effects** - Translucent backgrounds with backdrop-filter blur
+- **Animated Gradient Background** - Purple-blue gradient that shifts colors dynamically
+- **CSS Custom Properties** - Centralized theming with CSS variables
+- **Modern Typography** - Inter font family for UI, JetBrains Mono for code
+- **Smooth Animations** - CSS transitions with cubic-bezier easing
+- **Enhanced Hover Effects** - Interactive elements with scale and transform effects
+- **Custom Scrollbars** - Styled scrollbars matching the modern aesthetic
+- **Progress Bars** - Shimmer animations and gradient fills
+
+**Design Features:**
+- Animated gradient background (15-second color shift loop)
+- Glass-effect tabs with blur and semi-transparency
+- Gradient-based buttons with hover/active states
+- Modern card-based dialogs with rounded corners
+- Enhanced typography with gradient text for headings
+- Ripple-like hover effects on interactive elements
+- Theme variables for consistent colors and spacing
+- Shadow effects with proper depth perception
+
+**Technical Implementation:**
+- Created comprehensive `styles-modern.css` file (780+ lines)
+- Google Fonts integration (Inter, JetBrains Mono)
+- CSS Grid and Flexbox for modern layouts
+- backdrop-filter for glassmorphism (with fallbacks)
+- CSS animations with @keyframes
+- RGB/RGBA color system with opacity control
+- CSS custom properties for easy theming
+
+### v1.7.0 PDF Editor & Universal Converter
 
 #### 📄 Comprehensive PDF Editor
 **Complete PDF Manipulation Suite** (`src/main.js:1566-2068`, `src/index.html:552-921`, `src/renderer.js:1951-2429`)
@@ -532,5 +565,5 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ---
 
-**Last Updated**: September 15, 2025
-**Claude Assistant**: Development completed for v1.5.0 with optional advanced export options, removed proprietary dependencies for open-source compatibility, enhanced auto-save functionality, comprehensive document statistics, recent files management, and mathematical expression support using KaTeX.
+**Last Updated**: October 11, 2025
+**Claude Assistant**: Development completed for v1.7.1 with modern glassmorphism UI design featuring animated gradient backgrounds, translucent glass effects, smooth animations, enhanced typography with Inter and JetBrains Mono fonts, and comprehensive CSS custom properties for consistent theming.
