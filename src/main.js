@@ -83,7 +83,18 @@ function createWindow() {
     mainWindow = null;
   });
 
-  // Handle pending file from file association will be handled by renderer-ready event
+  // Wait for the page to fully load before sending file data
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Window finished loading');
+    // Give renderer a moment to initialize
+    setTimeout(() => {
+      if (app.pendingFile && !rendererReady) {
+        console.log('Opening pending file after did-finish-load:', app.pendingFile);
+        openFileFromPath(app.pendingFile);
+        app.pendingFile = null;
+      }
+    }, 500); // Wait 500ms for TabManager to initialize
+  });
 }
 
 function buildRecentFilesMenu() {
@@ -1552,14 +1563,15 @@ function openFileFromPath(filePath) {
     currentFile = filePath;
     const content = fs.readFileSync(filePath, 'utf-8');
     if (mainWindow && mainWindow.webContents) {
-      // Wait for the renderer to be ready (TabManager initialized) before sending file data
-      if (rendererReady) {
-        mainWindow.webContents.send('file-opened', { path: filePath, content });
-      } else {
-        // Store file to open after renderer is ready
-        app.pendingFile = filePath;
-      }
+      console.log('Attempting to open file:', filePath, 'rendererReady:', rendererReady);
+      // Always try to send, the renderer will handle it when ready
+      mainWindow.webContents.send('file-opened', { path: filePath, content });
+    } else {
+      // Store file to open after window is created
+      app.pendingFile = filePath;
     }
+  } else {
+    console.error('File does not exist:', filePath);
   }
 }
 
