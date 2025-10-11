@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.7.2
+**Current Version**: v1.7.6
 **Author**: Amit Haridas (amit.wh@gmail.com)
 **License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
@@ -111,7 +111,71 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ## Feature Implementation Guide
 
-### v1.7.2 Enhanced Themes & Bug Fixes (Latest)
+### v1.7.6 UI Improvement (Latest)
+
+#### 🎨 Table Header Styling Cleanup
+**Removed Custom Background Colors** (`src/styles.css:327-329`, `src/styles.css:451-453`)
+- Removed gray background color (#f6f8fa) from table headers in default theme
+- Removed dark theme table header background styling block entirely
+- Table headers now blend naturally with preview background for cleaner appearance
+- Headers maintain font-weight: 600 for visual distinction
+- All other table styling preserved (borders, alternating row colors)
+
+**User Feedback Implementation:**
+- Based on user feedback: "remove the theming of table headers, it looks bad"
+- Result: Professional, clean table presentation matching overall preview styling
+- Consistent with normal preview theming across all themes
+
+### v1.7.5 Critical File Association Fix
+
+#### 🐛 Single-Instance Lock for Windows File Association
+**Fixed Installed App Double-Click Behavior** (`src/main.js:52-85`)
+- **Root Cause**: Windows launches second instance when double-clicking files with app already running
+- **Solution**: Implemented `app.requestSingleInstanceLock()` pattern
+- **Second Instance Handler**: Captures file path from new instance attempts and opens in existing instance
+- **Focus Management**: Automatically focuses and restores existing window
+- **Renderer Readiness**: Proper handling of file queue with `rendererReady` state
+
+**Technical Implementation:**
+```javascript
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // Focus existing window
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+    // Extract and open file from second instance
+    const fileArgs = commandLine.slice(2);
+    for (const arg of fileArgs) {
+      if ((arg.endsWith('.md') || arg.endsWith('.markdown')) && fs.existsSync(arg)) {
+        if (rendererReady) {
+          openFileFromPath(arg);
+        } else {
+          app.pendingFile = arg;
+        }
+        break;
+      }
+    }
+  });
+}
+```
+
+**Fixed Issues:**
+- ✅ Double-click `.md` files in Windows Explorer now opens correctly
+- ✅ Right-click "Open with PanConverter" now works in installed app
+- ✅ File association behavior now consistent between development and production
+- ✅ Single instance maintained across all file opening methods
+
+**Why Previous Attempts Failed:**
+- v1.7.3-1.7.4: Only added `rendererReady` checks but missed second-instance handling
+- Development testing passed but production failed (different execution paths)
+- Second instance would start, receive file, then exit without passing to first instance
+
+### v1.7.2 Enhanced Themes & Bug Fixes
 
 #### 🎨 14 New Beautiful Themes
 **Expanded Theme Collection** (`src/main.js:242-266`, `src/styles.css:1590-2555`)
@@ -600,4 +664,4 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 ---
 
 **Last Updated**: October 11, 2025
-**Claude Assistant**: Development completed for v1.7.2 with 14 new professionally-designed themes (Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Material, Oceanic Next, Palenight, Cobalt2, and more) bringing total to 19 themes, plus fixed undo/redo menu integration for proper keyboard shortcut support.
+**Claude Assistant**: Development completed for v1.7.6 with table header styling cleanup for cleaner preview appearance (v1.7.6), and critical file association fix with single-instance lock implementation for proper double-click file opening in installed Windows app (v1.7.5). Previous releases include 14 new professionally-designed themes bringing total to 19 themes (v1.7.2), and comprehensive undo/redo menu integration.
