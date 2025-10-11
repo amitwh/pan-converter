@@ -49,6 +49,41 @@ let currentFile = null; // This will now represent the active tab's file
 let pandocAvailable = null; // Cache pandoc availability check
 let rendererReady = false; // Track if renderer is ready to receive file data
 
+// Handle single instance lock for Windows file association
+// When a file is double-clicked and the app is already running,
+// Windows tries to start a second instance. We prevent this and
+// pass the file to the existing instance instead.
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  // Another instance is already running, quit this one
+  app.quit();
+} else {
+  // This is the first instance, handle second-instance events
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // Someone tried to run a second instance, focus our window instead
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+
+    // Check if a file was passed to the second instance
+    // commandLine is an array like: ['electron.exe', 'app.asar', 'file.md']
+    const fileArgs = commandLine.slice(2);
+    for (const arg of fileArgs) {
+      if ((arg.endsWith('.md') || arg.endsWith('.markdown')) && fs.existsSync(arg)) {
+        // Open the file in the existing instance
+        if (rendererReady) {
+          openFileFromPath(arg);
+        } else {
+          app.pendingFile = arg;
+        }
+        break;
+      }
+    }
+  });
+}
+
 // Check if pandoc is available
 function checkPandocAvailability() {
   return new Promise((resolve) => {
