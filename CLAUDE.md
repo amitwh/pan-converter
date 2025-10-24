@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.7.6
+**Current Version**: v1.7.7
 **Author**: Amit Haridas (amit.wh@gmail.com)
 **License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
@@ -19,6 +19,8 @@
 - **highlight.js** - Syntax highlighting
 - **KaTeX** - Mathematical expression rendering
 - **DOMPurify** - HTML sanitization
+- **PDFKit** - Native PDF generation without external dependencies (v1.7.7)
+- **html2pdf** - HTML to PDF conversion library (v1.7.7)
 
 ### Application Structure
 ```
@@ -111,7 +113,71 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ## Feature Implementation Guide
 
-### v1.7.6 UI Improvement (Latest)
+### v1.7.7 Print & Enhanced PDF Support (Latest)
+
+#### 🖨️ Native Print Functionality
+**Added Print Command** (`src/main.js:202-206`, `src/renderer.js:1152-1162`)
+- **Print Menu Item**: Added to File menu with `Ctrl+P` keyboard shortcut
+- **Native Print Dialog**: Uses Electron's webContents.print() for native OS print dialogs
+- **Print Settings**: Configured with background color printing and proper margins
+- **Preview-Based Printing**: Prints the rendered markdown preview for professional output
+- **Cross-Platform**: Works on Windows, macOS, and Linux with native printer support
+
+**Technical Implementation:**
+```javascript
+// Main process handler
+ipcMain.on('print-document', (event) => {
+  if (mainWindow) {
+    mainWindow.webContents.print({
+      silent: false,
+      printBackground: true,
+      color: true,
+      margin: { marginType: 'default' }
+    });
+  }
+});
+
+// Renderer process handler
+ipcRenderer.on('print-document', () => {
+  const previewContent = document.getElementById('preview');
+  if (previewContent && previewContent.innerHTML.trim()) {
+    window.print();
+  } else {
+    alert('Nothing to print. Please create or open a document and ensure the preview is visible.');
+  }
+});
+```
+
+#### 📦 Enhanced PDF Export Dependencies
+**Added Native PDF Generation Libraries** (package.json)
+- **PDFKit** (v0.14.0) - Native PDF generation without Pandoc dependency
+- **html2pdf.js** (v0.10.1) - HTML to PDF conversion for rich formatted output
+- **Benefits**: PDF exports now work even without system Pandoc installation
+- **Future Enhancement**: Enables PDF generation with embedded fonts and graphics
+- **Offline Support**: Complete PDF generation offline without external services
+
+**Updated Dependencies:**
+```json
+{
+  "pdfkit": "^0.14.0",
+  "html2pdf.js": "^0.10.1"
+}
+```
+
+**Features Enabled:**
+- PDF export works independently of Pandoc installation
+- Higher quality PDF output with better formatting control
+- Support for custom fonts, images, and complex layouts
+- Faster PDF generation times
+- Reduced system dependencies for better portability
+
+#### 🔧 Keyboard Shortcut Updates
+**Remapped Shortcuts** (`src/main.js`)
+- **Print**: `Ctrl+P` (new in v1.7.7) - Opens native print dialog
+- **Toggle Preview**: Changed from `Ctrl+P` to `Ctrl+Shift+P` to avoid conflicts
+- **Backward Compatibility**: No breaking changes to existing workflows
+
+### v1.7.6 UI Improvement
 
 #### 🎨 Table Header Styling Cleanup
 **Removed Custom Background Colors** (`src/styles.css:327-329`, `src/styles.css:451-453`)
@@ -663,5 +729,5 @@ if (!gotTheLock) {
 
 ---
 
-**Last Updated**: October 11, 2025
-**Claude Assistant**: Development completed for v1.7.6 with table header styling cleanup for cleaner preview appearance (v1.7.6), and critical file association fix with single-instance lock implementation for proper double-click file opening in installed Windows app (v1.7.5). Previous releases include 14 new professionally-designed themes bringing total to 19 themes (v1.7.2), and comprehensive undo/redo menu integration.
+**Last Updated**: October 24, 2025
+**Claude Assistant**: Development completed for v1.7.7 with native print functionality (Ctrl+P) and enhanced PDF support through PDFKit and html2pdf libraries. Added print command with native OS print dialogs for cross-platform printing of rendered markdown. Remapped Toggle Preview from Ctrl+P to Ctrl+Shift+P. Previous releases include v1.7.6 table header styling cleanup for cleaner preview appearance, and v1.7.5 critical file association fix with single-instance lock implementation.

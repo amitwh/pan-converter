@@ -200,6 +200,12 @@ function createMenu() {
         },
         { type: 'separator' },
         {
+          label: 'Print',
+          accelerator: 'CmdOrCtrl+P',
+          click: () => mainWindow.webContents.send('print-document')
+        },
+        { type: 'separator' },
+        {
           label: 'Recent Files',
           submenu: buildRecentFilesMenu()
         },
@@ -265,7 +271,7 @@ function createMenu() {
       submenu: [
         {
           label: 'Toggle Preview',
-          accelerator: 'CmdOrCtrl+P',
+          accelerator: 'CmdOrCtrl+Shift+P',
           click: () => mainWindow.webContents.send('toggle-preview')
         },
         {
@@ -1149,6 +1155,19 @@ ipcMain.on('get-theme', (event) => {
 // Handle tab file tracking for exports
 ipcMain.on('set-current-file', (event, filePath) => {
   currentFile = filePath;
+});
+
+// Handle print document
+ipcMain.on('print-document', (event) => {
+  if (mainWindow) {
+    // Open native print dialog
+    mainWindow.webContents.print({
+      silent: false,
+      printBackground: true,
+      color: true,
+      margin: { marginType: 'default' }
+    });
+  }
 });
 
 // Handle renderer ready for file association

@@ -1149,6 +1149,18 @@ ipcRenderer.on('adjust-font-size', (event, action) => {
     updateFontSizes(currentFontSize);
 });
 
+// Print document handler
+ipcRenderer.on('print-document', () => {
+    // Use the preview pane for printing
+    const previewContent = document.getElementById('preview');
+    if (previewContent && previewContent.innerHTML.trim()) {
+        // Create a print window with the preview content
+        window.print();
+    } else {
+        alert('Nothing to print. Please create or open a document and ensure the preview is visible.');
+    }
+});
+
 // Export Dialog functionality
 let currentExportFormat = null;
 
