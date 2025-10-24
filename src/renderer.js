@@ -1149,16 +1149,42 @@ ipcRenderer.on('adjust-font-size', (event, action) => {
     updateFontSizes(currentFontSize);
 });
 
-// Print document handler
-ipcRenderer.on('print-document', () => {
-    // Use the preview pane for printing
+// Print preview handler - prepare for printing
+ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
     const previewContent = document.getElementById('preview');
-    if (previewContent && previewContent.innerHTML.trim()) {
-        // Create a print window with the preview content
-        window.print();
-    } else {
+
+    if (!previewContent || !previewContent.innerHTML.trim()) {
         alert('Nothing to print. Please create or open a document and ensure the preview is visible.');
+        return;
     }
+
+    // Hide editor and other UI elements for print
+    document.getElementById('editor-container').style.display = 'none';
+    document.getElementById('toolbar').style.display = 'none';
+    document.getElementById('tab-bar').style.display = 'none';
+    document.getElementById('status-bar').style.display = 'none';
+
+    // Show preview in full width
+    const preview = document.getElementById('preview');
+    if (preview) {
+        preview.classList.add('print-mode');
+        if (!withStyles) {
+            preview.classList.add('print-no-styles');
+        }
+    }
+
+    // Re-show everything after print
+    setTimeout(() => {
+        document.getElementById('editor-container').style.display = '';
+        document.getElementById('toolbar').style.display = '';
+        document.getElementById('tab-bar').style.display = '';
+        document.getElementById('status-bar').style.display = '';
+
+        const preview = document.getElementById('preview');
+        if (preview) {
+            preview.classList.remove('print-mode', 'print-no-styles');
+        }
+    }, 500);
 });
 
 // Export Dialog functionality

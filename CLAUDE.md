@@ -116,37 +116,90 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 ### v1.7.7 Print & Enhanced PDF Support (Latest)
 
 #### 🖨️ Native Print Functionality
-**Added Print Command** (`src/main.js:202-206`, `src/renderer.js:1152-1162`)
-- **Print Menu Item**: Added to File menu with `Ctrl+P` keyboard shortcut
+**Added Print Submenu to File Menu** (`src/main.js:202-215`, `src/renderer.js:1152-1188`, `src/styles.css:2828-2994`)
+- **Print Menu**: Submenu in File menu with two print options
+  - **Print Preview** (`Ctrl+P`) - Prints preview in black text, no background colors (ink-saving)
+  - **Print Preview (With Styles)** - Prints with full theme colors and styling
+- **Preview-Only Printing**: Only renders the markdown preview, hides all editor UI
 - **Native Print Dialog**: Uses Electron's webContents.print() for native OS print dialogs
-- **Print Settings**: Configured with background color printing and proper margins
-- **Preview-Based Printing**: Prints the rendered markdown preview for professional output
+- **Professional Output**: Automatically hides editor, toolbar, tabs, and status bar during print
+- **Print Optimization**: Smart page breaks, proper formatting for headings, code blocks, tables
 - **Cross-Platform**: Works on Windows, macOS, and Linux with native printer support
+
+**Print Options:**
+1. **Print Preview** (Ctrl+P)
+   - Black text on white background for professional printing
+   - No background colors to save ink
+   - Perfect for documents and reports
+   - Minimal ink consumption
+
+2. **Print Preview (With Styles)**
+   - Full theme colors and styling
+   - Preserves markdown formatting with visual hierarchy
+   - Better for design-focused documents
+   - Shows code blocks with colored syntax highlighting
 
 **Technical Implementation:**
 ```javascript
-// Main process handler
-ipcMain.on('print-document', (event) => {
-  if (mainWindow) {
+// Main process - two print handlers
+ipcMain.on('print-preview', (event) => {
+  mainWindow.webContents.send('prepare-print-preview', false);
+  setTimeout(() => {
+    mainWindow.webContents.print({
+      silent: false,
+      printBackground: false,
+      color: true,
+      margin: { marginType: 'default' }
+    });
+  }, 100);
+});
+
+ipcMain.on('print-preview-styled', (event) => {
+  mainWindow.webContents.send('prepare-print-preview', true);
+  setTimeout(() => {
     mainWindow.webContents.print({
       silent: false,
       printBackground: true,
       color: true,
       margin: { marginType: 'default' }
     });
-  }
+  }, 100);
 });
 
-// Renderer process handler
-ipcRenderer.on('print-document', () => {
-  const previewContent = document.getElementById('preview');
-  if (previewContent && previewContent.innerHTML.trim()) {
-    window.print();
-  } else {
-    alert('Nothing to print. Please create or open a document and ensure the preview is visible.');
+// Renderer process - prepares preview for printing
+ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
+  // Hide editor and UI elements
+  document.getElementById('editor-container').style.display = 'none';
+  document.getElementById('toolbar').style.display = 'none';
+  document.getElementById('tab-bar').style.display = 'none';
+  document.getElementById('status-bar').style.display = 'none';
+
+  // Add print mode classes
+  const preview = document.getElementById('preview');
+  preview.classList.add('print-mode');
+  if (!withStyles) {
+    preview.classList.add('print-no-styles');
   }
+
+  // Restore UI after print
+  setTimeout(() => {
+    document.getElementById('editor-container').style.display = '';
+    document.getElementById('toolbar').style.display = '';
+    document.getElementById('tab-bar').style.display = '';
+    document.getElementById('status-bar').style.display = '';
+    preview.classList.remove('print-mode', 'print-no-styles');
+  }, 500);
 });
 ```
+
+**CSS Print Styles** (`src/styles.css:2828-2994`)
+- Comprehensive @media print stylesheet
+- Hides all UI elements in print view
+- Optimizes preview for paper output
+- Smart page breaks for headings and tables
+- Proper formatting for code blocks, lists, tables
+- Image optimization and link handling
+- Professional typography with 12pt font size
 
 #### 📦 Enhanced PDF Export Dependencies
 **Added Native PDF Generation Libraries** (package.json)
@@ -730,4 +783,4 @@ if (!gotTheLock) {
 ---
 
 **Last Updated**: October 24, 2025
-**Claude Assistant**: Development completed for v1.7.7 with native print functionality (Ctrl+P) and enhanced PDF support through PDFKit and html2pdf libraries. Added print command with native OS print dialogs for cross-platform printing of rendered markdown. Remapped Toggle Preview from Ctrl+P to Ctrl+Shift+P. Previous releases include v1.7.6 table header styling cleanup for cleaner preview appearance, and v1.7.5 critical file association fix with single-instance lock implementation.
+**Claude Assistant**: Development completed for v1.7.7 with enhanced print menu featuring two print options: "Print Preview" (Ctrl+P, black text, ink-saving) and "Print Preview (With Styles)" (full colors). Implemented comprehensive print handler that hides editor UI and shows only the rendered preview. Added extensive CSS print stylesheet with smart page breaks, optimized formatting for all markdown elements, and professional typography. Added PDFKit and html2pdf libraries for native PDF support without Pandoc dependency. Previous releases include v1.7.6 table header styling cleanup and v1.7.5 critical file association fix.

@@ -2824,3 +2824,171 @@ body.theme-concrete-warm .status-bar {
     border-top-color: #9a9696;
     color: #e3e3e3;
 }
+
+/* Print Styles */
+@media print {
+    /* Hide UI elements for clean print output */
+    #toolbar,
+    #tab-bar,
+    #editor-container,
+    .editor-container,
+    #status-bar,
+    .status-bar {
+        display: none !important;
+    }
+
+    /* Show preview in full width */
+    #preview,
+    .preview,
+    .preview-content {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        overflow: visible !important;
+    }
+
+    /* Optimize preview content for printing */
+    .preview-content {
+        line-height: 1.6;
+        font-size: 12pt;
+        color: #000 !important;
+        background: white !important;
+    }
+
+    /* Text formatting */
+    .preview-content h1,
+    .preview-content h2,
+    .preview-content h3,
+    .preview-content h4,
+    .preview-content h5,
+    .preview-content h6 {
+        page-break-after: avoid;
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+    }
+
+    .preview-content p {
+        margin-bottom: 0.5em;
+        page-break-inside: avoid;
+    }
+
+    /* Code blocks */
+    .preview-content pre {
+        background: #f5f5f5 !important;
+        border: 1px solid #ddd !important;
+        page-break-inside: avoid;
+        padding: 10px;
+        font-size: 10pt;
+    }
+
+    .preview-content code {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+        font-size: 10pt;
+    }
+
+    /* Lists */
+    .preview-content ul,
+    .preview-content ol {
+        margin-left: 20px;
+        page-break-inside: avoid;
+    }
+
+    .preview-content li {
+        page-break-inside: avoid;
+        margin-bottom: 0.3em;
+    }
+
+    /* Tables */
+    .preview-content table {
+        width: 100%;
+        border-collapse: collapse;
+        page-break-inside: avoid;
+        margin-bottom: 1em;
+    }
+
+    .preview-content th,
+    .preview-content td {
+        border: 1px solid #999 !important;
+        padding: 8px !important;
+        text-align: left;
+    }
+
+    .preview-content th {
+        background: #f0f0f0 !important;
+        font-weight: bold;
+    }
+
+    /* Links - remove underline for print */
+    .preview-content a {
+        color: #000 !important;
+        text-decoration: none;
+    }
+
+    /* Blockquotes */
+    .preview-content blockquote {
+        border-left: 3px solid #ccc;
+        padding-left: 15px;
+        margin-left: 0;
+        color: #333 !important;
+    }
+
+    /* Images */
+    .preview-content img {
+        max-width: 100%;
+        height: auto;
+        page-break-inside: avoid;
+    }
+
+    /* Horizontal rules */
+    .preview-content hr {
+        border: none;
+        border-top: 1px solid #999;
+        margin: 1em 0;
+    }
+}
+
+/* Print mode classes */
+.print-mode {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.print-no-styles .preview-content {
+    color: #000 !important;
+    background: white !important;
+}
+
+.print-no-styles .preview-content h1,
+.print-no-styles .preview-content h2,
+.print-no-styles .preview-content h3,
+.print-no-styles .preview-content h4,
+.print-no-styles .preview-content h5,
+.print-no-styles .preview-content h6 {
+    color: #000 !important;
+    border-color: #999 !important;
+}
+
+.print-no-styles .preview-content code {
+    background: #f5f5f5 !important;
+    color: #000 !important;
+}
+
+.print-no-styles .preview-content pre {
+    background: #f5f5f5 !important;
+    color: #000 !important;
+    border-color: #999 !important;
+}
+
+.print-no-styles .preview-content a {
+    color: #000 !important;
+}
+
+.print-no-styles .preview-content blockquote {
+    color: #333 !important;
+    border-color: #999 !important;
+}

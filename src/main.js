@@ -201,8 +201,17 @@ function createMenu() {
         { type: 'separator' },
         {
           label: 'Print',
-          accelerator: 'CmdOrCtrl+P',
-          click: () => mainWindow.webContents.send('print-document')
+          submenu: [
+            {
+              label: 'Print Preview',
+              accelerator: 'CmdOrCtrl+P',
+              click: () => mainWindow.webContents.send('print-preview')
+            },
+            {
+              label: 'Print Preview (With Styles)',
+              click: () => mainWindow.webContents.send('print-preview-styled')
+            }
+          ]
         },
         { type: 'separator' },
         {
@@ -1157,16 +1166,37 @@ ipcMain.on('set-current-file', (event, filePath) => {
   currentFile = filePath;
 });
 
-// Handle print document
-ipcMain.on('print-document', (event) => {
+// Handle print preview
+ipcMain.on('print-preview', (event) => {
   if (mainWindow) {
-    // Open native print dialog
-    mainWindow.webContents.print({
-      silent: false,
-      printBackground: true,
-      color: true,
-      margin: { marginType: 'default' }
-    });
+    // Prepare for printing preview only (black text, no colors)
+    mainWindow.webContents.send('prepare-print-preview', false);
+    // Give renderer time to prepare, then print
+    setTimeout(() => {
+      mainWindow.webContents.print({
+        silent: false,
+        printBackground: false,
+        color: true,
+        margin: { marginType: 'default' }
+      });
+    }, 100);
+  }
+});
+
+// Handle print preview with styles
+ipcMain.on('print-preview-styled', (event) => {
+  if (mainWindow) {
+    // Prepare for printing preview with colors
+    mainWindow.webContents.send('prepare-print-preview', true);
+    // Give renderer time to prepare, then print
+    setTimeout(() => {
+      mainWindow.webContents.print({
+        silent: false,
+        printBackground: true,
+        color: true,
+        margin: { marginType: 'default' }
+      });
+    }, 100);
   }
 });
 
