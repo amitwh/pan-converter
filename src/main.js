@@ -1157,7 +1157,7 @@ ipcMain.on('save-current-file', (event, content) => {
 });
 
 ipcMain.on('get-theme', (event) => {
-  const theme = store.get('theme', 'light');
+  const theme = store.get('theme', 'github');
   event.reply('theme-changed', theme);
 });
 

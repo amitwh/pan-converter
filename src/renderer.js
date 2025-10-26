@@ -1149,6 +1149,15 @@ ipcRenderer.on('adjust-font-size', (event, action) => {
     updateFontSizes(currentFontSize);
 });
 
+// Print preview request handlers - relay to main process
+ipcRenderer.on('print-preview', () => {
+    ipcRenderer.send('print-preview');
+});
+
+ipcRenderer.on('print-preview-styled', () => {
+    ipcRenderer.send('print-preview-styled');
+});
+
 // Print preview handler - prepare for printing
 ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
     const previewContent = document.getElementById('preview');
