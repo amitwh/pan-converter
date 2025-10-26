@@ -112,6 +112,9 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
+  // Open DevTools for debugging
+  mainWindow.webContents.openDevTools();
+
   createMenu();
 
   mainWindow.on('closed', () => {
@@ -1179,8 +1182,11 @@ ipcMain.on('do-print', (event, { withStyles }) => {
 
 // Handle renderer ready for file association
 ipcMain.on('renderer-ready', (event) => {
+  console.log('[MAIN] renderer-ready received, rendererReady was:', rendererReady);
   rendererReady = true;
+  console.log('[MAIN] app.pendingFile:', app.pendingFile);
   if (app.pendingFile) {
+    console.log('[MAIN] Opening pending file:', app.pendingFile);
     openFileFromPath(app.pendingFile);
     app.pendingFile = null;
   }
@@ -1583,13 +1589,17 @@ app.whenReady().then(() => {
   // Handle file association on app startup
   // Process all command line arguments except the first two (node and script path)
   const fileArgs = process.argv.slice(2);
+  console.log('[MAIN] Command line args:', process.argv);
+  console.log('[MAIN] File args to process:', fileArgs);
   for (const arg of fileArgs) {
     if ((arg.endsWith('.md') || arg.endsWith('.markdown')) && fs.existsSync(arg)) {
       // Store the file to open after window is ready
+      console.log('[MAIN] Setting pendingFile to:', arg);
       app.pendingFile = arg;
       break;
     }
   }
+  console.log('[MAIN] Final app.pendingFile:', app.pendingFile);
 });
 
 app.on('window-all-closed', () => {
@@ -1641,16 +1651,23 @@ app.on('open-file', (event, filePath) => {
 
 // Handle file opening from command line or file association
 function openFileFromPath(filePath) {
+  console.log('[MAIN] openFileFromPath called with:', filePath);
+  console.log('[MAIN] rendererReady:', rendererReady, 'mainWindow exists:', !!mainWindow);
   if (fs.existsSync(filePath)) {
     currentFile = filePath;
     const content = fs.readFileSync(filePath, 'utf-8');
+    console.log('[MAIN] File read successfully, content length:', content.length);
     if (mainWindow && mainWindow.webContents && rendererReady) {
       // Send file immediately - renderer-ready means UI is initialized
+      console.log('[MAIN] Sending file-opened to renderer');
       mainWindow.webContents.send('file-opened', { path: filePath, content });
     } else {
       // Store file to open after renderer is ready
+      console.log('[MAIN] Storing as pending file');
       app.pendingFile = filePath;
     }
+  } else {
+    console.error('[MAIN] File does not exist:', filePath);
   }
 }
 

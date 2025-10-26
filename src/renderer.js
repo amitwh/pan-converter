@@ -1039,8 +1039,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Request current theme - renderer-ready will be sent after theme is applied
+    // Request current theme
     ipcRenderer.send('get-theme');
+
+    // Also send renderer-ready immediately as backup
+    // This ensures we don't get stuck waiting for theme-changed
+    setTimeout(() => {
+        console.log('Backup renderer-ready timeout triggered');
+        ipcRenderer.send('renderer-ready');
+    }, 100);
 
     // Set up auto-save interval
     setInterval(() => {
@@ -1059,8 +1066,11 @@ ipcRenderer.on('file-new', () => {
 });
 
 ipcRenderer.on('file-opened', (event, data) => {
+    console.log('[RENDERER] file-opened received:', data.path, 'content length:', data.content.length);
     if (tabManager) {
         tabManager.openFile(data.path, data.content);
+    } else {
+        console.error('[RENDERER] tabManager not initialized!');
     }
 });
 
@@ -1098,11 +1108,13 @@ ipcRenderer.on('toggle-find', () => {
 });
 
 ipcRenderer.on('theme-changed', (event, theme) => {
+    console.log('[RENDERER] Theme changed to:', theme);
     document.body.className = `theme-${theme}`;
 
     // After theme is applied, wait for next frame then signal renderer is ready
     // This ensures complete UI initialization before files are opened
     requestAnimationFrame(() => {
+        console.log('[RENDERER] Sending renderer-ready from theme-changed');
         ipcRenderer.send('renderer-ready');
     });
 });
@@ -1154,10 +1166,12 @@ ipcRenderer.on('adjust-font-size', (event, action) => {
 
 // Print preview request handlers - handle printing directly
 ipcRenderer.on('print-preview', () => {
+    console.log('[RENDERER] print-preview received');
     handlePrintPreview(false);
 });
 
 ipcRenderer.on('print-preview-styled', () => {
+    console.log('[RENDERER] print-preview-styled received');
     handlePrintPreview(true);
 });
 
