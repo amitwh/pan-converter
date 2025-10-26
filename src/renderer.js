@@ -1039,15 +1039,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Request current theme
+    // Request current theme - renderer-ready will be sent after theme is applied
     ipcRenderer.send('get-theme');
-
-    // Delay renderer-ready signal to ensure all UI initialization completes
-    // This prevents files from opening before the interface is fully loaded
-    // Increased delay to account for slower first-time initialization
-    setTimeout(() => {
-        ipcRenderer.send('renderer-ready');
-    }, 1000);
 
     // Set up auto-save interval
     setInterval(() => {
@@ -1106,6 +1099,12 @@ ipcRenderer.on('toggle-find', () => {
 
 ipcRenderer.on('theme-changed', (event, theme) => {
     document.body.className = `theme-${theme}`;
+
+    // After theme is applied, wait a bit longer and then signal renderer is ready
+    // This ensures complete UI initialization before files are opened
+    setTimeout(() => {
+        ipcRenderer.send('renderer-ready');
+    }, 1500);
 });
 
 // Undo/Redo handlers
@@ -1173,47 +1172,58 @@ ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
         return;
     }
 
-    // Hide editor and other UI elements for print
-    document.getElementById('editor-container').style.display = 'none';
+    // Hide UI elements except the preview
     document.getElementById('toolbar').style.display = 'none';
     document.getElementById('tab-bar').style.display = 'none';
     document.getElementById('status-bar').style.display = 'none';
+
+    // Hide editor panes (not the whole editor-container)
+    const editorPane = document.getElementById(`editor-pane-${activeTabId}`);
+    if (editorPane) {
+        editorPane.style.display = 'none';
+    }
 
     // Hide all export dialogs and other overlays
     const exportDialog = document.getElementById('export-dialog');
     const batchDialog = document.getElementById('batch-dialog');
     const pdfDialog = document.getElementById('pdf-editor-dialog');
     const converterDialog = document.getElementById('converter-dialog');
+    const findDialog = document.getElementById('find-dialog');
     if (exportDialog) exportDialog.style.display = 'none';
     if (batchDialog) batchDialog.style.display = 'none';
     if (pdfDialog) pdfDialog.style.display = 'none';
     if (converterDialog) converterDialog.style.display = 'none';
+    if (findDialog) findDialog.style.display = 'none';
 
-    // Show preview in full width
-    const preview = document.getElementById(`preview-${activeTabId}`);
-    if (preview) {
-        preview.classList.add('print-mode');
+    // Make preview full screen for printing
+    const previewPane = document.getElementById(`preview-pane-${activeTabId}`);
+    if (previewPane) {
+        previewPane.classList.add('print-mode');
         if (!withStyles) {
-            preview.classList.add('print-no-styles');
+            previewPane.classList.add('print-no-styles');
         }
     }
 
     // Re-show everything after print
     setTimeout(() => {
-        document.getElementById('editor-container').style.display = '';
         document.getElementById('toolbar').style.display = '';
         document.getElementById('tab-bar').style.display = '';
         document.getElementById('status-bar').style.display = '';
+
+        // Restore editor pane
+        if (editorPane) {
+            editorPane.style.display = '';
+        }
 
         // Restore dialog visibility if they were open
         if (exportDialog) exportDialog.style.display = '';
         if (batchDialog) batchDialog.style.display = '';
         if (pdfDialog) pdfDialog.style.display = '';
         if (converterDialog) converterDialog.style.display = '';
+        if (findDialog) findDialog.style.display = '';
 
-        const preview = document.getElementById(`preview-${activeTabId}`);
-        if (preview) {
-            preview.classList.remove('print-mode', 'print-no-styles');
+        if (previewPane) {
+            previewPane.classList.remove('print-mode', 'print-no-styles');
         }
     }, 500);
 });

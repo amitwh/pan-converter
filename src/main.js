@@ -1669,10 +1669,10 @@ function openFileFromPath(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8');
     if (mainWindow && mainWindow.webContents && rendererReady) {
       // Add delay to ensure renderer is fully prepared to display the file
-      // Increased delay for first-time load when UI is still initializing
+      // Give extra time for theme application and preview pane setup
       setTimeout(() => {
         mainWindow.webContents.send('file-opened', { path: filePath, content });
-      }, 300);
+      }, 500);
     } else {
       // Store file to open after renderer is ready
       app.pendingFile = filePath;
