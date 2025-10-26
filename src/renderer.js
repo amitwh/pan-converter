@@ -1199,33 +1199,32 @@ function handlePrintPreview(withStyles) {
         }
     }
 
-    // Use requestAnimationFrame twice to ensure browser has rendered the DOM changes
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            // Now tell main process to print - the DOM is fully rendered
-            ipcRenderer.send('do-print', { withStyles });
+    // Wait for DOM to render the changes before printing
+    // Use setTimeout to ensure browser has time to repaint
+    setTimeout(() => {
+        // Tell main process to print - the DOM is now fully rendered
+        ipcRenderer.send('do-print', { withStyles });
 
-            // Restore UI after print
-            setTimeout(() => {
-                document.getElementById('toolbar').style.display = '';
-                document.getElementById('tab-bar').style.display = '';
-                document.getElementById('status-bar').style.display = '';
+        // Restore UI after a delay (printer will have captured the output by then)
+        setTimeout(() => {
+            document.getElementById('toolbar').style.display = '';
+            document.getElementById('tab-bar').style.display = '';
+            document.getElementById('status-bar').style.display = '';
 
-                if (editorPane) {
-                    editorPane.style.display = '';
-                }
+            if (editorPane) {
+                editorPane.style.display = '';
+            }
 
-                dialogs.forEach(id => {
-                    const dialog = document.getElementById(id);
-                    if (dialog) dialog.style.display = '';
-                });
+            dialogs.forEach(id => {
+                const dialog = document.getElementById(id);
+                if (dialog) dialog.style.display = '';
+            });
 
-                if (previewPane) {
-                    previewPane.classList.remove('print-mode', 'print-no-styles');
-                }
-            }, 100);
-        });
-    });
+            if (previewPane) {
+                previewPane.classList.remove('print-mode', 'print-no-styles');
+            }
+        }, 500);
+    }, 300);
 }
 
 // Export Dialog functionality

@@ -795,9 +795,10 @@ function tryPdfFallback(inputFile, outputFile, engines, index, options, lastErro
   }
 
   const engine = engines[index];
-  let pandocCmd = `${getPandocPath()} "${inputFile}" --pdf-engine=${engine} -V geometry:${geometry} -o "${outputFile}"`;
+  let pandocCmd = `${getPandocPath()} "${inputFile}" --pdf-engine=${engine} -o "${outputFile}"`;
 
-  if (options.geometry) pandocCmd += ` -V geometry:"${options.geometry}"`;
+  // Add geometry if specified
+  if (options.geometry) pandocCmd = pandocCmd.replace(` -o `, ` -V geometry:"${options.geometry}" -o `);
 
   // Add all other options
   if (options.template && options.template !== 'default') {
@@ -1665,10 +1666,10 @@ function openFileFromPath(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8');
     if (mainWindow && mainWindow.webContents && rendererReady) {
       // Add delay to ensure renderer is fully prepared to display the file
-      // Give extra time for theme application and preview pane setup
+      // Wait for theme, preview pane, and all CSS to be fully loaded
       setTimeout(() => {
         mainWindow.webContents.send('file-opened', { path: filePath, content });
-      }, 500);
+      }, 2000);
     } else {
       // Store file to open after renderer is ready
       app.pendingFile = filePath;
