@@ -1184,23 +1184,95 @@ function handlePrintPreview(withStyles) {
         return;
     }
 
-    // Add print style classes to body for styling control
-    // The @media print CSS will handle hiding toolbar/tabs automatically
-    if (!withStyles) {
-        document.body.classList.add('printing-no-styles');
-    }
-    document.body.classList.add('printing');
+    // Store original display values for restoration
+    const elementsToHide = [];
 
-    // Give browser time to apply classes before printing
+    // Hide toolbar
+    const toolbar = document.querySelector('.toolbar');
+    if (toolbar) {
+        elementsToHide.push({ elem: toolbar, display: toolbar.style.display });
+        toolbar.style.display = 'none';
+    }
+
+    // Hide tab bar
+    const tabBar = document.querySelector('.tab-bar');
+    if (tabBar) {
+        elementsToHide.push({ elem: tabBar, display: tabBar.style.display });
+        tabBar.style.display = 'none';
+    }
+
+    // Hide status bar
+    const statusBar = document.querySelector('.status-bar');
+    if (statusBar) {
+        elementsToHide.push({ elem: statusBar, display: statusBar.style.display });
+        statusBar.style.display = 'none';
+    }
+
+    // Hide editor pane
+    const editorPane = document.getElementById(`editor-pane-${activeTabId}`);
+    if (editorPane) {
+        elementsToHide.push({ elem: editorPane, display: editorPane.style.display });
+        editorPane.style.display = 'none';
+    }
+
+    // Hide all dialogs
+    const dialogs = document.querySelectorAll('.dialog, .modal-overlay');
+    dialogs.forEach(dialog => {
+        elementsToHide.push({ elem: dialog, display: dialog.style.display });
+        dialog.style.display = 'none';
+    });
+
+    // Make preview pane full width
+    const previewPane = document.getElementById(`preview-pane-${activeTabId}`);
+    let originalPreviewStyles = {};
+    if (previewPane) {
+        originalPreviewStyles = {
+            position: previewPane.style.position,
+            top: previewPane.style.top,
+            left: previewPane.style.left,
+            width: previewPane.style.width,
+            height: previewPane.style.height,
+            margin: previewPane.style.margin,
+            padding: previewPane.style.padding
+        };
+        previewPane.style.position = 'absolute';
+        previewPane.style.top = '0';
+        previewPane.style.left = '0';
+        previewPane.style.width = '100%';
+        previewPane.style.height = 'auto';
+        previewPane.style.margin = '0';
+        previewPane.style.padding = '20px';
+    }
+
+    // Apply no-styles if needed
+    if (!withStyles && previewContent) {
+        previewContent.style.color = '#000';
+        previewContent.style.background = '#fff';
+    }
+
+    // Wait for DOM updates then print
     setTimeout(() => {
-        // Tell main process to print
         ipcRenderer.send('do-print', { withStyles });
 
-        // Restore classes after print dialog appears
+        // Restore everything after print dialog opens
         setTimeout(() => {
-            document.body.classList.remove('printing', 'printing-no-styles');
-        }, 1000);
-    }, 100);
+            // Restore hidden elements
+            elementsToHide.forEach(({ elem, display }) => {
+                elem.style.display = display;
+            });
+
+            // Restore preview pane styles
+            if (previewPane) {
+                Object.assign(previewPane.style, originalPreviewStyles);
+            }
+
+            // Restore preview content styles
+            if (!withStyles && previewContent) {
+                previewContent.style.color = '';
+                previewContent.style.background = '';
+            }
+        }, 500);
+    }, 200);
 }
 
 // Export Dialog functionality
