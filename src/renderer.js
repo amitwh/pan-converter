@@ -1185,9 +1185,13 @@ function handlePrintPreview(withStyles) {
     }
 
     // Hide UI elements
-    document.getElementById('toolbar').style.display = 'none';
-    document.getElementById('tab-bar').style.display = 'none';
-    document.getElementById('status-bar').style.display = 'none';
+    const toolbar = document.getElementById('toolbar');
+    const tabBar = document.getElementById('tab-bar');
+    const statusBar = document.getElementById('status-bar');
+
+    if (toolbar) toolbar.style.display = 'none';
+    if (tabBar) tabBar.style.display = 'none';
+    if (statusBar) statusBar.style.display = 'none';
 
     const editorPane = document.getElementById(`editor-pane-${activeTabId}`);
     if (editorPane) {
@@ -1221,9 +1225,9 @@ function handlePrintPreview(withStyles) {
 
         // Restore UI after a delay (printer will have captured the output by then)
         setTimeout(() => {
-            document.getElementById('toolbar').style.display = '';
-            document.getElementById('tab-bar').style.display = '';
-            document.getElementById('status-bar').style.display = '';
+            if (toolbar) toolbar.style.display = '';
+            if (tabBar) tabBar.style.display = '';
+            if (statusBar) statusBar.style.display = '';
 
             if (editorPane) {
                 editorPane.style.display = '';

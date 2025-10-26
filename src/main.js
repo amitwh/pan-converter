@@ -1183,10 +1183,19 @@ ipcMain.on('do-print', (event, { withStyles }) => {
 // Handle renderer ready for file association
 ipcMain.on('renderer-ready', (event) => {
   console.log('[MAIN] renderer-ready received, rendererReady was:', rendererReady);
+  if (mainWindow) {
+    mainWindow.webContents.executeJavaScript(`console.log('[MAIN->RENDERER] renderer-ready received, rendererReady was: ${rendererReady}')`);
+  }
   rendererReady = true;
   console.log('[MAIN] app.pendingFile:', app.pendingFile);
+  if (mainWindow) {
+    mainWindow.webContents.executeJavaScript(`console.log('[MAIN->RENDERER] app.pendingFile: ${app.pendingFile}')`);
+  }
   if (app.pendingFile) {
     console.log('[MAIN] Opening pending file:', app.pendingFile);
+    if (mainWindow) {
+      mainWindow.webContents.executeJavaScript(`console.log('[MAIN->RENDERER] Opening pending file: ${app.pendingFile}')`);
+    }
     openFileFromPath(app.pendingFile);
     app.pendingFile = null;
   }
