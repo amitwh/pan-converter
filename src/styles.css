@@ -2956,6 +2956,17 @@ body.theme-concrete-warm .status-bar {
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+    background: white !important;
+    padding: 20px !important;
+}
+
+/* Ensure preview panes are visible in print mode */
+#preview-pane-1, #preview-pane-2, #preview-pane-3, #preview-pane-4, #preview-pane-5 {
+    display: block !important;
 }
 
 .print-no-styles .preview-content {

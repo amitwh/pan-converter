@@ -1044,9 +1044,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Delay renderer-ready signal to ensure all UI initialization completes
     // This prevents files from opening before the interface is fully loaded
+    // Increased delay to account for slower first-time initialization
     setTimeout(() => {
         ipcRenderer.send('renderer-ready');
-    }, 500);
+    }, 1000);
 
     // Set up auto-save interval
     setInterval(() => {
@@ -1163,7 +1164,9 @@ ipcRenderer.on('print-preview-styled', () => {
 
 // Print preview handler - prepare for printing
 ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
-    const previewContent = document.getElementById('preview');
+    // Get the active tab's preview element
+    const activeTabId = tabManager ? tabManager.activeTabId : 1;
+    const previewContent = document.getElementById(`preview-${activeTabId}`);
 
     if (!previewContent || !previewContent.innerHTML.trim()) {
         alert('Nothing to print. Please create or open a document and ensure the preview is visible.');
@@ -1176,8 +1179,18 @@ ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
     document.getElementById('tab-bar').style.display = 'none';
     document.getElementById('status-bar').style.display = 'none';
 
+    // Hide all export dialogs and other overlays
+    const exportDialog = document.getElementById('export-dialog');
+    const batchDialog = document.getElementById('batch-dialog');
+    const pdfDialog = document.getElementById('pdf-editor-dialog');
+    const converterDialog = document.getElementById('converter-dialog');
+    if (exportDialog) exportDialog.style.display = 'none';
+    if (batchDialog) batchDialog.style.display = 'none';
+    if (pdfDialog) pdfDialog.style.display = 'none';
+    if (converterDialog) converterDialog.style.display = 'none';
+
     // Show preview in full width
-    const preview = document.getElementById('preview');
+    const preview = document.getElementById(`preview-${activeTabId}`);
     if (preview) {
         preview.classList.add('print-mode');
         if (!withStyles) {
@@ -1192,7 +1205,13 @@ ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
         document.getElementById('tab-bar').style.display = '';
         document.getElementById('status-bar').style.display = '';
 
-        const preview = document.getElementById('preview');
+        // Restore dialog visibility if they were open
+        if (exportDialog) exportDialog.style.display = '';
+        if (batchDialog) batchDialog.style.display = '';
+        if (pdfDialog) pdfDialog.style.display = '';
+        if (converterDialog) converterDialog.style.display = '';
+
+        const preview = document.getElementById(`preview-${activeTabId}`);
         if (preview) {
             preview.classList.remove('print-mode', 'print-no-styles');
         }
