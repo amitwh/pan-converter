@@ -1668,7 +1668,11 @@ function openFileFromPath(filePath) {
     currentFile = filePath;
     const content = fs.readFileSync(filePath, 'utf-8');
     if (mainWindow && mainWindow.webContents && rendererReady) {
-      mainWindow.webContents.send('file-opened', { path: filePath, content });
+      // Add a small delay to ensure renderer is fully prepared to display the file
+      // This prevents timing issues where file opens before UI is ready
+      setTimeout(() => {
+        mainWindow.webContents.send('file-opened', { path: filePath, content });
+      }, 100);
     } else {
       // Store file to open after renderer is ready
       app.pendingFile = filePath;

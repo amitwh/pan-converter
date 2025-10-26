@@ -1042,8 +1042,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Request current theme
     ipcRenderer.send('get-theme');
 
-    // Signal that renderer is ready for file operations
-    ipcRenderer.send('renderer-ready');
+    // Delay renderer-ready signal to ensure all UI initialization completes
+    // This prevents files from opening before the interface is fully loaded
+    setTimeout(() => {
+        ipcRenderer.send('renderer-ready');
+    }, 500);
 
     // Set up auto-save interval
     setInterval(() => {
