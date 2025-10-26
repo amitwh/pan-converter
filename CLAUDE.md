@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.7.7
+**Current Version**: v1.7.8
 **Author**: Amit Haridas (amit.wh@gmail.com)
 **License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
@@ -113,7 +113,109 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ## Feature Implementation Guide
 
-### v1.7.7 Print & Enhanced PDF Support (Latest)
+### v1.7.8 Critical Bug Fixes (Latest)
+
+#### 🐛 File Association Fix for Packaged Apps
+**Fixed Command-Line Argument Parsing** (`src/main.js:1598-1627`, `src/main.js:70-90`)
+- **Root Cause**: `process.argv.slice(2)` works in development but fails in packaged apps
+- **Solution**: Detect if app is packaged using `app.isPackaged` and use correct slice index
+  - Development: `process.argv.slice(2)` - ['electron', 'app.js', 'file.md']
+  - Packaged: `process.argv.slice(1)` - ['PanConverter.exe', 'file.md']
+- **Path Resolution**: Added proper path resolution for both absolute and relative paths
+- **Comprehensive Logging**: Added detailed console logs to debug file loading issues
+- **Second Instance Handler**: Also fixed second-instance handler to use same logic
+
+**Technical Implementation:**
+```javascript
+// Detect packaged vs development mode
+const startIndex = app.isPackaged ? 1 : 2;
+const fileArgs = process.argv.slice(startIndex);
+
+// Resolve paths properly
+for (const arg of fileArgs) {
+  if ((arg.endsWith('.md') || arg.endsWith('.markdown'))) {
+    const resolvedPath = path.isAbsolute(arg) ? arg : path.resolve(process.cwd(), arg);
+    if (fs.existsSync(resolvedPath)) {
+      app.pendingFile = resolvedPath;
+      break;
+    }
+  }
+}
+```
+
+**Fixed Issues:**
+- ✅ Files now open correctly on first double-click in packaged app
+- ✅ Command-line arguments properly parsed in both dev and production
+- ✅ Relative and absolute paths handled correctly
+- ✅ Comprehensive logging for debugging file association issues
+
+#### 🖨️ Print Preview Fix
+**Fixed Print Output to Show Preview Content** (`src/renderer.js:1178-1204`, `src/styles.css:2828-3014`)
+- **Root Cause**: Manual DOM manipulation conflicted with CSS `@media print` rules
+- **Solution**: Simplified handler to rely on CSS `@media print` for hiding UI elements
+- **CSS Enhancements**:
+  - Added selectors for dynamic preview panes `[id^="preview-pane-"]` and `[id^="editor-pane-"]`
+  - Added `.tab-content` to ensure full-width rendering
+  - Added body class-based styling for no-styles mode
+- **Removed Manual Hiding**: Eliminated manual `display: none` manipulation in favor of CSS
+
+**Technical Implementation:**
+```javascript
+// Simplified print handler - let CSS do the work
+function handlePrintPreview(withStyles) {
+  const activeTabId = tabManager ? tabManager.activeTabId : 1;
+  const previewContent = document.getElementById(`preview-${activeTabId}`);
+
+  if (!previewContent || !previewContent.innerHTML.trim()) {
+    alert('Nothing to print...');
+    return;
+  }
+
+  // Add body classes for CSS styling
+  if (!withStyles) {
+    document.body.classList.add('printing-no-styles');
+  }
+  document.body.classList.add('printing');
+
+  setTimeout(() => {
+    ipcRenderer.send('do-print', { withStyles });
+    setTimeout(() => {
+      document.body.classList.remove('printing', 'printing-no-styles');
+    }, 1000);
+  }, 100);
+}
+```
+
+**CSS Updates:**
+```css
+@media print {
+  /* Hide all UI elements */
+  #toolbar, #tab-bar, .editor-pane, [id^="editor-pane-"] {
+    display: none !important;
+  }
+
+  /* Show preview in full width */
+  [id^="preview-"], [id^="preview-pane-"], .tab-content {
+    display: block !important;
+    width: 100% !important;
+    padding: 20px !important;
+  }
+}
+```
+
+**Fixed Issues:**
+- ✅ Print now correctly renders preview content, not toolbar
+- ✅ Both print modes work (with styles and without styles)
+- ✅ Clean, professional print output with proper formatting
+- ✅ Proper page breaks, typography, and layout optimization
+
+#### 🔧 Development Cleanup
+**Removed Debugging Code** (`src/main.js:120-123`)
+- Removed auto-opening of DevTools
+- Clean production-ready build
+- Debugging logs remain for troubleshooting but DevTools disabled by default
+
+### v1.7.7 Print & Enhanced PDF Support
 
 #### 🖨️ Native Print Functionality
 **Added Print Submenu to File Menu** (`src/main.js:202-215`, `src/renderer.js:1152-1188`, `src/styles.css:2828-2994`)
@@ -782,5 +884,10 @@ if (!gotTheLock) {
 
 ---
 
-**Last Updated**: October 24, 2025
-**Claude Assistant**: Development completed for v1.7.7 with enhanced print menu featuring two print options: "Print Preview" (Ctrl+P, black text, ink-saving) and "Print Preview (With Styles)" (full colors). Implemented comprehensive print handler that hides editor UI and shows only the rendered preview. Added extensive CSS print stylesheet with smart page breaks, optimized formatting for all markdown elements, and professional typography. Added PDFKit and html2pdf libraries for native PDF support without Pandoc dependency. Previous releases include v1.7.6 table header styling cleanup and v1.7.5 critical file association fix.
+**Last Updated**: October 26, 2025
+**Claude Assistant**: Development completed for v1.7.8 with critical bug fixes:
+1. **File Association Fix**: Fixed command-line argument parsing to properly detect packaged vs development mode using `app.isPackaged`, enabling files to open correctly on first double-click in packaged app
+2. **Print Preview Fix**: Completely rewrote print handler to rely on CSS `@media print` rules instead of manual DOM manipulation, ensuring preview content (not toolbar) is printed
+3. **Code Cleanup**: Removed auto-opening DevTools for production-ready build
+
+Previous releases: v1.7.7 (print menu with two options, PDFKit/html2pdf integration), v1.7.6 (table header styling cleanup), v1.7.5 (single-instance lock).

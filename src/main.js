@@ -68,17 +68,24 @@ if (!gotTheLock) {
     }
 
     // Check if a file was passed to the second instance
-    // commandLine is an array like: ['electron.exe', 'app.asar', 'file.md']
-    const fileArgs = commandLine.slice(2);
+    // commandLine is an array like: ['PanConverter.exe', 'file.md']
+    console.log('[MAIN] Second instance commandLine:', JSON.stringify(commandLine));
+    const startIndex = app.isPackaged ? 1 : 2;
+    const fileArgs = commandLine.slice(startIndex);
+    console.log('[MAIN] Second instance file args:', fileArgs);
     for (const arg of fileArgs) {
-      if ((arg.endsWith('.md') || arg.endsWith('.markdown')) && fs.existsSync(arg)) {
-        // Open the file in the existing instance
-        if (rendererReady) {
-          openFileFromPath(arg);
-        } else {
-          app.pendingFile = arg;
+      if ((arg.endsWith('.md') || arg.endsWith('.markdown'))) {
+        const resolvedPath = path.isAbsolute(arg) ? arg : path.resolve(workingDirectory, arg);
+        console.log('[MAIN] Second instance resolved path:', resolvedPath);
+        if (fs.existsSync(resolvedPath)) {
+          // Open the file in the existing instance
+          if (rendererReady) {
+            openFileFromPath(resolvedPath);
+          } else {
+            app.pendingFile = resolvedPath;
+          }
+          break;
         }
-        break;
       }
     }
   });
@@ -111,9 +118,6 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
-
-  // Open DevTools for debugging
-  mainWindow.webContents.openDevTools();
 
   createMenu();
 
@@ -463,7 +467,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.7.7\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.7.8\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }
@@ -1596,16 +1600,32 @@ app.whenReady().then(() => {
   createWindow();
   
   // Handle file association on app startup
-  // Process all command line arguments except the first two (node and script path)
-  const fileArgs = process.argv.slice(2);
-  console.log('[MAIN] Command line args:', process.argv);
-  console.log('[MAIN] File args to process:', fileArgs);
+  // In packaged apps, process.argv structure is different:
+  // Development: ['electron', 'app.js', 'file.md'] - need slice(2)
+  // Packaged: ['PanConverter.exe', 'file.md'] - need slice(1)
+  // We'll check all arguments after the executable
+  console.log('[MAIN] Full command line args:', JSON.stringify(process.argv));
+  console.log('[MAIN] App is packaged:', app.isPackaged);
+
+  // Start from index 1 (skip executable) and check each argument
+  const startIndex = app.isPackaged ? 1 : 2;
+  const fileArgs = process.argv.slice(startIndex);
+  console.log('[MAIN] File args to process (starting from index', startIndex + '):', fileArgs);
+
   for (const arg of fileArgs) {
-    if ((arg.endsWith('.md') || arg.endsWith('.markdown')) && fs.existsSync(arg)) {
-      // Store the file to open after window is ready
-      console.log('[MAIN] Setting pendingFile to:', arg);
-      app.pendingFile = arg;
-      break;
+    console.log('[MAIN] Checking arg:', arg);
+    if ((arg.endsWith('.md') || arg.endsWith('.markdown'))) {
+      // Try to resolve the path (might be relative)
+      const resolvedPath = path.isAbsolute(arg) ? arg : path.resolve(process.cwd(), arg);
+      console.log('[MAIN] Resolved path:', resolvedPath);
+      if (fs.existsSync(resolvedPath)) {
+        // Store the file to open after window is ready
+        console.log('[MAIN] Setting pendingFile to:', resolvedPath);
+        app.pendingFile = resolvedPath;
+        break;
+      } else {
+        console.log('[MAIN] File does not exist:', resolvedPath);
+      }
     }
   }
   console.log('[MAIN] Final app.pendingFile:', app.pendingFile);

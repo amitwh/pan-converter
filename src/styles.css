@@ -2833,14 +2833,19 @@ body.theme-concrete-warm .status-bar {
     #editor-container,
     .editor-container,
     #status-bar,
-    .status-bar {
+    .status-bar,
+    .editor-pane,
+    [id^="editor-pane-"] {
         display: none !important;
     }
 
     /* Show preview in full width */
     #preview,
     .preview,
-    .preview-content {
+    .preview-content,
+    [id^="preview-"],
+    [id^="preview-pane-"],
+    .tab-content {
         display: block !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -2848,10 +2853,12 @@ body.theme-concrete-warm .status-bar {
         margin: 0 !important;
         padding: 20px !important;
         overflow: visible !important;
+        position: static !important;
     }
 
     /* Optimize preview content for printing */
-    .preview-content {
+    .preview-content,
+    [id^="preview-"] {
         line-height: 1.6;
         font-size: 12pt;
         color: #000 !important;
@@ -2969,11 +2976,20 @@ body.theme-concrete-warm .status-bar {
     display: block !important;
 }
 
+/* No-styles printing mode */
+body.printing-no-styles .preview-content,
+body.printing-no-styles [id^="preview-"],
 .print-no-styles .preview-content {
     color: #000 !important;
     background: white !important;
 }
 
+body.printing-no-styles .preview-content h1,
+body.printing-no-styles .preview-content h2,
+body.printing-no-styles .preview-content h3,
+body.printing-no-styles .preview-content h4,
+body.printing-no-styles .preview-content h5,
+body.printing-no-styles .preview-content h6,
 .print-no-styles .preview-content h1,
 .print-no-styles .preview-content h2,
 .print-no-styles .preview-content h3,
@@ -2984,11 +3000,13 @@ body.theme-concrete-warm .status-bar {
     border-color: #999 !important;
 }
 
+body.printing-no-styles .preview-content code,
 .print-no-styles .preview-content code {
     background: #f5f5f5 !important;
     color: #000 !important;
 }
 
+body.printing-no-styles .preview-content pre,
 .print-no-styles .preview-content pre {
     background: #f5f5f5 !important;
     color: #000 !important;

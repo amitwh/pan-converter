@@ -1184,65 +1184,23 @@ function handlePrintPreview(withStyles) {
         return;
     }
 
-    // Hide UI elements
-    const toolbar = document.getElementById('toolbar');
-    const tabBar = document.getElementById('tab-bar');
-    const statusBar = document.getElementById('status-bar');
-
-    if (toolbar) toolbar.style.display = 'none';
-    if (tabBar) tabBar.style.display = 'none';
-    if (statusBar) statusBar.style.display = 'none';
-
-    const editorPane = document.getElementById(`editor-pane-${activeTabId}`);
-    if (editorPane) {
-        editorPane.style.display = 'none';
+    // Add print style classes to body for styling control
+    // The @media print CSS will handle hiding toolbar/tabs automatically
+    if (!withStyles) {
+        document.body.classList.add('printing-no-styles');
     }
+    document.body.classList.add('printing');
 
-    // Hide all dialogs
-    const dialogs = [
-        'export-dialog', 'batch-dialog', 'pdf-editor-dialog',
-        'converter-dialog', 'find-dialog'
-    ];
-    dialogs.forEach(id => {
-        const dialog = document.getElementById(id);
-        if (dialog) dialog.style.display = 'none';
-    });
-
-    // Apply print-mode to preview pane
-    const previewPane = document.getElementById(`preview-pane-${activeTabId}`);
-    if (previewPane) {
-        previewPane.classList.add('print-mode');
-        if (!withStyles) {
-            previewPane.classList.add('print-no-styles');
-        }
-    }
-
-    // Wait for DOM to render the changes before printing
-    // Use setTimeout to ensure browser has time to repaint
+    // Give browser time to apply classes before printing
     setTimeout(() => {
-        // Tell main process to print - the DOM is now fully rendered
+        // Tell main process to print
         ipcRenderer.send('do-print', { withStyles });
 
-        // Restore UI after a delay (printer will have captured the output by then)
+        // Restore classes after print dialog appears
         setTimeout(() => {
-            if (toolbar) toolbar.style.display = '';
-            if (tabBar) tabBar.style.display = '';
-            if (statusBar) statusBar.style.display = '';
-
-            if (editorPane) {
-                editorPane.style.display = '';
-            }
-
-            dialogs.forEach(id => {
-                const dialog = document.getElementById(id);
-                if (dialog) dialog.style.display = '';
-            });
-
-            if (previewPane) {
-                previewPane.classList.remove('print-mode', 'print-no-styles');
-            }
-        }, 500);
-    }, 300);
+            document.body.classList.remove('printing', 'printing-no-styles');
+        }, 1000);
+    }, 100);
 }
 
 // Export Dialog functionality
