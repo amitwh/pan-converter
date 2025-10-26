@@ -1166,37 +1166,33 @@ ipcMain.on('set-current-file', (event, filePath) => {
   currentFile = filePath;
 });
 
-// Handle print preview
+// Handle print preview - send signal to renderer to prepare
 ipcMain.on('print-preview', (event) => {
   if (mainWindow) {
-    // Prepare for printing preview only (black text, no colors)
-    mainWindow.webContents.send('prepare-print-preview', false);
-    // Give renderer time to prepare, then print
-    setTimeout(() => {
-      mainWindow.webContents.print({
-        silent: false,
-        printBackground: false,
-        color: true,
-        margin: { marginType: 'default' }
-      });
-    }, 100);
+    mainWindow.webContents.send('print-preview');
   }
 });
 
-// Handle print preview with styles
+// Handle print preview with styles - send signal to renderer to prepare
 ipcMain.on('print-preview-styled', (event) => {
   if (mainWindow) {
-    // Prepare for printing preview with colors
-    mainWindow.webContents.send('prepare-print-preview', true);
-    // Give renderer time to prepare, then print
+    mainWindow.webContents.send('print-preview-styled');
+  }
+});
+
+// Handle actual printing when renderer is ready
+ipcMain.on('do-print', (event, { withStyles }) => {
+  if (mainWindow) {
+    // Renderer has already hidden UI and prepared the page
+    // Small delay to ensure everything is rendered
     setTimeout(() => {
       mainWindow.webContents.print({
         silent: false,
-        printBackground: true,
+        printBackground: withStyles,
         color: true,
         margin: { marginType: 'default' }
       });
-    }, 100);
+    }, 50);
   }
 });
 

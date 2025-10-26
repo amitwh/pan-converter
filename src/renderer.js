@@ -964,10 +964,13 @@ class TabManager {
             tab.originalContent = content;
             tab.isDirty = false;
 
-            // Update the editor immediately
+            // Update the editor and preview
             const editor = document.getElementById(`editor-${this.activeTabId}`);
             if (editor) {
                 editor.value = content;
+                // Update preview after editor is updated
+                this.updatePreview(this.activeTabId);
+                this.updateWordCount();
             }
         } else {
             // Create new tab for the file
@@ -990,9 +993,6 @@ class TabManager {
                 }
             }, 50);
         }
-
-        this.updatePreview(this.activeTabId);
-        this.updateWordCount();
         this.startAutoSave();
         this.addToRecentFiles(filePath);
         this.updateTabBar();
@@ -1152,18 +1152,16 @@ ipcRenderer.on('adjust-font-size', (event, action) => {
     updateFontSizes(currentFontSize);
 });
 
-// Print preview request handlers - relay to main process
+// Print preview request handlers - handle printing directly
 ipcRenderer.on('print-preview', () => {
-    ipcRenderer.send('print-preview');
+    handlePrintPreview(false);
 });
 
 ipcRenderer.on('print-preview-styled', () => {
-    ipcRenderer.send('print-preview-styled');
+    handlePrintPreview(true);
 });
 
-// Print preview handler - prepare for printing
-ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
-    // Get the active tab's preview element
+function handlePrintPreview(withStyles) {
     const activeTabId = tabManager ? tabManager.activeTabId : 1;
     const previewContent = document.getElementById(`preview-${activeTabId}`);
 
@@ -1172,30 +1170,27 @@ ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
         return;
     }
 
-    // Hide UI elements except the preview
+    // Hide UI elements
     document.getElementById('toolbar').style.display = 'none';
     document.getElementById('tab-bar').style.display = 'none';
     document.getElementById('status-bar').style.display = 'none';
 
-    // Hide editor panes (not the whole editor-container)
     const editorPane = document.getElementById(`editor-pane-${activeTabId}`);
     if (editorPane) {
         editorPane.style.display = 'none';
     }
 
-    // Hide all export dialogs and other overlays
-    const exportDialog = document.getElementById('export-dialog');
-    const batchDialog = document.getElementById('batch-dialog');
-    const pdfDialog = document.getElementById('pdf-editor-dialog');
-    const converterDialog = document.getElementById('converter-dialog');
-    const findDialog = document.getElementById('find-dialog');
-    if (exportDialog) exportDialog.style.display = 'none';
-    if (batchDialog) batchDialog.style.display = 'none';
-    if (pdfDialog) pdfDialog.style.display = 'none';
-    if (converterDialog) converterDialog.style.display = 'none';
-    if (findDialog) findDialog.style.display = 'none';
+    // Hide all dialogs
+    const dialogs = [
+        'export-dialog', 'batch-dialog', 'pdf-editor-dialog',
+        'converter-dialog', 'find-dialog'
+    ];
+    dialogs.forEach(id => {
+        const dialog = document.getElementById(id);
+        if (dialog) dialog.style.display = 'none';
+    });
 
-    // Make preview full screen for printing
+    // Apply print-mode to preview pane
     const previewPane = document.getElementById(`preview-pane-${activeTabId}`);
     if (previewPane) {
         previewPane.classList.add('print-mode');
@@ -1204,29 +1199,34 @@ ipcRenderer.on('prepare-print-preview', (event, withStyles) => {
         }
     }
 
-    // Re-show everything after print
-    setTimeout(() => {
-        document.getElementById('toolbar').style.display = '';
-        document.getElementById('tab-bar').style.display = '';
-        document.getElementById('status-bar').style.display = '';
+    // Use requestAnimationFrame twice to ensure browser has rendered the DOM changes
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            // Now tell main process to print - the DOM is fully rendered
+            ipcRenderer.send('do-print', { withStyles });
 
-        // Restore editor pane
-        if (editorPane) {
-            editorPane.style.display = '';
-        }
+            // Restore UI after print
+            setTimeout(() => {
+                document.getElementById('toolbar').style.display = '';
+                document.getElementById('tab-bar').style.display = '';
+                document.getElementById('status-bar').style.display = '';
 
-        // Restore dialog visibility if they were open
-        if (exportDialog) exportDialog.style.display = '';
-        if (batchDialog) batchDialog.style.display = '';
-        if (pdfDialog) pdfDialog.style.display = '';
-        if (converterDialog) converterDialog.style.display = '';
-        if (findDialog) findDialog.style.display = '';
+                if (editorPane) {
+                    editorPane.style.display = '';
+                }
 
-        if (previewPane) {
-            previewPane.classList.remove('print-mode', 'print-no-styles');
-        }
-    }, 500);
-});
+                dialogs.forEach(id => {
+                    const dialog = document.getElementById(id);
+                    if (dialog) dialog.style.display = '';
+                });
+
+                if (previewPane) {
+                    previewPane.classList.remove('print-mode', 'print-no-styles');
+                }
+            }, 100);
+        });
+    });
+}
 
 // Export Dialog functionality
 let currentExportFormat = null;
