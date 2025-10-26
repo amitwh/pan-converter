@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.7.8
+**Current Version**: v1.7.9
 **Author**: Amit Haridas (amit.wh@gmail.com)
 **License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
@@ -113,7 +113,63 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ## Feature Implementation Guide
 
-### v1.7.8 Critical Bug Fixes (Latest)
+### v1.7.9 Enhanced Word Export (Latest)
+
+#### 📝 Native Word Document Generation
+**Added Enhanced DOCX Export** (`src/wordTemplateExporter.js`, `src/main.js:537-573`, `src/main.js:241`)
+- **New Export Option**: "DOCX (Enhanced)" in File → Export menu with keyboard shortcut `Ctrl+Shift+W`
+- **Native JavaScript Implementation**: Uses `docx` npm package for direct Word document generation
+- **No External Dependencies**: Works without Pandoc or Python installation
+- **Full Markdown Support**:
+  - Headings (H1-H6) with proper Word styles
+  - Text formatting (bold, italic, bold+italic)
+  - Inline code with Consolas font
+  - Code blocks with gray background
+  - Ordered and unordered lists with proper numbering
+  - Blockquotes with indentation
+  - Tables with header styling
+  - Horizontal rules
+  - Links
+
+**Technical Implementation:**
+```javascript
+// Word Template Exporter class
+class WordTemplateExporter {
+    async convert(markdownContent, outputPath, templatePath = null) {
+        const children = this.parseMarkdown(markdownContent);
+        const doc = new Document({
+            sections: [{ children: children }]
+        });
+        const buffer = await Packer.toBuffer(doc);
+        fs.writeFileSync(outputPath, buffer);
+    }
+}
+```
+
+**Features:**
+- Proper heading levels (H1-H6) using Word's built-in heading styles
+- Bold (**text**), italic (*text*), and combined (***text***)  formatting
+- Inline code with `monospace font`
+- Multi-line code blocks with light gray background
+- Bullet and numbered lists with correct indentation
+- Blockquotes with italic styling and left indent
+- Tables with formatted headers
+- Preserves document structure and formatting
+
+**Menu Integration:**
+- Location: File → Export → "DOCX (Enhanced)"
+- Keyboard shortcut: `Ctrl+Shift+W`
+- Saves with `.docx` extension
+- Shows success notification with output path
+
+**Dependencies Added:**
+```json
+{
+  "docx": "^9.5.1"
+}
+```
+
+### v1.7.8 Critical Bug Fixes
 
 #### 🐛 File Association Fix for Packaged Apps
 **Fixed Command-Line Argument Parsing** (`src/main.js:1598-1627`, `src/main.js:70-90`)
@@ -885,9 +941,11 @@ if (!gotTheLock) {
 ---
 
 **Last Updated**: October 26, 2025
-**Claude Assistant**: Development completed for v1.7.8 with critical bug fixes:
-1. **File Association Fix**: Fixed command-line argument parsing to properly detect packaged vs development mode using `app.isPackaged`, enabling files to open correctly on first double-click in packaged app
-2. **Print Preview Fix**: Completely rewrote print handler to rely on CSS `@media print` rules instead of manual DOM manipulation, ensuring preview content (not toolbar) is printed
-3. **Code Cleanup**: Removed auto-opening DevTools for production-ready build
+**Claude Assistant**: Development completed for v1.7.9 with Enhanced Word Export functionality:
+- **Native DOCX Generation**: Created `wordTemplateExporter.js` module using `docx` npm package for direct Word document creation
+- **Full Markdown Support**: Headings, formatting (bold/italic), code blocks, lists, blockquotes, tables, links
+- **Menu Integration**: Added "DOCX (Enhanced)" option in File → Export with Ctrl+Shift+W shortcut
+- **No External Dependencies**: Works without Pandoc or Python, pure JavaScript implementation
+- **Professional Output**: Proper Word styles, formatting, and document structure
 
-Previous releases: v1.7.7 (print menu with two options, PDFKit/html2pdf integration), v1.7.6 (table header styling cleanup), v1.7.5 (single-instance lock).
+Previous releases: v1.7.8 (file association & print preview fixes), v1.7.7 (print menu with two options), v1.7.6 (table header cleanup), v1.7.5 (single-instance lock).

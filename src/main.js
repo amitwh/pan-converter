@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 const { PDFDocument, rgb, degrees, StandardFonts } = require('pdf-lib');
+const WordTemplateExporter = require('./wordTemplateExporter');
 
 // Get the system Pandoc path
 function getPandocPath() {
@@ -237,6 +238,7 @@ function createMenu() {
             { label: 'HTML', click: () => exportFile('html') },
             { label: 'PDF', click: () => exportFile('pdf') },
             { label: 'DOCX', click: () => exportFile('docx') },
+            { label: 'DOCX (Enhanced)', click: () => exportWordWithTemplate(), accelerator: 'Ctrl+Shift+W' },
             { label: 'LaTeX', click: () => exportFile('latex') },
             { label: 'RTF', click: () => exportFile('rtf') },
             { label: 'ODT', click: () => exportFile('odt') },
@@ -467,7 +469,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.7.8\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.7.9\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }
@@ -531,6 +533,44 @@ function showExportOptionsDialog(format) {
 
 function showBatchConversionDialog() {
   mainWindow.webContents.send('show-batch-dialog');
+}
+
+// Enhanced Word Export with Template Support
+async function exportWordWithTemplate() {
+  if (!currentFile) {
+    dialog.showErrorBox('Error', 'Please save the file first');
+    return;
+  }
+
+  try {
+    // Get markdown content
+    const content = fs.readFileSync(currentFile, 'utf-8');
+
+    // Show dialog for output file
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export to Word (Enhanced)',
+      defaultPath: currentFile.replace(/\.md$/, '.docx'),
+      filters: [{ name: 'Word Document', extensions: ['docx'] }]
+    });
+
+    if (result.canceled) return;
+
+    // Create exporter instance
+    const exporter = new WordTemplateExporter();
+
+    // Convert markdown to DOCX
+    await exporter.convert(content, result.filePath);
+
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Export Successful',
+      message: 'Document exported successfully!',
+      detail: `Saved to: ${result.filePath}`
+    });
+
+  } catch (error) {
+    dialog.showErrorBox('Export Error', `Failed to export document: ${error.message}`);
+  }
 }
 
 // Universal File Converter integration

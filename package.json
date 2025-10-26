@@ -1,6 +1,6 @@
 {
   "name": "pan-converter",
-  "version": "1.7.8",
+  "version": "1.7.9",
   "description": "Cross-platform Markdown editor and converter using Pandoc",
   "main": "src/main.js",
   "scripts": {
@@ -31,10 +31,11 @@
   },
   "dependencies": {
     "codemirror": "^6.0.2",
+    "docx": "^9.5.1",
     "dompurify": "^3.2.6",
     "electron-store": "^10.1.0",
-    "html2pdf.js": "^0.10.1",
     "highlight.js": "^11.11.1",
+    "html2pdf.js": "^0.10.1",
     "marked": "^16.2.1",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.14.0",

@@ -33,7 +33,10 @@
       "Bash(git rm:*)",
       "Bash(gh release view:*)",
       "Bash(npm run build:linux:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Read(//i/Template_exporter/**)",
+      "Bash(copy \"I:\\Template_exporter\\md_to_docx_converter.py\" \"H:\\Development\\pan-converter\\word-template-exporter\"\" && copy \"I:Template_exporterrequirements.txt\" \"H:Developmentpan-converterword-template-exporter\"\")",
+      "Bash(copy \"I:\\Template_exporter\\word_template.docx\" \"H:\\Development\\pan-converter\\word-template-exporter\"\")"
     ],
     "deny": []
   }
