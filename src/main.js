@@ -48,6 +48,7 @@ const store = {
 let mainWindow;
 let currentFile = null; // This will now represent the active tab's file
 let pandocAvailable = null; // Cache pandoc availability check
+let wordTemplatePath = null; // Path to selected Word template
 let rendererReady = false; // Track if renderer is ready to receive file data
 
 // Handle single instance lock for Windows file association
@@ -249,6 +250,11 @@ function createMenu() {
             { type: 'separator' },
             { label: 'CSV (Tables)', click: () => exportSpreadsheet('csv') },
           ]
+        },
+        { type: 'separator' },
+        {
+          label: 'Select Word Template...',
+          click: selectWordTemplate
         },
         { type: 'separator' },
         {
@@ -535,6 +541,27 @@ function showBatchConversionDialog() {
   mainWindow.webContents.send('show-batch-dialog');
 }
 
+// Select Word Template
+async function selectWordTemplate() {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select Word Template',
+    filters: [{ name: 'Word Document', extensions: ['docx'] }],
+    properties: ['openFile']
+  });
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    wordTemplatePath = result.filePaths[0];
+    store.set('wordTemplatePath', wordTemplatePath);
+
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Template Selected',
+      message: 'Word template has been updated',
+      detail: `Template: ${path.basename(wordTemplatePath)}`
+    });
+  }
+}
+
 // Enhanced Word Export with Template Support
 async function exportWordWithTemplate() {
   if (!currentFile) {
@@ -555,8 +582,8 @@ async function exportWordWithTemplate() {
 
     if (result.canceled) return;
 
-    // Create exporter instance
-    const exporter = new WordTemplateExporter();
+    // Create exporter instance with selected template (if any)
+    const exporter = new WordTemplateExporter(wordTemplatePath);
 
     // Convert markdown to DOCX
     await exporter.convert(content, result.filePath);
@@ -1630,13 +1657,16 @@ function buildPandocCommand(content, format, outputPath) {
 }
 
 app.whenReady().then(() => {
+  // Load saved Word template path
+  wordTemplatePath = store.get('wordTemplatePath', null);
+
   // Check for command line conversion requests
   const args = process.argv.slice(2);
   if (args.length >= 2 && (args[0] === '--convert' || args[0] === '--convert-to')) {
     handleCLIConversion(args);
     return; // Don't create window for CLI operations
   }
-  
+
   createWindow();
   
   // Handle file association on app startup

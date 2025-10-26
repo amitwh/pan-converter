@@ -32,6 +32,7 @@
   "dependencies": {
     "codemirror": "^6.0.2",
     "docx": "^9.5.1",
+    "docx4js": "^3.3.0",
     "dompurify": "^3.2.6",
     "electron-store": "^10.1.0",
     "highlight.js": "^11.11.1",
@@ -39,6 +40,7 @@
     "marked": "^16.2.1",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.14.0",
+    "pizzip": "^3.2.0",
     "tslib": "^2.8.1",
     "xlsx": "^0.18.5"
   },

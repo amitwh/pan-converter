@@ -113,61 +113,130 @@ gh release create v1.2.1 --title "Title" --notes "Release notes" \
 
 ## Feature Implementation Guide
 
-### v1.7.9 Enhanced Word Export (Latest)
+### v1.7.9 Enhanced Word Export with Template Support (Latest)
 
-#### 📝 Native Word Document Generation
-**Added Enhanced DOCX Export** (`src/wordTemplateExporter.js`, `src/main.js:537-573`, `src/main.js:241`)
+#### 📝 Template-Based Word Document Generation
+**Added Enhanced DOCX Export** (`src/wordTemplateExporter.js`, `src/main.js:540-596`, `src/main.js:242`)
 - **New Export Option**: "DOCX (Enhanced)" in File → Export menu with keyboard shortcut `Ctrl+Shift+W`
-- **Native JavaScript Implementation**: Uses `docx` npm package for direct Word document generation
-- **No External Dependencies**: Works without Pandoc or Python installation
-- **Full Markdown Support**:
-  - Headings (H1-H6) with proper Word styles
-  - Text formatting (bold, italic, bold+italic)
-  - Inline code with Consolas font
-  - Code blocks with gray background
-  - Ordered and unordered lists with proper numbering
-  - Blockquotes with indentation
-  - Tables with header styling
-  - Horizontal rules
-  - Links
+- **Template Support**: Use custom Word templates to preserve branding, styles, and formatting
+- **Template Selection**: File → "Select Word Template..." menu option to choose custom templates
+- **Persistent Template**: Selected template is saved and reused across sessions
+- **Word XML Manipulation**: Direct manipulation of Word document XML using PizZip
+- **Template Page Preservation**: Preserves first 2 pages (cover + TOC) when using templates
+- **Smart Content Insertion**: Inserts markdown content after 2nd section break
+
+**Full Markdown Support:**
+- Headings (H1-H6) with markdown numbering stripped (e.g., "1.1 Title" → "Title")
+- Text formatting (bold, italic, bold+italic, strikethrough)
+- Inline code with Consolas font and gray background
+- Code blocks with monospace font and light gray background
+- Ordered and unordered lists (uses template numbering, strips markdown numbering)
+- Blockquotes with indentation
+- **Tables with orange header styling**:
+  - Orange header row (#F58220) with white bold text
+  - White data rows (no alternating colors)
+  - Orange borders (#F58220) on all cells
+  - Proper column alignment and spacing
+- Horizontal rules
+- Links
+- **ASCII Art and Flowcharts**:
+  - Detects box-drawing characters (┌, ─, │, └, etc.)
+  - Detects flowchart patterns with square brackets
+  - Preserves monospace alignment with Consolas font
+  - Each line rendered separately to prevent wrapping
+  - No-wrap paragraph properties for exact spacing
+  - **Red-colored arrows** (↓, →, ←, ↑) for enhanced visibility
+  - Gray background (#F5F5F5) for distinction from regular text
+
+**ASCII Art Detection Patterns:**
+- Unicode box-drawing characters: ┌┐└┘├┤┬┴┼─│═║╔╗╚╝╠╣╦╩╬
+- Arrow characters: ↓→←↑▼►◄▲
+- ASCII box patterns: +-----+, |-----|, [Text in brackets]
+- Flowchart steps: START, [Step Description], END
+
+**ASCII Art Rendering Features:**
+```javascript
+// Each line gets its own paragraph with no-wrap
+xml += `<w:p>
+    <w:pPr>
+        <w:wordWrap w:val="0"/>          // Disable wrapping
+        <w:keepLines/>                    // Keep lines together
+        <w:line="240" w:lineRule="exact"/>  // Exact line height
+    </w:pPr>
+    // Arrows colored red (#FF0000)
+    // Text in Consolas 16pt with gray background
+</w:p>`;
+```
+
+**Template Selection Workflow:**
+1. User clicks File → "Select Word Template..."
+2. Dialog opens to browse for .docx files
+3. Selected template path stored in global variable and persisted
+4. Template automatically loaded on app startup
+5. Enhanced export uses selected template (or defaults to `word_template.docx`)
 
 **Technical Implementation:**
 ```javascript
-// Word Template Exporter class
+// Template selection function
+async function selectWordTemplate() {
+    const result = await dialog.showOpenDialog(mainWindow, {
+        title: 'Select Word Template',
+        filters: [{ name: 'Word Document', extensions: ['docx'] }],
+        properties: ['openFile']
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+        wordTemplatePath = result.filePaths[0];
+        store.set('wordTemplatePath', wordTemplatePath);
+    }
+}
+
+// Word Template Exporter with template support
 class WordTemplateExporter {
-    async convert(markdownContent, outputPath, templatePath = null) {
-        const children = this.parseMarkdown(markdownContent);
-        const doc = new Document({
-            sections: [{ children: children }]
-        });
-        const buffer = await Packer.toBuffer(doc);
-        fs.writeFileSync(outputPath, buffer);
+    constructor(templatePath) {
+        this.templatePath = templatePath || path.join(__dirname, '../word_template.docx');
+    }
+
+    async convert(markdownContent, outputPath) {
+        // Load template as ZIP
+        const templateBuffer = fs.readFileSync(this.templatePath);
+        const zip = new PizZip(templateBuffer);
+
+        // Extract and modify document.xml
+        const documentXml = zip.file('word/document.xml').asText();
+        const newContentXml = this.markdownToWordXml(markdownContent);
+        const modifiedXml = this.insertContentAfterPage2(documentXml, newContentXml);
+
+        // Save modified document
+        zip.file('word/document.xml', modifiedXml);
+        const newDocBuffer = zip.generate({ type: 'nodebuffer' });
+        fs.writeFileSync(outputPath, newDocBuffer);
     }
 }
 ```
 
-**Features:**
-- Proper heading levels (H1-H6) using Word's built-in heading styles
-- Bold (**text**), italic (*text*), and combined (***text***)  formatting
-- Inline code with `monospace font`
-- Multi-line code blocks with light gray background
-- Bullet and numbered lists with correct indentation
-- Blockquotes with italic styling and left indent
-- Tables with formatted headers
-- Preserves document structure and formatting
-
 **Menu Integration:**
-- Location: File → Export → "DOCX (Enhanced)"
-- Keyboard shortcut: `Ctrl+Shift+W`
-- Saves with `.docx` extension
-- Shows success notification with output path
+- Export: File → Export → "DOCX (Enhanced)" (`Ctrl+Shift+W`)
+- Template Selection: File → "Select Word Template..."
+- Template path saved to: `userData/settings.json`
 
 **Dependencies Added:**
 ```json
 {
-  "docx": "^9.5.1"
+  "docx": "^9.5.1",
+  "pizzip": "^3.2.0",
+  "docx4js": "^3.3.0"
 }
 ```
+
+**Key Improvements in v1.7.9:**
+1. ✅ Template-based export preserving corporate branding
+2. ✅ Persistent template selection across sessions
+3. ✅ Tables with professional orange header styling and white data rows
+4. ✅ ASCII art and flowcharts with perfect alignment and no wrapping
+5. ✅ Red-colored arrows in flowcharts for enhanced readability
+6. ✅ Markdown numbering stripped from headings and lists
+7. ✅ Template's automatic numbering system used instead
 
 ### v1.7.8 Critical Bug Fixes
 
@@ -940,12 +1009,14 @@ if (!gotTheLock) {
 
 ---
 
-**Last Updated**: October 26, 2025
-**Claude Assistant**: Development completed for v1.7.9 with Enhanced Word Export functionality:
-- **Native DOCX Generation**: Created `wordTemplateExporter.js` module using `docx` npm package for direct Word document creation
-- **Full Markdown Support**: Headings, formatting (bold/italic), code blocks, lists, blockquotes, tables, links
-- **Menu Integration**: Added "DOCX (Enhanced)" option in File → Export with Ctrl+Shift+W shortcut
-- **No External Dependencies**: Works without Pandoc or Python, pure JavaScript implementation
-- **Professional Output**: Proper Word styles, formatting, and document structure
+**Last Updated**: October 27, 2025
+**Claude Assistant**: Development completed for v1.7.9 with Template-Based Word Export:
+- **Template Support**: Word XML manipulation using PizZip to preserve template branding and styles
+- **Template Selection**: File menu option to choose custom Word templates, persisted across sessions
+- **Table Styling**: Orange headers (#F58220) with white bold text, white data rows, orange borders
+- **ASCII Art & Flowcharts**: Perfect monospace alignment with no-wrap properties, each line as separate paragraph
+- **Red Arrows**: Flowchart arrows (↓→←↑) rendered in red color for enhanced visibility
+- **Markdown Numbering Strip**: Removes markdown numbering from headings and lists to use template numbering
+- **Template Page Preservation**: Keeps first 2 pages (cover + TOC) intact, inserts content after 2nd section break
 
 Previous releases: v1.7.8 (file association & print preview fixes), v1.7.7 (print menu with two options), v1.7.6 (table header cleanup), v1.7.5 (single-instance lock).
