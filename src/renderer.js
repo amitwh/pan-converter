@@ -1100,11 +1100,11 @@ ipcRenderer.on('toggle-find', () => {
 ipcRenderer.on('theme-changed', (event, theme) => {
     document.body.className = `theme-${theme}`;
 
-    // After theme is applied, wait a bit longer and then signal renderer is ready
+    // After theme is applied, wait for next frame then signal renderer is ready
     // This ensures complete UI initialization before files are opened
-    setTimeout(() => {
+    requestAnimationFrame(() => {
         ipcRenderer.send('renderer-ready');
-    }, 1500);
+    });
 });
 
 // Undo/Redo handlers

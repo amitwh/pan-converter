@@ -784,13 +784,9 @@ function performExportWithOptions(format, options) {
 
 function tryPdfFallback(inputFile, outputFile, engines, index, options, lastError) {
   if (index >= engines.length) {
-    dialog.showErrorBox('PDF Export Error',
-      `Failed to export PDF with all available engines. Please ensure you have one of the following installed:\n` +
-      `• XeLaTeX (recommended): sudo apt-get install texlive-xetex\n` +
-      `• PDFLaTeX: sudo apt-get install texlive-latex-base\n` +
-      `• LuaLaTeX: sudo apt-get install texlive-luatex\n\n` +
-      `Last error: ${lastError.message}`
-    );
+    // All Pandoc PDF engines failed, fallback to Electron's built-in PDF export
+    console.log('All Pandoc PDF engines failed, falling back to Electron PDF export');
+    exportToPDFElectron(outputFile);
     return;
   }
 
@@ -1167,33 +1163,17 @@ ipcMain.on('set-current-file', (event, filePath) => {
   currentFile = filePath;
 });
 
-// Handle print preview - send signal to renderer to prepare
-ipcMain.on('print-preview', (event) => {
-  if (mainWindow) {
-    mainWindow.webContents.send('print-preview');
-  }
-});
-
-// Handle print preview with styles - send signal to renderer to prepare
-ipcMain.on('print-preview-styled', (event) => {
-  if (mainWindow) {
-    mainWindow.webContents.send('print-preview-styled');
-  }
-});
-
 // Handle actual printing when renderer is ready
 ipcMain.on('do-print', (event, { withStyles }) => {
   if (mainWindow) {
-    // Renderer has already hidden UI and prepared the page
-    // Small delay to ensure everything is rendered
-    setTimeout(() => {
-      mainWindow.webContents.print({
-        silent: false,
-        printBackground: withStyles,
-        color: true,
-        margin: { marginType: 'default' }
-      });
-    }, 50);
+    // Renderer has already hidden UI, waited 300ms, and prepared the page
+    // Print immediately - DOM is fully rendered
+    mainWindow.webContents.print({
+      silent: false,
+      printBackground: withStyles,
+      color: true,
+      margin: { marginType: 'default' }
+    });
   }
 });
 
@@ -1665,11 +1645,8 @@ function openFileFromPath(filePath) {
     currentFile = filePath;
     const content = fs.readFileSync(filePath, 'utf-8');
     if (mainWindow && mainWindow.webContents && rendererReady) {
-      // Add delay to ensure renderer is fully prepared to display the file
-      // Wait for theme, preview pane, and all CSS to be fully loaded
-      setTimeout(() => {
-        mainWindow.webContents.send('file-opened', { path: filePath, content });
-      }, 2000);
+      // Send file immediately - renderer-ready means UI is initialized
+      mainWindow.webContents.send('file-opened', { path: filePath, content });
     } else {
       // Store file to open after renderer is ready
       app.pendingFile = filePath;
