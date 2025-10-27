@@ -138,6 +138,8 @@ npm run dist:all
 
 ## Version History
 
+- **v1.8.0** - Added enhanced Word export with template support to batch converter
+- **v1.7.9** - Enhanced Word Export with Template Support: Template-based DOCX generation with custom templates, table styling, ASCII art support, and red-colored flowchart arrows
 - **v1.5.6** - (Your release notes here)
 - **v1.5.5** - Refactored PDF export, simplified Pandoc pathing, and removed XLSX dependency.
 - **v1.3.1** - Bug fixes: Fixed file associations for double-clicking .md files, corrected 50/50 layout alignment for editor/preview panes

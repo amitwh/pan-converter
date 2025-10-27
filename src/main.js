@@ -475,7 +475,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.7.9\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.8.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Comprehensive PDF Editor (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• Enhanced Word export with template support (single file & batch)\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }
@@ -1432,7 +1432,7 @@ function performBatchConversion(inputFolder, outputFolder, format, options) {
   const totalCount = markdownFiles.length;
 
   // Process each file
-  const processNextFile = (index) => {
+  const processNextFile = async (index) => {
     if (index >= markdownFiles.length) {
       // All files processed
       dialog.showMessageBox(mainWindow, {
@@ -1447,7 +1447,8 @@ function performBatchConversion(inputFolder, outputFolder, format, options) {
     const inputFile = markdownFiles[index];
     const relativePath = path.relative(inputFolder, inputFile);
     const baseName = path.basename(relativePath, path.extname(relativePath));
-    const outputFile = path.join(outputFolder, relativePath.replace(/\.(md|markdown)$/i, `.${format}`));
+    const outputExtension = format === 'docx-enhanced' ? 'docx' : format;
+    const outputFile = path.join(outputFolder, relativePath.replace(/\.(md|markdown)$/i, `.${outputExtension}`));
 
     // Create subdirectories in output folder if needed
     const outputDir = path.dirname(outputFile);
@@ -1455,7 +1456,41 @@ function performBatchConversion(inputFolder, outputFolder, format, options) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // Build pandoc command
+    // Handle DOCX Enhanced format with WordTemplateExporter
+    if (format === 'docx-enhanced') {
+      try {
+        const content = fs.readFileSync(inputFile, 'utf-8');
+        const exporter = new WordTemplateExporter(wordTemplatePath);
+        await exporter.convert(content, outputFile);
+
+        completedCount++;
+
+        // Update progress
+        mainWindow.webContents.send('batch-progress', {
+          completed: index + 1,
+          total: totalCount,
+          currentFile: path.basename(inputFile),
+          success: true
+        });
+
+        // Process next file
+        processNextFile(index + 1);
+      } catch (error) {
+        // Update progress with error
+        mainWindow.webContents.send('batch-progress', {
+          completed: index + 1,
+          total: totalCount,
+          currentFile: path.basename(inputFile),
+          success: false
+        });
+
+        // Process next file even if this one failed
+        processNextFile(index + 1);
+      }
+      return;
+    }
+
+    // Build pandoc command for other formats
     let pandocCmd = `${getPandocPath()} "${inputFile}" -o "${outputFile}"`;
 
     // Add template if specified
