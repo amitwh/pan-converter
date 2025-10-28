@@ -49,6 +49,7 @@ let mainWindow;
 let currentFile = null; // This will now represent the active tab's file
 let pandocAvailable = null; // Cache pandoc availability check
 let wordTemplatePath = null; // Path to selected Word template
+let templateStartPage = 3; // Which page to start inserting content (default: page 3)
 let rendererReady = false; // Track if renderer is ready to receive file data
 
 // Handle single instance lock for Windows file association
@@ -238,6 +239,7 @@ function createMenu() {
           submenu: [
             { label: 'HTML', click: () => exportFile('html') },
             { label: 'PDF', click: () => exportFile('pdf') },
+            { label: 'PDF (Enhanced)', click: () => exportPDFViaWordTemplate(), accelerator: 'Ctrl+Shift+P' },
             { label: 'DOCX', click: () => exportFile('docx') },
             { label: 'DOCX (Enhanced)', click: () => exportWordWithTemplate(), accelerator: 'Ctrl+Shift+W' },
             { label: 'LaTeX', click: () => exportFile('latex') },
@@ -255,6 +257,10 @@ function createMenu() {
         {
           label: 'Select Word Template...',
           click: selectWordTemplate
+        },
+        {
+          label: 'Template Settings...',
+          click: showTemplateSettings
         },
         { type: 'separator' },
         {
@@ -475,7 +481,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.8.1\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Streamlined PDF Editor UI (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• Enhanced Word export with template support (single file & batch)\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.8.3\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Enhanced PDF export via Word template with configurable start page\n• Configurable template settings (start page selection)\n• Streamlined PDF Editor UI (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• Enhanced Word export with template support (single file & batch)\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }
@@ -562,6 +568,56 @@ async function selectWordTemplate() {
   }
 }
 
+// Template Settings Dialog
+async function showTemplateSettings() {
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    title: 'Template Settings',
+    message: 'Configure Word Template Export',
+    detail: `Current template: ${wordTemplatePath ? path.basename(wordTemplatePath) : 'Default template'}\nContent starts from page: ${templateStartPage}\n\nWhich page should content start from?\n(Templates usually have cover pages, TOC, etc.)`,
+    buttons: ['Page 1', 'Page 2', 'Page 3', 'Page 4', 'Page 5', 'Custom...', 'Cancel'],
+    defaultId: templateStartPage - 1,
+    cancelId: 6
+  });
+
+  if (result.response === 6) return; // Cancel
+
+  let newStartPage;
+  if (result.response === 5) { // Custom
+    // Show input dialog for custom page number
+    mainWindow.webContents.send('show-custom-start-page-dialog', templateStartPage);
+  } else {
+    newStartPage = result.response + 1; // Convert button index to page number
+    templateStartPage = newStartPage;
+    store.set('templateStartPage', templateStartPage);
+
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Settings Updated',
+      message: 'Template settings have been updated',
+      detail: `Content will now start from page ${templateStartPage}`
+    });
+  }
+}
+
+// Handle custom start page input from renderer
+ipcMain.on('set-custom-start-page', (event, pageNumber) => {
+  const page = parseInt(pageNumber);
+  if (page >= 1 && page <= 100) {
+    templateStartPage = page;
+    store.set('templateStartPage', templateStartPage);
+
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Settings Updated',
+      message: 'Template settings have been updated',
+      detail: `Content will now start from page ${templateStartPage}`
+    });
+  } else {
+    dialog.showErrorBox('Invalid Page Number', 'Please enter a page number between 1 and 100');
+  }
+});
+
 // Enhanced Word Export with Template Support
 async function exportWordWithTemplate() {
   if (!currentFile) {
@@ -582,8 +638,8 @@ async function exportWordWithTemplate() {
 
     if (result.canceled) return;
 
-    // Create exporter instance with selected template (if any)
-    const exporter = new WordTemplateExporter(wordTemplatePath);
+    // Create exporter instance with selected template and start page
+    const exporter = new WordTemplateExporter(wordTemplatePath, templateStartPage);
 
     // Convert markdown to DOCX
     await exporter.convert(content, result.filePath);
@@ -597,6 +653,79 @@ async function exportWordWithTemplate() {
 
   } catch (error) {
     dialog.showErrorBox('Export Error', `Failed to export document: ${error.message}`);
+  }
+}
+
+// Enhanced PDF Export via Word Template
+async function exportPDFViaWordTemplate() {
+  if (!currentFile) {
+    dialog.showErrorBox('Error', 'Please save the file first');
+    return;
+  }
+
+  try {
+    // Get markdown content
+    const content = fs.readFileSync(currentFile, 'utf-8');
+
+    // Show dialog for output file
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export to PDF (Enhanced)',
+      defaultPath: currentFile.replace(/\.md$/, '.pdf'),
+      filters: [{ name: 'PDF Document', extensions: ['pdf'] }]
+    });
+
+    if (result.canceled) return;
+
+    // Step 1: Create temporary DOCX file using Word template
+    const tempDocxPath = result.filePath.replace(/\.pdf$/, '_temp.docx');
+
+    const exporter = new WordTemplateExporter(wordTemplatePath, templateStartPage);
+    await exporter.convert(content, tempDocxPath);
+
+    // Step 2: Convert DOCX to PDF using LibreOffice
+    const soffice = process.platform === 'win32'
+      ? '"C:\\Program Files\\LibreOffice\\program\\soffice.exe"'
+      : 'soffice';
+
+    const outputDir = path.dirname(result.filePath);
+    const convertCmd = `${soffice} --headless --convert-to pdf --outdir "${outputDir}" "${tempDocxPath}"`;
+
+    exec(convertCmd, (error, stdout, stderr) => {
+      // Clean up temporary DOCX file
+      try {
+        fs.unlinkSync(tempDocxPath);
+      } catch (e) {
+        console.error('Failed to delete temp file:', e);
+      }
+
+      if (error) {
+        dialog.showErrorBox('PDF Conversion Error',
+          `Failed to convert to PDF. Please ensure LibreOffice is installed.\n\nError: ${error.message}`);
+        return;
+      }
+
+      // LibreOffice creates file with same base name as input
+      const generatedPdfPath = tempDocxPath.replace(/\.docx$/, '.pdf');
+
+      // Rename if needed
+      if (generatedPdfPath !== result.filePath) {
+        try {
+          fs.renameSync(generatedPdfPath, result.filePath);
+        } catch (e) {
+          console.error('Failed to rename PDF:', e);
+        }
+      }
+
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Export Successful',
+        message: 'PDF exported successfully using Word template!',
+        detail: `Saved to: ${result.filePath}`
+      });
+    });
+
+  } catch (error) {
+    dialog.showErrorBox('Export Error', `Failed to export PDF: ${error.message}`);
   }
 }
 
@@ -1447,7 +1576,9 @@ function performBatchConversion(inputFolder, outputFolder, format, options) {
     const inputFile = markdownFiles[index];
     const relativePath = path.relative(inputFolder, inputFile);
     const baseName = path.basename(relativePath, path.extname(relativePath));
-    const outputExtension = format === 'docx-enhanced' ? 'docx' : format;
+    let outputExtension = format;
+    if (format === 'docx-enhanced') outputExtension = 'docx';
+    if (format === 'pdf-enhanced') outputExtension = 'pdf';
     const outputFile = path.join(outputFolder, relativePath.replace(/\.(md|markdown)$/i, `.${outputExtension}`));
 
     // Create subdirectories in output folder if needed
@@ -1460,7 +1591,7 @@ function performBatchConversion(inputFolder, outputFolder, format, options) {
     if (format === 'docx-enhanced') {
       try {
         const content = fs.readFileSync(inputFile, 'utf-8');
-        const exporter = new WordTemplateExporter(wordTemplatePath);
+        const exporter = new WordTemplateExporter(wordTemplatePath, templateStartPage);
         await exporter.convert(content, outputFile);
 
         completedCount++;
@@ -1475,6 +1606,85 @@ function performBatchConversion(inputFolder, outputFolder, format, options) {
 
         // Process next file
         processNextFile(index + 1);
+      } catch (error) {
+        // Update progress with error
+        mainWindow.webContents.send('batch-progress', {
+          completed: index + 1,
+          total: totalCount,
+          currentFile: path.basename(inputFile),
+          success: false
+        });
+
+        // Process next file even if this one failed
+        processNextFile(index + 1);
+      }
+      return;
+    }
+
+    // Handle PDF Enhanced format with Word Template → PDF conversion
+    if (format === 'pdf-enhanced') {
+      try {
+        const content = fs.readFileSync(inputFile, 'utf-8');
+
+        // Step 1: Create temporary DOCX file using Word template
+        const tempDocxPath = outputFile.replace(/\.pdf$/, '_temp.docx');
+        const exporter = new WordTemplateExporter(wordTemplatePath, templateStartPage);
+        await exporter.convert(content, tempDocxPath);
+
+        // Step 2: Convert DOCX to PDF using LibreOffice
+        const soffice = process.platform === 'win32'
+          ? '"C:\\Program Files\\LibreOffice\\program\\soffice.exe"'
+          : 'soffice';
+
+        const outputDir = path.dirname(outputFile);
+        const convertCmd = `${soffice} --headless --convert-to pdf --outdir "${outputDir}" "${tempDocxPath}"`;
+
+        exec(convertCmd, (error, stdout, stderr) => {
+          // Clean up temporary DOCX file
+          try {
+            fs.unlinkSync(tempDocxPath);
+          } catch (e) {
+            console.error('Failed to delete temp file:', e);
+          }
+
+          if (error) {
+            // Update progress with error
+            mainWindow.webContents.send('batch-progress', {
+              completed: index + 1,
+              total: totalCount,
+              currentFile: path.basename(inputFile),
+              success: false
+            });
+            processNextFile(index + 1);
+            return;
+          }
+
+          // LibreOffice creates file with same base name as input
+          const generatedPdfPath = tempDocxPath.replace(/\.docx$/, '.pdf');
+
+          // Rename if needed
+          if (generatedPdfPath !== outputFile) {
+            try {
+              fs.renameSync(generatedPdfPath, outputFile);
+            } catch (e) {
+              console.error('Failed to rename PDF:', e);
+            }
+          }
+
+          completedCount++;
+
+          // Update progress
+          mainWindow.webContents.send('batch-progress', {
+            completed: index + 1,
+            total: totalCount,
+            currentFile: path.basename(inputFile),
+            success: true
+          });
+
+          // Process next file
+          processNextFile(index + 1);
+        });
+
       } catch (error) {
         // Update progress with error
         mainWindow.webContents.send('batch-progress', {
@@ -1692,8 +1902,9 @@ function buildPandocCommand(content, format, outputPath) {
 }
 
 app.whenReady().then(() => {
-  // Load saved Word template path
+  // Load saved Word template path and settings
   wordTemplatePath = store.get('wordTemplatePath', null);
+  templateStartPage = store.get('templateStartPage', 3);
 
   // Check for command line conversion requests
   const args = process.argv.slice(2);

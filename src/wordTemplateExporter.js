@@ -10,8 +10,9 @@ const PizZip = require('pizzip');
 const Docx = require('docx4js').default;
 
 class WordTemplateExporter {
-    constructor(templatePath) {
+    constructor(templatePath, startPage = 3) {
         this.templatePath = templatePath || path.join(__dirname, '../word_template.docx');
+        this.startPage = startPage; // Which page to start inserting content
     }
 
     /**
@@ -29,8 +30,8 @@ class WordTemplateExporter {
             // Parse markdown and generate Word XML
             const newContentXml = this.markdownToWordXml(markdownContent);
 
-            // Insert new content after page 2 (after the section break)
-            const modifiedXml = this.insertContentAfterPage2(documentXml, newContentXml);
+            // Insert new content after the specified start page
+            const modifiedXml = this.insertContentAfterPage(documentXml, newContentXml, this.startPage);
 
             // Update the zip with modified XML
             zip.file('word/document.xml', modifiedXml);
@@ -47,20 +48,33 @@ class WordTemplateExporter {
     }
 
     /**
-     * Insert markdown content after page 2 in the document
+     * Insert markdown content after the specified page in the document
+     * @param {string} documentXml - The document XML
+     * @param {string} newContentXml - The new content to insert
+     * @param {number} afterPage - Insert content after this page number (1-based)
      */
-    insertContentAfterPage2(documentXml, newContentXml) {
-        // Find the last section break (after page 2)
+    insertContentAfterPage(documentXml, newContentXml, afterPage) {
+        // Find section breaks that mark page boundaries
         // Look for the section properties tag that marks page breaks
         const sectionBreakRegex = /<w:sectPr[^>]*>[\s\S]*?<\/w:sectPr>/g;
         const matches = [...documentXml.matchAll(sectionBreakRegex)];
 
-        if (matches.length >= 2) {
-            // Insert after the 2nd section break
-            const insertPoint = matches[1].index + matches[1][0].length;
+        // Calculate which section break to insert after
+        // Page 1 = before 1st section break
+        // Page 2 = after 1st section break
+        // Page 3 = after 2nd section break, etc.
+        const sectionIndex = afterPage - 1;
+
+        if (matches.length >= sectionIndex && sectionIndex > 0) {
+            // Insert after the specified section break
+            const insertPoint = matches[sectionIndex - 1].index + matches[sectionIndex - 1][0].length;
             return documentXml.slice(0, insertPoint) + newContentXml + documentXml.slice(insertPoint);
+        } else if (afterPage === 1 || matches.length === 0) {
+            // Insert at the beginning (after <w:body>) or if no section breaks found
+            const bodyStart = documentXml.indexOf('<w:body>') + 8;
+            return documentXml.slice(0, bodyStart) + newContentXml + documentXml.slice(bodyStart);
         } else {
-            // If no section breaks found, insert before closing body tag
+            // If not enough section breaks, insert before closing body tag
             return documentXml.replace('</w:body>', newContentXml + '</w:body>');
         }
     }

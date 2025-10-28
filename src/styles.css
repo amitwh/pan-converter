@@ -2945,9 +2945,23 @@ body.theme-concrete-warm .status-bar {
     .editor-container,
     #status-bar,
     .status-bar,
+    .toolbar,
+    .tab-bar,
     .editor-pane,
-    [id^="editor-pane-"] {
+    [id^="editor-pane-"],
+    .dialog,
+    .modal-overlay,
+    .export-dialog {
         display: none !important;
+    }
+
+    /* Ensure body and html take full width */
+    html, body {
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
     }
 
     /* Show preview in full width */
@@ -2956,7 +2970,8 @@ body.theme-concrete-warm .status-bar {
     .preview-content,
     [id^="preview-"],
     [id^="preview-pane-"],
-    .tab-content {
+    .tab-content,
+    .pane {
         display: block !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -2965,6 +2980,10 @@ body.theme-concrete-warm .status-bar {
         padding: 20px !important;
         overflow: visible !important;
         position: static !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
     }
 
     /* Optimize preview content for printing */
@@ -2974,6 +2993,13 @@ body.theme-concrete-warm .status-bar {
         font-size: 12pt;
         color: #000 !important;
         background: white !important;
+    }
+
+    /* No-styles mode for printing without theme colors */
+    body.printing-no-styles .preview-content,
+    body.printing-no-styles [id^="preview-"] {
+        color: #000 !important;
+        background: #fff !important;
     }
 
     /* Text formatting */
