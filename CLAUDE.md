@@ -4,7 +4,7 @@
 
 **PanConverter** is a cross-platform Markdown editor and converter powered by Pandoc, built with Electron. It provides professional-grade editing capabilities with comprehensive export options.
 
-**Current Version**: v1.7.9
+**Current Version**: v1.8.3
 **Author**: Amit Haridas (amit.wh@gmail.com)
 **License**: MIT
 **Repository**: https://github.com/amitwh/pan-converter
@@ -1009,14 +1009,137 @@ if (!gotTheLock) {
 
 ---
 
-**Last Updated**: October 27, 2025
-**Claude Assistant**: Development completed for v1.7.9 with Template-Based Word Export:
-- **Template Support**: Word XML manipulation using PizZip to preserve template branding and styles
-- **Template Selection**: File menu option to choose custom Word templates, persisted across sessions
-- **Table Styling**: Orange headers (#F58220) with white bold text, white data rows, orange borders
-- **ASCII Art & Flowcharts**: Perfect monospace alignment with no-wrap properties, each line as separate paragraph
-- **Red Arrows**: Flowchart arrows (↓→←↑) rendered in red color for enhanced visibility
-- **Markdown Numbering Strip**: Removes markdown numbering from headings and lists to use template numbering
-- **Template Page Preservation**: Keeps first 2 pages (cover + TOC) intact, inserts content after 2nd section break
+## Pending Tasks & Future Enhancements
 
-Previous releases: v1.7.8 (file association & print preview fixes), v1.7.7 (print menu with two options), v1.7.6 (table header cleanup), v1.7.5 (single-instance lock).
+### v1.9.0 - Header & Footer Customization (PLANNED)
+
+#### 📋 Overview
+Comprehensive header and footer customization system for all export formats (PDF, Word, Excel, ODT, PowerPoint) with support for custom text, logos, page numbers, and dynamic fields.
+
+#### ✨ Planned Features
+
+**Header & Footer Configuration Dialog**
+- **Three-column layout**: Left, Center, Right positioning for both headers and footers
+- **Custom text fields**: User-defined text in each position
+- **Logo/image support**: Upload and embed logos in headers/footers
+- **Dynamic fields**:
+  - `$PAGE$` - Current page number
+  - `$TOTAL$` - Total page count
+  - `$DATE$` - Current date
+  - `$TIME$` - Current time
+  - `$TITLE$` - Document title
+  - `$AUTHOR$` - Document author
+  - `$FILENAME$` - File name
+- **Enable/disable toggle**: Quick on/off for headers and footers
+- **Persistent settings**: Save preferences across sessions
+
+**Implementation Requirements**
+1. **UI Components** (`src/index.html`)
+   - New dialog with header/footer configuration form
+   - Logo upload buttons with preview
+   - Position selectors (left/center/right)
+   - Dynamic field insertion buttons
+   - Enable/disable checkboxes
+
+2. **State Management** (`src/main.js`)
+   - `headerFooterSettings` object structure:
+     ```javascript
+     {
+       enabled: boolean,
+       header: {
+         left: string,
+         center: string,
+         right: string,
+         logo: string | null
+       },
+       footer: {
+         left: string,
+         center: string,
+         right: string,
+         logo: string | null
+       }
+     }
+     ```
+   - Settings persistence via `store.set('headerFooterSettings')`
+   - IPC handlers for dialog communication
+
+3. **Pandoc Integration**
+   - Use Pandoc's `--include-in-header` and `--include-after-body` options
+   - Generate LaTeX header/footer code for PDF exports
+   - Use `--variable` for header-left, header-center, header-right, etc.
+   - Image embedding via `\includegraphics` in LaTeX
+
+4. **Word Template Integration** (`src/wordTemplateExporter.js`)
+   - Modify Word document headers/footers via XML manipulation
+   - Insert custom text using `<w:hdr>` and `<w:ftr>` elements
+   - Embed images in headers/footers using Word relationships
+   - Page numbering fields: `<w:fldChar w:fldCharType="begin"/>PAGE<w:fldChar w:fldCharType="end"/>`
+
+5. **Export Format Support**
+   - **PDF**: Via Pandoc LaTeX template with fancyhdr package
+   - **Word (DOCX)**: Direct XML manipulation of header/footer sections
+   - **Excel/Spreadsheet**: Not applicable (spreadsheets don't have headers/footers in same way)
+   - **ODT**: Via Pandoc with ODF header/footer styles
+   - **PowerPoint**: Slide numbers and footer text via Pandoc
+
+**Technical Challenges**
+- **Image format conversion**: Convert various image formats to those supported by each export format
+- **LaTeX syntax**: Proper escaping and formatting for LaTeX headers
+- **Word XML complexity**: Managing relationships and image embedding in DOCX
+- **Page numbering**: Different syntax for each export format
+
+**Menu Integration**
+- `File → Header & Footer Settings...` (already added to menu in v1.8.3 development)
+
+**File Structure**
+```
+Changes required:
+- src/main.js: Add IPC handlers and settings management
+- src/index.html: Add header/footer configuration dialog
+- src/renderer.js: Dialog management and image handling
+- src/styles.css: Dialog styling
+- src/wordTemplateExporter.js: Header/footer XML generation
+```
+
+**Dependencies to Add**
+- None required (all functionality can be implemented with existing packages)
+
+**Testing Checklist**
+- [ ] Basic text headers/footers in PDF
+- [ ] Logo embedding in PDF
+- [ ] Page numbers and dynamic fields in PDF
+- [ ] Word document headers/footers
+- [ ] Logo/image in Word headers/footers
+- [ ] ODT format headers/footers
+- [ ] PowerPoint slide numbers
+- [ ] Settings persistence across app restarts
+- [ ] Theme support for dialog
+- [ ] Batch conversion with headers/footers
+
+**Estimated Development Time**: 8-12 hours
+- UI design and implementation: 2-3 hours
+- Pandoc integration: 2-3 hours
+- Word template integration: 2-3 hours
+- Image handling and conversion: 1-2 hours
+- Testing and debugging: 1-2 hours
+
+**Priority**: High - User-requested feature with significant value for professional document generation
+
+---
+
+**Last Updated**: October 28, 2025
+**Claude Assistant**: Development completed for v1.8.3 with Major UI and Export Enhancements:
+
+### v1.8.3 - Recent Release Summary
+- **Streamlined PDF Editor UI**: Clean, focused interface showing only selected operation
+- **Enhanced PDF Export**: PDF (Enhanced) option using Word template → LibreOffice conversion
+- **Configurable Template Settings**: User-selectable content start page (1-100)
+- **Print Fix**: Resolved blank print output issue using CSS @media print rules
+- **Batch Support**: Enhanced exports available in batch converter
+- **Keyboard Shortcuts**: Ctrl+Shift+P for PDF (Enhanced)
+
+### Previous Releases
+- v1.7.9: Template-Based Word Export with ASCII art support
+- v1.8.0: Enhanced Word Export with template support (batch)
+- v1.8.1: Streamlined PDF Editor UI
+- v1.8.2: Enhanced PDF Export & Print Fix
