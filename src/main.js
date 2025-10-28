@@ -5,6 +5,15 @@ const { exec } = require('child_process');
 const { PDFDocument, rgb, degrees, StandardFonts } = require('pdf-lib');
 const WordTemplateExporter = require('./wordTemplateExporter');
 
+// Add MiKTeX to PATH for LaTeX support
+if (process.platform === 'win32') {
+  const miktexPath = 'C:\\Program Files\\MiKTeX\\miktex\\bin\\x64';
+  if (fs.existsSync(miktexPath)) {
+    process.env.PATH = `${miktexPath};${process.env.PATH}`;
+    console.log('[MAIN] Added MiKTeX to PATH:', miktexPath);
+  }
+}
+
 // Get the system Pandoc path
 function getPandocPath() {
   // Pandoc is expected to be in the system's PATH.
@@ -664,6 +673,52 @@ ipcMain.on('save-header-footer-settings', (event, settings) => {
 });
 
 // Save header/footer logo image
+// Browse for header/footer logo
+ipcMain.on('browse-header-footer-logo', async (event, position) => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: `Select ${position.charAt(0).toUpperCase() + position.slice(1)} Logo/Image`,
+      filters: [
+        { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp'] }
+      ],
+      properties: ['openFile']
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+      const filePath = result.filePaths[0];
+
+      // Copy image to userData directory for persistent storage
+      const userDataPath = app.getPath('userData');
+      const logoDir = path.join(userDataPath, 'logos');
+
+      // Create logos directory if it doesn't exist
+      if (!fs.existsSync(logoDir)) {
+        fs.mkdirSync(logoDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const ext = path.extname(filePath);
+      const filename = `${position}_${Date.now()}${ext}`;
+      const destPath = path.join(logoDir, filename);
+
+      // Copy file
+      fs.copyFileSync(filePath, destPath);
+
+      // Update settings
+      if (position === 'header') {
+        headerFooterSettings.header.logo = destPath;
+      } else if (position === 'footer') {
+        headerFooterSettings.footer.logo = destPath;
+      }
+
+      event.reply('header-footer-logo-saved', { position, path: destPath });
+    }
+  } catch (error) {
+    console.error('Logo browse error:', error);
+    dialog.showErrorBox('Logo Error', `Failed to select logo: ${error.message}`);
+  }
+});
+
 ipcMain.on('save-header-footer-logo', async (event, { position, filePath }) => {
   try {
     if (!filePath) {

@@ -2658,23 +2658,9 @@ function saveHeaderFooterSettings() {
     closeHeaderFooterDialog();
 }
 
-// Handle logo file selection
-function handleLogoSelection(position) {
-    const input = document.getElementById(`${position}-logo`);
-
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        // Use webUtils to get the real file path in Electron
-        const filePath = file.path || (window.electron && window.electron.webUtils ? window.electron.webUtils.getPathForFile(file) : null);
-
-        if (!filePath) {
-            alert('Error: Could not get file path. Please try again.');
-            return;
-        }
-
-        // Send to main process to save
-        ipcRenderer.send('save-header-footer-logo', { position, filePath });
-    }
+// Handle logo browsing - ask main process to show open dialog
+function browseForLogo(position) {
+    ipcRenderer.send('browse-header-footer-logo', position);
 }
 
 // Handle logo saved confirmation
@@ -2685,7 +2671,6 @@ ipcRenderer.on('header-footer-logo-saved', (event, { position, path }) => {
 // Clear logo
 function clearLogo(position) {
     ipcRenderer.send('clear-header-footer-logo', position);
-    document.getElementById(`${position}-logo`).value = '';
     document.getElementById(`${position}-logo-preview`).textContent = '';
 }
 
@@ -2728,9 +2713,9 @@ document.querySelectorAll('.field-insert-btn').forEach(btn => {
     });
 });
 
-// Logo file inputs
-document.getElementById('header-logo').addEventListener('change', () => handleLogoSelection('header'));
-document.getElementById('footer-logo').addEventListener('change', () => handleLogoSelection('footer'));
+// Logo browse buttons
+document.getElementById('header-logo-browse').addEventListener('click', () => browseForLogo('header'));
+document.getElementById('footer-logo-browse').addEventListener('click', () => browseForLogo('footer'));
 
 // Logo clear buttons
 document.getElementById('header-logo-clear').addEventListener('click', () => clearLogo('header'));
