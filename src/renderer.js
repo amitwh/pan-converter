@@ -2556,3 +2556,192 @@ function initMathSupport() {
 
 // Initialize math support on load
 initMathSupport();
+
+// ================================
+// Header & Footer Dialog Management
+// ================================
+
+let currentFieldTarget = null; // Track which input field is being edited
+
+// Open header/footer settings dialog
+function openHeaderFooterDialog() {
+    const dialog = document.getElementById('header-footer-dialog');
+    dialog.classList.remove('hidden');
+
+    // Request current settings from main process
+    ipcRenderer.send('get-header-footer-settings');
+}
+
+// Close header/footer settings dialog
+function closeHeaderFooterDialog() {
+    const dialog = document.getElementById('header-footer-dialog');
+    dialog.classList.add('hidden');
+}
+
+// Open field picker dialog
+function openFieldPickerDialog(targetInputId) {
+    currentFieldTarget = targetInputId;
+    const dialog = document.getElementById('field-picker-dialog');
+    dialog.classList.remove('hidden');
+}
+
+// Close field picker dialog
+function closeFieldPickerDialog() {
+    const dialog = document.getElementById('field-picker-dialog');
+    dialog.classList.add('hidden');
+    currentFieldTarget = null;
+}
+
+// Load settings into dialog
+ipcRenderer.on('header-footer-settings-data', (event, settings) => {
+    // Enable/disable checkbox
+    document.getElementById('hf-enabled').checked = settings.enabled;
+
+    // Header fields
+    document.getElementById('header-left').value = settings.header.left || '';
+    document.getElementById('header-center').value = settings.header.center || '';
+    document.getElementById('header-right').value = settings.header.right || '';
+
+    // Footer fields
+    document.getElementById('footer-left').value = settings.footer.left || '';
+    document.getElementById('footer-center').value = settings.footer.center || '';
+    document.getElementById('footer-right').value = settings.footer.right || '';
+
+    // Logo previews
+    if (settings.header.logo) {
+        document.getElementById('header-logo-preview').textContent = path.basename(settings.header.logo);
+    } else {
+        document.getElementById('header-logo-preview').textContent = '';
+    }
+
+    if (settings.footer.logo) {
+        document.getElementById('footer-logo-preview').textContent = path.basename(settings.footer.logo);
+    } else {
+        document.getElementById('footer-logo-preview').textContent = '';
+    }
+
+    // Update config content visibility
+    toggleConfigContent();
+});
+
+// Toggle config content based on enabled checkbox
+function toggleConfigContent() {
+    const enabled = document.getElementById('hf-enabled').checked;
+    const configContent = document.getElementById('hf-config-content');
+
+    if (enabled) {
+        configContent.classList.remove('disabled');
+    } else {
+        configContent.classList.add('disabled');
+    }
+}
+
+// Save header/footer settings
+function saveHeaderFooterSettings() {
+    const settings = {
+        enabled: document.getElementById('hf-enabled').checked,
+        header: {
+            left: document.getElementById('header-left').value || '',
+            center: document.getElementById('header-center').value || '',
+            right: document.getElementById('header-right').value || '',
+            logo: null // Logo paths are managed separately
+        },
+        footer: {
+            left: document.getElementById('footer-left').value || '',
+            center: document.getElementById('footer-center').value || '',
+            right: document.getElementById('footer-right').value || '',
+            logo: null
+        }
+    };
+
+    ipcRenderer.send('save-header-footer-settings', settings);
+    closeHeaderFooterDialog();
+}
+
+// Handle logo file selection
+function handleLogoSelection(position) {
+    const input = document.getElementById(`${position}-logo`);
+
+    if (input.files && input.files[0]) {
+        const filePath = input.files[0].path;
+
+        // Send to main process to save
+        ipcRenderer.send('save-header-footer-logo', { position, filePath });
+    }
+}
+
+// Handle logo saved confirmation
+ipcRenderer.on('header-footer-logo-saved', (event, { position, path }) => {
+    document.getElementById(`${position}-logo-preview`).textContent = path.split(/[\\/]/).pop();
+});
+
+// Clear logo
+function clearLogo(position) {
+    ipcRenderer.send('clear-header-footer-logo', position);
+    document.getElementById(`${position}-logo`).value = '';
+    document.getElementById(`${position}-logo-preview`).textContent = '';
+}
+
+// Handle logo cleared confirmation
+ipcRenderer.on('header-footer-logo-cleared', (event, position) => {
+    console.log(`${position} logo cleared`);
+});
+
+// Insert dynamic field into input
+function insertDynamicField(field) {
+    if (currentFieldTarget) {
+        const input = document.getElementById(currentFieldTarget);
+        const cursorPos = input.selectionStart;
+        const textBefore = input.value.substring(0, cursorPos);
+        const textAfter = input.value.substring(cursorPos);
+
+        input.value = textBefore + field + textAfter;
+        input.focus();
+        input.setSelectionRange(cursorPos + field.length, cursorPos + field.length);
+    }
+
+    closeFieldPickerDialog();
+}
+
+// Event Listeners for Header/Footer Dialog
+
+// Close buttons
+document.getElementById('header-footer-close').addEventListener('click', closeHeaderFooterDialog);
+document.getElementById('header-footer-cancel').addEventListener('click', closeHeaderFooterDialog);
+document.getElementById('header-footer-save').addEventListener('click', saveHeaderFooterSettings);
+
+// Enable/disable checkbox
+document.getElementById('hf-enabled').addEventListener('change', toggleConfigContent);
+
+// Field insert buttons
+document.querySelectorAll('.field-insert-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-target');
+        openFieldPickerDialog(target);
+    });
+});
+
+// Logo file inputs
+document.getElementById('header-logo').addEventListener('change', () => handleLogoSelection('header'));
+document.getElementById('footer-logo').addEventListener('change', () => handleLogoSelection('footer'));
+
+// Logo clear buttons
+document.getElementById('header-logo-clear').addEventListener('click', () => clearLogo('header'));
+document.getElementById('footer-logo-clear').addEventListener('click', () => clearLogo('footer'));
+
+// Field picker dialog
+document.getElementById('field-picker-close').addEventListener('click', closeFieldPickerDialog);
+document.querySelectorAll('.field-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const field = btn.getAttribute('data-field');
+        insertDynamicField(field);
+    });
+});
+
+// Export function to make openHeaderFooterDialog accessible globally
+window.openHeaderFooterDialog = openHeaderFooterDialog;
+
+// Listen for menu command to open dialog
+ipcRenderer.on('open-header-footer-dialog', () => {
+    openHeaderFooterDialog();
+});

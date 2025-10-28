@@ -926,6 +926,121 @@
             </div>
         </div>
 
+        <!-- Header & Footer Configuration Dialog -->
+        <div id="header-footer-dialog" class="export-dialog hidden">
+            <div class="export-dialog-content" style="max-width: 700px;">
+                <div class="export-dialog-header">
+                    <h3>Header & Footer Settings</h3>
+                    <button id="header-footer-close" class="dialog-close" title="Close">×</button>
+                </div>
+                <div class="export-dialog-body">
+                    <div class="hf-enable-section">
+                        <label>
+                            <input type="checkbox" id="hf-enabled" checked>
+                            Enable Headers and Footers
+                        </label>
+                    </div>
+
+                    <div id="hf-config-content">
+                        <!-- Header Configuration -->
+                        <div class="hf-section">
+                            <h4>Header</h4>
+                            <div class="hf-row">
+                                <div class="hf-column">
+                                    <label>Left</label>
+                                    <input type="text" id="header-left" placeholder="e.g., Document Title">
+                                    <button class="field-insert-btn" data-target="header-left" title="Insert dynamic field">+</button>
+                                </div>
+                                <div class="hf-column">
+                                    <label>Center</label>
+                                    <input type="text" id="header-center" placeholder="e.g., $TITLE$">
+                                    <button class="field-insert-btn" data-target="header-center" title="Insert dynamic field">+</button>
+                                </div>
+                                <div class="hf-column">
+                                    <label>Right</label>
+                                    <input type="text" id="header-right" placeholder="e.g., $DATE$">
+                                    <button class="field-insert-btn" data-target="header-right" title="Insert dynamic field">+</button>
+                                </div>
+                            </div>
+                            <div class="hf-logo-row">
+                                <label>Header Logo/Image:</label>
+                                <input type="file" id="header-logo" accept="image/*">
+                                <button id="header-logo-clear" class="clear-btn">Clear</button>
+                                <span id="header-logo-preview" class="logo-preview"></span>
+                            </div>
+                        </div>
+
+                        <!-- Footer Configuration -->
+                        <div class="hf-section">
+                            <h4>Footer</h4>
+                            <div class="hf-row">
+                                <div class="hf-column">
+                                    <label>Left</label>
+                                    <input type="text" id="footer-left" placeholder="e.g., Company Name">
+                                    <button class="field-insert-btn" data-target="footer-left" title="Insert dynamic field">+</button>
+                                </div>
+                                <div class="hf-column">
+                                    <label>Center</label>
+                                    <input type="text" id="footer-center" placeholder="e.g., $PAGE$ of $TOTAL$">
+                                    <button class="field-insert-btn" data-target="footer-center" title="Insert dynamic field">+</button>
+                                </div>
+                                <div class="hf-column">
+                                    <label>Right</label>
+                                    <input type="text" id="footer-right" placeholder="e.g., $AUTHOR$">
+                                    <button class="field-insert-btn" data-target="footer-right" title="Insert dynamic field">+</button>
+                                </div>
+                            </div>
+                            <div class="hf-logo-row">
+                                <label>Footer Logo/Image:</label>
+                                <input type="file" id="footer-logo" accept="image/*">
+                                <button id="footer-logo-clear" class="clear-btn">Clear</button>
+                                <span id="footer-logo-preview" class="logo-preview"></span>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Fields Help -->
+                        <div class="hf-help">
+                            <p><strong>Available Dynamic Fields:</strong></p>
+                            <ul>
+                                <li><code>$PAGE$</code> - Current page number</li>
+                                <li><code>$TOTAL$</code> - Total page count</li>
+                                <li><code>$DATE$</code> - Current date</li>
+                                <li><code>$TIME$</code> - Current time</li>
+                                <li><code>$TITLE$</code> - Document title</li>
+                                <li><code>$AUTHOR$</code> - Document author</li>
+                                <li><code>$FILENAME$</code> - File name</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="export-dialog-footer">
+                    <button id="header-footer-cancel">Cancel</button>
+                    <button id="header-footer-save" class="primary">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Field Picker Dialog -->
+        <div id="field-picker-dialog" class="export-dialog hidden">
+            <div class="export-dialog-content" style="max-width: 400px;">
+                <div class="export-dialog-header">
+                    <h3>Insert Dynamic Field</h3>
+                    <button id="field-picker-close" class="dialog-close" title="Close">×</button>
+                </div>
+                <div class="export-dialog-body">
+                    <div class="field-picker-list">
+                        <button class="field-option" data-field="$PAGE$">Page Number</button>
+                        <button class="field-option" data-field="$TOTAL$">Total Pages</button>
+                        <button class="field-option" data-field="$DATE$">Current Date</button>
+                        <button class="field-option" data-field="$TIME$">Current Time</button>
+                        <button class="field-option" data-field="$TITLE$">Document Title</button>
+                        <button class="field-option" data-field="$AUTHOR$">Document Author</button>
+                        <button class="field-option" data-field="$FILENAME$">File Name</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="editor-container">
             <div class="tab-content active" id="tab-content-1" data-tab-id="1">
                 <div id="editor-pane-1" class="pane">

@@ -1,6 +1,6 @@
 {
   "name": "pan-converter",
-  "version": "1.8.3",
+  "version": "1.9.0",
   "description": "Cross-platform Markdown editor and converter using Pandoc",
   "main": "src/main.js",
   "scripts": {

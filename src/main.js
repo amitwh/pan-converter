@@ -52,6 +52,23 @@ let wordTemplatePath = null; // Path to selected Word template
 let templateStartPage = 3; // Which page to start inserting content (default: page 3)
 let rendererReady = false; // Track if renderer is ready to receive file data
 
+// Header & Footer Settings
+let headerFooterSettings = {
+  enabled: true,
+  header: {
+    left: '',
+    center: '',
+    right: '',
+    logo: null // Will store image file path
+  },
+  footer: {
+    left: '',
+    center: '$PAGE$ of $TOTAL$',
+    right: '',
+    logo: null
+  }
+};
+
 // Handle single instance lock for Windows file association
 // When a file is double-clicked and the app is already running,
 // Windows tries to start a second instance. We prevent this and
@@ -261,6 +278,14 @@ function createMenu() {
         {
           label: 'Template Settings...',
           click: showTemplateSettings
+        },
+        {
+          label: 'Header & Footer Settings...',
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send('open-header-footer-dialog');
+            }
+          }
         },
         { type: 'separator' },
         {
@@ -481,7 +506,7 @@ function createMenu() {
               type: 'info',
               title: 'About PanConverter',
               message: 'PanConverter',
-              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.8.3\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Modern glassmorphism UI with gradient backgrounds\n• Enhanced PDF export via Word template with configurable start page\n• Configurable template settings (start page selection)\n• Streamlined PDF Editor UI (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• Enhanced Word export with template support (single file & batch)\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
+              detail: 'A cross-platform Markdown editor and converter using Pandoc.\n\nVersion: 1.9.0\nAuthor: Amit Haridas\nEmail: amit.wh@gmail.com\nLicense: MIT\n\nFeatures:\n• Custom Headers & Footers for PDF, DOCX, ODT, and PowerPoint exports\n• Dynamic field support: $PAGE$, $TOTAL$, $DATE$, $TIME$, $TITLE$, $AUTHOR$, $FILENAME$\n• Logo/image embedding in headers and footers\n• Modern glassmorphism UI with gradient backgrounds\n• Enhanced PDF export via Word template with configurable start page\n• Configurable template settings (start page selection)\n• Streamlined PDF Editor UI (merge, split, compress, rotate, watermark, encrypt)\n• Universal File Converter (LibreOffice, ImageMagick, FFmpeg, Pandoc)\n• Windows Explorer context menu integration\n• Tabbed interface for multiple files\n• Advanced markdown editing with live preview\n• Real-time preview updates while typing\n• Full toolbar markdown editing functions\n• Enhanced PDF export with built-in Electron fallback\n• Enhanced Word export with template support (single file & batch)\n• File association support for .md files\n• Command-line interface for batch conversion\n• Advanced export options with templates and metadata\n• Batch file conversion with progress tracking\n• Improved preview typography and spacing\n• Adjustable font sizes via menu (Ctrl+Shift+Plus/Minus)\n• Complete theme support including Monokai fixes\n• Find & replace with match highlighting\n• Line numbers and auto-indentation\n• Export to multiple formats via Pandoc\n• PowerPoint & presentation export\n• Export tables to Excel/ODS spreadsheets\n• Document import & conversion\n• Table creation helper\n• 22 beautiful themes (including Dracula, Nord, Tokyo Night, Gruvbox, Ayu, Concrete, and more)\n• Undo/redo functionality\n• Live word count and statistics',
               buttons: ['OK']
             });
           }
@@ -617,6 +642,215 @@ ipcMain.on('set-custom-start-page', (event, pageNumber) => {
     dialog.showErrorBox('Invalid Page Number', 'Please enter a page number between 1 and 100');
   }
 });
+
+// Header & Footer Settings IPC Handlers
+
+// Get current header/footer settings
+ipcMain.on('get-header-footer-settings', (event) => {
+  event.reply('header-footer-settings-data', headerFooterSettings);
+});
+
+// Save header/footer settings
+ipcMain.on('save-header-footer-settings', (event, settings) => {
+  headerFooterSettings = settings;
+  store.set('headerFooterSettings', headerFooterSettings);
+
+  dialog.showMessageBox(mainWindow, {
+    type: 'info',
+    title: 'Settings Saved',
+    message: 'Header and footer settings have been saved successfully!',
+    buttons: ['OK']
+  });
+});
+
+// Save header/footer logo image
+ipcMain.on('save-header-footer-logo', async (event, { position, filePath }) => {
+  try {
+    // Copy image to userData directory for persistent storage
+    const userDataPath = app.getPath('userData');
+    const logoDir = path.join(userDataPath, 'logos');
+
+    // Create logos directory if it doesn't exist
+    if (!fs.existsSync(logoDir)) {
+      fs.mkdirSync(logoDir, { recursive: true });
+    }
+
+    // Generate unique filename
+    const ext = path.extname(filePath);
+    const filename = `${position}_${Date.now()}${ext}`;
+    const destPath = path.join(logoDir, filename);
+
+    // Copy file
+    fs.copyFileSync(filePath, destPath);
+
+    // Update settings
+    if (position === 'header') {
+      headerFooterSettings.header.logo = destPath;
+    } else if (position === 'footer') {
+      headerFooterSettings.footer.logo = destPath;
+    }
+
+    event.reply('header-footer-logo-saved', { position, path: destPath });
+  } catch (error) {
+    dialog.showErrorBox('Logo Error', `Failed to save logo: ${error.message}`);
+  }
+});
+
+// Clear header/footer logo
+ipcMain.on('clear-header-footer-logo', (event, position) => {
+  if (position === 'header') {
+    headerFooterSettings.header.logo = null;
+  } else if (position === 'footer') {
+    headerFooterSettings.footer.logo = null;
+  }
+  event.reply('header-footer-logo-cleared', position);
+});
+
+// Helper function to process dynamic fields in header/footer text
+function processDynamicFields(text, metadata = {}) {
+  if (!text) return '';
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString();
+  const timeStr = now.toLocaleTimeString();
+
+  let result = text;
+  result = result.replace(/\$DATE\$/g, dateStr);
+  result = result.replace(/\$TIME\$/g, timeStr);
+  result = result.replace(/\$TITLE\$/g, metadata.title || 'Untitled');
+  result = result.replace(/\$AUTHOR\$/g, metadata.author || '');
+  result = result.replace(/\$FILENAME\$/g, metadata.filename || '');
+
+  // Note: $PAGE$ and $TOTAL$ are handled by Pandoc/export tools
+
+  return result;
+}
+
+// Add headers/footers to DOCX file using PizZip and docx4js
+async function addHeaderFooterToDocx(docxPath, metadata = {}) {
+  if (!headerFooterSettings.enabled) return;
+
+  try {
+    const PizZip = require('pizzip');
+
+    // Read the DOCX file
+    const docxBuffer = fs.readFileSync(docxPath);
+    const zip = new PizZip(docxBuffer);
+
+    // Process dynamic fields
+    const headerLeft = processDynamicFields(headerFooterSettings.header.left, metadata);
+    const headerCenter = processDynamicFields(headerFooterSettings.header.center, metadata);
+    const headerRight = processDynamicFields(headerFooterSettings.header.right, metadata);
+    const footerLeft = processDynamicFields(headerFooterSettings.footer.left, metadata);
+    const footerCenter = processDynamicFields(headerFooterSettings.footer.center, metadata);
+    const footerRight = processDynamicFields(headerFooterSettings.footer.right, metadata);
+
+    // Create header XML
+    if (headerLeft || headerCenter || headerRight) {
+      const headerXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p>
+    <w:pPr><w:jc w:val="left"/></w:pPr>
+    <w:r><w:t>${headerLeft || ''}</w:t></w:r>
+  </w:p>
+  <w:p>
+    <w:pPr><w:jc w:val="center"/></w:pPr>
+    <w:r><w:t>${headerCenter || ''}</w:t></w:r>
+  </w:p>
+  <w:p>
+    <w:pPr><w:jc w:val="right"/></w:pPr>
+    <w:r><w:t>${headerRight || ''}</w:t></w:r>
+  </w:p>
+</w:hdr>`;
+      zip.file('word/header1.xml', headerXml);
+    }
+
+    // Create footer XML with page numbers
+    if (footerLeft || footerCenter || footerRight) {
+      let footerCenterXml = '';
+      if (footerCenter) {
+        // Handle $PAGE$ and $TOTAL$ in footer
+        if (footerCenter.includes('$PAGE$') || footerCenter.includes('$TOTAL$')) {
+          const parts = footerCenter.split(/(\$PAGE\$|\$TOTAL\$)/);
+          footerCenterXml = parts.map(part => {
+            if (part === '$PAGE$') {
+              return '<w:fldSimple w:instr="PAGE"/>';
+            } else if (part === '$TOTAL$') {
+              return '<w:fldSimple w:instr="NUMPAGES"/>';
+            } else {
+              return `<w:r><w:t>${part}</w:t></w:r>`;
+            }
+          }).join('');
+        } else {
+          footerCenterXml = `<w:r><w:t>${footerCenter}</w:t></w:r>`;
+        }
+      }
+
+      const footerXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p>
+    <w:pPr><w:jc w:val="left"/></w:pPr>
+    <w:r><w:t>${footerLeft || ''}</w:t></w:r>
+  </w:p>
+  <w:p>
+    <w:pPr><w:jc w:val="center"/></w:pPr>
+    ${footerCenterXml}
+  </w:p>
+  <w:p>
+    <w:pPr><w:jc w:val="right"/></w:pPr>
+    <w:r><w:t>${footerRight || ''}</w:t></w:r>
+  </w:p>
+</w:ftr>`;
+      zip.file('word/footer1.xml', footerXml);
+    }
+
+    // Update document.xml.rels to reference header/footer
+    let relsXml = zip.file('word/_rels/document.xml.rels').asText();
+
+    // Add header relationship if not exists
+    if ((headerLeft || headerCenter || headerRight) && !relsXml.includes('header1.xml')) {
+      const headerId = 'rId100';
+      const headerRel = `<Relationship Id="${headerId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>`;
+      relsXml = relsXml.replace('</Relationships>', headerRel + '</Relationships>');
+    }
+
+    // Add footer relationship if not exists
+    if ((footerLeft || footerCenter || footerRight) && !relsXml.includes('footer1.xml')) {
+      const footerId = 'rId101';
+      const footerRel = `<Relationship Id="${footerId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>`;
+      relsXml = relsXml.replace('</Relationships>', footerRel + '</Relationships>');
+    }
+
+    zip.file('word/_rels/document.xml.rels', relsXml);
+
+    // Update document.xml to use header/footer in sections
+    let documentXml = zip.file('word/document.xml').asText();
+    if ((headerLeft || headerCenter || headerRight || footerLeft || footerCenter || footerRight)) {
+      // Find all section properties and add header/footer references
+      const sectPrRegex = /<w:sectPr[^>]*>[\s\S]*?<\/w:sectPr>/g;
+      documentXml = documentXml.replace(sectPrRegex, (match) => {
+        let updated = match;
+        if ((headerLeft || headerCenter || headerRight) && !match.includes('headerReference')) {
+          updated = updated.replace('</w:sectPr>', '<w:headerReference w:type="default" r:id="rId100"/></w:sectPr>');
+        }
+        if ((footerLeft || footerCenter || footerRight) && !match.includes('footerReference')) {
+          updated = updated.replace('</w:sectPr>', '<w:footerReference w:type="default" r:id="rId101"/></w:sectPr>');
+        }
+        return updated;
+      });
+    }
+
+    zip.file('word/document.xml', documentXml);
+
+    // Write modified DOCX
+    const newDocxBuffer = zip.generate({ type: 'nodebuffer' });
+    fs.writeFileSync(docxPath, newDocxBuffer);
+
+  } catch (error) {
+    console.error('Failed to add headers/footers to DOCX:', error);
+    // Don't fail the export, just log the error
+  }
+}
 
 // Enhanced Word Export with Template Support
 async function exportWordWithTemplate() {
@@ -1033,16 +1267,16 @@ function showExportSuccess(outputFile) {
 // Helper function to export with pandoc (general)
 function exportWithPandoc(pandocCmd, outputFile, format) {
   console.log(`Executing Pandoc command: ${pandocCmd}`);
-  
-  exec(pandocCmd, (error, stdout, stderr) => {
+
+  exec(pandocCmd, async (error, stdout, stderr) => {
     if (error) {
       console.error(`Pandoc error for ${format}:`, error);
       console.error(`Pandoc stderr:`, stderr);
       console.error(`Pandoc stdout:`, stdout);
-      
+
       // Provide more specific error messages
       let errorMessage = `Failed to export to ${format.toUpperCase()}`;
-      
+
       if (error.message.includes('not found') || error.message.includes('not recognized')) {
         errorMessage += '\n\nPandoc is not installed or not found in PATH.';
         errorMessage += '\nPlease install Pandoc from: https://pandoc.org/installing.html';
@@ -1051,9 +1285,9 @@ function exportWithPandoc(pandocCmd, outputFile, format) {
       } else {
         errorMessage += `\n\nError details: ${error.message}`;
       }
-      
+
       errorMessage += `\n\nCommand used: ${pandocCmd}`;
-      
+
       dialog.showErrorBox('Export Error', errorMessage);
     } else {
       console.log(`Successfully exported to ${format}:`, outputFile);
@@ -1061,6 +1295,30 @@ function exportWithPandoc(pandocCmd, outputFile, format) {
       if (stderr) {
         console.warn(`Pandoc stderr (non-fatal):`, stderr);
       }
+
+      // Add headers/footers to DOCX if enabled
+      if (format === 'docx' && headerFooterSettings.enabled) {
+        try {
+          const filename = currentFile ? path.basename(currentFile, path.extname(currentFile)) : 'document';
+          const metadata = {
+            filename: filename,
+            title: filename,
+            author: ''
+          };
+          await addHeaderFooterToDocx(outputFile, metadata);
+          console.log('Headers/footers added to DOCX');
+        } catch (hfError) {
+          console.error('Error adding headers/footers to DOCX:', hfError);
+          // Continue with success message even if header/footer fails
+        }
+      }
+
+      // Add headers/footers to ODT if enabled
+      if (format === 'odt' && headerFooterSettings.enabled) {
+        // ODT format is similar to DOCX in structure, we could implement this
+        console.log('ODT header/footer support not yet implemented');
+      }
+
       showExportSuccess(outputFile);
     }
   });
@@ -1734,16 +1992,71 @@ function performBatchConversion(inputFolder, outputFolder, format, options) {
     if (options.bibliography) pandocCmd += ` --bibliography="${options.bibliography}"`;
     if (options.csl) pandocCmd += ` --csl="${options.csl}"`;
 
-    // Add PDF-specific options
+    // Add PDF-specific options with header/footer support
     if (format === 'pdf') {
       const pdfEngine = options.pdfEngine || 'xelatex';
       pandocCmd += ` --pdf-engine="${pdfEngine}"`;
       if (options.geometry) pandocCmd += ` -V geometry:"${options.geometry}"`;
+
+      // Add header/footer if enabled
+      if (headerFooterSettings.enabled) {
+        const filename = path.basename(inputFile, path.extname(inputFile));
+        const metadata = { filename, title: filename, author: '' };
+
+        const headerLeft = processDynamicFields(headerFooterSettings.header.left, metadata);
+        const headerCenter = processDynamicFields(headerFooterSettings.header.center, metadata);
+        const headerRight = processDynamicFields(headerFooterSettings.header.right, metadata);
+        const footerLeft = processDynamicFields(headerFooterSettings.footer.left, metadata);
+        const footerCenter = processDynamicFields(headerFooterSettings.footer.center, metadata);
+        const footerRight = processDynamicFields(headerFooterSettings.footer.right, metadata);
+
+        // Create LaTeX header
+        const latexHeader = `
+\\usepackage{fancyhdr}
+\\pagestyle{fancy}
+\\fancyhf{}
+\\lhead{${headerLeft.replace(/\\/g, '\\\\')}}
+\\chead{${headerCenter.replace(/\\/g, '\\\\')}}
+\\rhead{${headerRight.replace(/\\/g, '\\\\')}}
+\\lfoot{${footerLeft.replace(/\\/g, '\\\\')}}
+\\cfoot{${footerCenter.replace(/[$]PAGE[$]/g, '\\\\thepage').replace(/[$]TOTAL[$]/g, '\\\\pageref{LastPage}').replace(/\\/g, '\\\\')}}
+\\rfoot{${footerRight.replace(/\\/g, '\\\\')}}
+\\renewcommand{\\headrulewidth}{0.4pt}
+\\renewcommand{\\footrulewidth}{0.4pt}
+`;
+        const headerFile = path.join(require('os').tmpdir(), `header_batch_${Date.now()}.tex`);
+        fs.writeFileSync(headerFile, latexHeader, 'utf-8');
+        pandocCmd += ` --include-in-header="${headerFile}"`;
+        pandocCmd += ' --variable header-includes="\\\\usepackage{lastpage}"';
+      }
+    }
+
+    // Add DOCX-specific handling
+    if (format === 'docx') {
+      pandocCmd += ' -t docx';
+    }
+
+    // Add PowerPoint footer if enabled
+    if (format === 'pptx' && headerFooterSettings.enabled && headerFooterSettings.footer.center) {
+      const filename = path.basename(inputFile, path.extname(inputFile));
+      const metadata = { filename, title: filename, author: '' };
+      const footerText = processDynamicFields(headerFooterSettings.footer.center, metadata);
+      pandocCmd += ` --variable footer="${footerText}"`;
     }
 
     // Execute conversion
-    exec(pandocCmd, (error, stdout, stderr) => {
+    exec(pandocCmd, async (error, stdout, stderr) => {
       if (!error) {
+        // Add headers/footers to DOCX if enabled
+        if (format === 'docx' && headerFooterSettings.enabled) {
+          try {
+            const filename = path.basename(inputFile, path.extname(inputFile));
+            const metadata = { filename, title: filename, author: '' };
+            await addHeaderFooterToDocx(outputFile, metadata);
+          } catch (hfError) {
+            console.error('Batch: Error adding headers/footers to DOCX:', hfError);
+          }
+        }
         completedCount++;
       }
 
@@ -1877,27 +2190,91 @@ function performCLIConversion(inputPath, format) {
 function buildPandocCommand(content, format, outputPath) {
   const inputFile = path.join(require('os').tmpdir(), `panconverter_temp_${Date.now()}.md`);
   fs.writeFileSync(inputFile, content, 'utf-8');
-  
+
   let command = `pandoc "${inputFile}" -o "${outputPath}"`;
-  
+
+  // Get metadata for dynamic fields
+  const filename = currentFile ? path.basename(currentFile, path.extname(currentFile)) : 'document';
+  const metadata = {
+    filename: filename,
+    title: filename,
+    author: '',
+  };
+
   switch (format) {
     case 'pdf':
       command += ' --pdf-engine=xelatex --variable geometry:margin=1in';
+
+      // Add header/footer if enabled
+      if (headerFooterSettings.enabled) {
+        // Process dynamic fields
+        const headerLeft = processDynamicFields(headerFooterSettings.header.left, metadata);
+        const headerCenter = processDynamicFields(headerFooterSettings.header.center, metadata);
+        const headerRight = processDynamicFields(headerFooterSettings.header.right, metadata);
+        const footerLeft = processDynamicFields(headerFooterSettings.footer.left, metadata);
+        const footerCenter = processDynamicFields(headerFooterSettings.footer.center, metadata);
+        const footerRight = processDynamicFields(headerFooterSettings.footer.right, metadata);
+
+        // Add Pandoc variables for fancyhdr package
+        if (headerLeft) command += ` --variable header-left="${headerLeft}"`;
+        if (headerCenter) command += ` --variable header-center="${headerCenter}"`;
+        if (headerRight) command += ` --variable header-right="${headerRight}"`;
+        if (footerLeft) command += ` --variable footer-left="${footerLeft}"`;
+        if (footerCenter) command += ` --variable footer-center="${footerCenter}"`;
+        if (footerRight) command += ` --variable footer-right="${footerRight}"`;
+
+        // Create custom LaTeX header with fancyhdr
+        const latexHeader = `
+\\usepackage{fancyhdr}
+\\pagestyle{fancy}
+\\fancyhf{}
+\\lhead{${headerLeft.replace(/\\/g, '\\\\')}}
+\\chead{${headerCenter.replace(/\\/g, '\\\\')}}
+\\rhead{${headerRight.replace(/\\/g, '\\\\')}}
+\\lfoot{${footerLeft.replace(/\\/g, '\\\\')}}
+\\cfoot{${footerCenter.replace(/[$]PAGE[$]/g, '\\\\thepage').replace(/[$]TOTAL[$]/g, '\\\\pageref{LastPage}').replace(/\\/g, '\\\\')}}
+\\rfoot{${footerRight.replace(/\\/g, '\\\\')}}
+\\renewcommand{\\headrulewidth}{0.4pt}
+\\renewcommand{\\footrulewidth}{0.4pt}
+`;
+        const headerFile = path.join(require('os').tmpdir(), `header_${Date.now()}.tex`);
+        fs.writeFileSync(headerFile, latexHeader, 'utf-8');
+        command += ` --include-in-header="${headerFile}"`;
+
+        // Add lastpage package for $TOTAL$ support
+        command += ' --variable header-includes="\\\\usepackage{lastpage}"';
+      }
       break;
+
     case 'html':
       command += ' --self-contained --css';
       break;
+
     case 'docx':
       command += ' --reference-doc';
+
+      // For DOCX, header/footer are handled via reference document or separate processing
+      // We'll add a note that DOCX headers/footers require reference doc or post-processing
       break;
+
+    case 'odt':
+      // ODT headers/footers are handled via reference document
+      break;
+
     case 'latex':
       command += ' --standalone';
       break;
+
     case 'pptx':
       command += ' --slide-level=2';
+      // PowerPoint footer can be added with --variable
+      if (headerFooterSettings.enabled && headerFooterSettings.footer.center) {
+        const footerText = processDynamicFields(headerFooterSettings.footer.center, metadata);
+        command += ` --variable footer="${footerText}"`;
+      }
       break;
   }
-  
+
   return command;
 }
 
@@ -1905,6 +2282,12 @@ app.whenReady().then(() => {
   // Load saved Word template path and settings
   wordTemplatePath = store.get('wordTemplatePath', null);
   templateStartPage = store.get('templateStartPage', 3);
+
+  // Load header/footer settings
+  const savedHFSettings = store.get('headerFooterSettings', null);
+  if (savedHFSettings) {
+    headerFooterSettings = savedHFSettings;
+  }
 
   // Check for command line conversion requests
   const args = process.argv.slice(2);
