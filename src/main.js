@@ -666,6 +666,11 @@ ipcMain.on('save-header-footer-settings', (event, settings) => {
 // Save header/footer logo image
 ipcMain.on('save-header-footer-logo', async (event, { position, filePath }) => {
   try {
+    if (!filePath) {
+      dialog.showErrorBox('Logo Error', 'Failed to save logo: The "path" argument must be of type string. Received undefined');
+      return;
+    }
+
     // Copy image to userData directory for persistent storage
     const userDataPath = app.getPath('userData');
     const logoDir = path.join(userDataPath, 'logos');
@@ -673,6 +678,12 @@ ipcMain.on('save-header-footer-logo', async (event, { position, filePath }) => {
     // Create logos directory if it doesn't exist
     if (!fs.existsSync(logoDir)) {
       fs.mkdirSync(logoDir, { recursive: true });
+    }
+
+    // Verify source file exists
+    if (!fs.existsSync(filePath)) {
+      dialog.showErrorBox('Logo Error', `Source file not found: ${filePath}`);
+      return;
     }
 
     // Generate unique filename
@@ -692,6 +703,7 @@ ipcMain.on('save-header-footer-logo', async (event, { position, filePath }) => {
 
     event.reply('header-footer-logo-saved', { position, path: destPath });
   } catch (error) {
+    console.error('Logo save error:', error);
     dialog.showErrorBox('Logo Error', `Failed to save logo: ${error.message}`);
   }
 });
@@ -1196,6 +1208,38 @@ function performExportWithOptions(format, options) {
       pandocCmd += ` --pdf-engine="${pdfEngine}"`;
       if (options.geometry) pandocCmd += ` -V geometry:"${options.geometry}"`;
 
+      // Add header/footer if enabled
+      if (headerFooterSettings.enabled) {
+        const filename = currentFile ? path.basename(currentFile, path.extname(currentFile)) : 'document';
+        const metadata = { filename, title: filename, author: '' };
+
+        const headerLeft = processDynamicFields(headerFooterSettings.header.left, metadata);
+        const headerCenter = processDynamicFields(headerFooterSettings.header.center, metadata);
+        const headerRight = processDynamicFields(headerFooterSettings.header.right, metadata);
+        const footerLeft = processDynamicFields(headerFooterSettings.footer.left, metadata);
+        const footerCenter = processDynamicFields(headerFooterSettings.footer.center, metadata);
+        const footerRight = processDynamicFields(headerFooterSettings.footer.right, metadata);
+
+        // Create LaTeX header
+        const latexHeader = `
+\\usepackage{fancyhdr}
+\\pagestyle{fancy}
+\\fancyhf{}
+\\lhead{${headerLeft.replace(/\\/g, '\\\\')}}
+\\chead{${headerCenter.replace(/\\/g, '\\\\')}}
+\\rhead{${headerRight.replace(/\\/g, '\\\\')}}
+\\lfoot{${footerLeft.replace(/\\/g, '\\\\')}}
+\\cfoot{${footerCenter.replace(/[$]PAGE[$]/g, '\\\\thepage').replace(/[$]TOTAL[$]/g, '\\\\pageref{LastPage}').replace(/\\/g, '\\\\')}}
+\\rfoot{${footerRight.replace(/\\/g, '\\\\')}}
+\\renewcommand{\\headrulewidth}{0.4pt}
+\\renewcommand{\\footrulewidth}{0.4pt}
+`;
+        const headerFile = path.join(require('os').tmpdir(), `header_export_${Date.now()}.tex`);
+        fs.writeFileSync(headerFile, latexHeader, 'utf-8');
+        pandocCmd += ` --include-in-header="${headerFile}"`;
+        pandocCmd += ' --variable header-includes="\\\\usepackage{lastpage}"';
+      }
+
       // Try with specified PDF engine
       exec(pandocCmd, (error) => {
         if (error) {
@@ -1208,6 +1252,15 @@ function performExportWithOptions(format, options) {
       });
     } else if (format === 'docx') {
       pandocCmd += ' -t docx';
+      exportWithPandoc(pandocCmd, outputFile, format);
+    } else if (format === 'pptx') {
+      // Add PowerPoint footer if enabled
+      if (headerFooterSettings.enabled && headerFooterSettings.footer.center) {
+        const filename = currentFile ? path.basename(currentFile, path.extname(currentFile)) : 'document';
+        const metadata = { filename, title: filename, author: '' };
+        const footerText = processDynamicFields(headerFooterSettings.footer.center, metadata);
+        pandocCmd += ` --variable footer="${footerText}"`;
+      }
       exportWithPandoc(pandocCmd, outputFile, format);
     } else {
       // Generic export for other formats
@@ -1232,6 +1285,38 @@ function tryPdfFallback(inputFile, outputFile, engines, index, options, lastErro
 
   // Add geometry if specified
   if (options.geometry) pandocCmd = pandocCmd.replace(` -o `, ` -V geometry:"${options.geometry}" -o `);
+
+  // Add header/footer if enabled
+  if (headerFooterSettings.enabled) {
+    const filename = path.basename(inputFile, path.extname(inputFile));
+    const metadata = { filename, title: filename, author: options.metadata?.author || '' };
+
+    const headerLeft = processDynamicFields(headerFooterSettings.header.left, metadata);
+    const headerCenter = processDynamicFields(headerFooterSettings.header.center, metadata);
+    const headerRight = processDynamicFields(headerFooterSettings.header.right, metadata);
+    const footerLeft = processDynamicFields(headerFooterSettings.footer.left, metadata);
+    const footerCenter = processDynamicFields(headerFooterSettings.footer.center, metadata);
+    const footerRight = processDynamicFields(headerFooterSettings.footer.right, metadata);
+
+    // Create LaTeX header for fancyhdr
+    const latexHeader = `
+\\usepackage{fancyhdr}
+\\usepackage{lastpage}
+\\pagestyle{fancy}
+\\fancyhf{}
+\\lhead{${headerLeft.replace(/\\/g, '\\\\')}}
+\\chead{${headerCenter.replace(/\\/g, '\\\\')}}
+\\rhead{${headerRight.replace(/\\/g, '\\\\')}}
+\\lfoot{${footerLeft.replace(/\\/g, '\\\\')}}
+\\cfoot{${footerCenter.replace(/\$PAGE\$/g, '\\\\thepage').replace(/\$TOTAL\$/g, '\\\\pageref{LastPage}').replace(/\\/g, '\\\\')}}
+\\rfoot{${footerRight.replace(/\\/g, '\\\\')}}
+\\renewcommand{\\headrulewidth}{0.4pt}
+\\renewcommand{\\footrulewidth}{0.4pt}
+`;
+    const headerFile = path.join(require('os').tmpdir(), `header_fallback_${Date.now()}.tex`);
+    fs.writeFileSync(headerFile, latexHeader, 'utf-8');
+    pandocCmd += ` --include-in-header="${headerFile}"`;
+  }
 
   // Add all other options
   if (options.template && options.template !== 'default') {

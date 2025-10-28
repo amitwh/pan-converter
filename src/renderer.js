@@ -2663,7 +2663,14 @@ function handleLogoSelection(position) {
     const input = document.getElementById(`${position}-logo`);
 
     if (input.files && input.files[0]) {
-        const filePath = input.files[0].path;
+        const file = input.files[0];
+        // Use webUtils to get the real file path in Electron
+        const filePath = file.path || (window.electron && window.electron.webUtils ? window.electron.webUtils.getPathForFile(file) : null);
+
+        if (!filePath) {
+            alert('Error: Could not get file path. Please try again.');
+            return;
+        }
 
         // Send to main process to save
         ipcRenderer.send('save-header-footer-logo', { position, filePath });
