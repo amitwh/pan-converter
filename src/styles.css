@@ -1098,6 +1098,117 @@ body.theme-dark #add-metadata-field {
     color: #f0f0f0;
 }
 
+/* PDF Editor Specific Styles */
+.pdf-editor-content {
+    max-width: 600px !important;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.pdf-editor-body {
+    min-height: 200px;
+    max-height: calc(85vh - 150px);
+    overflow-y: auto;
+}
+
+.pdf-operation-section {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pdf-operation-section.hidden {
+    display: none !important;
+}
+
+/* Make PDF Editor sections more compact */
+.pdf-operation-section .export-section {
+    margin-bottom: 18px;
+}
+
+.pdf-operation-section .export-section:last-child {
+    margin-bottom: 0;
+}
+
+/* File list styling for merge operation */
+.file-list {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fafafa;
+}
+
+.file-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 6px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.file-entry:last-child {
+    margin-bottom: 0;
+}
+
+.file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 10px;
+    font-size: 13px;
+}
+
+.remove-file {
+    padding: 4px 10px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.remove-file:hover {
+    background: #c82333;
+}
+
+/* Theme support for PDF Editor */
+body.theme-dark .file-list {
+    background: #1a1a1a;
+    border-color: #555;
+}
+
+body.theme-dark .file-entry {
+    background: #2d2d2d;
+    border-color: #444;
+    color: #f0f0f0;
+}
+
+body.theme-dark .pdf-editor-content {
+    background: #2d2d2d;
+}
+
+body.theme-dark .pdf-editor-body {
+    background: #2d2d2d;
+}
+
 body.theme-dark .form-row button:hover,
 body.theme-dark #add-metadata-field:hover {
     background: #333;
